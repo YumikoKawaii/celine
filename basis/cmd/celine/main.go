@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"os"
 	"os/signal"
 	"syscall"
 
@@ -14,6 +13,7 @@ import (
 
 	"github.com/YumikoKawaii/celine/basis/gen/celine/v1/celinev1connect"
 	"github.com/YumikoKawaii/celine/basis/internal/agent"
+	"github.com/YumikoKawaii/celine/basis/internal/config"
 	"github.com/YumikoKawaii/celine/basis/internal/hermes"
 	"github.com/YumikoKawaii/celine/basis/internal/llm"
 	"github.com/YumikoKawaii/celine/basis/internal/mneme"
@@ -24,41 +24,37 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	addr := os.Getenv("CELINE_ADDR")
-	if addr == "" {
-		addr = ":8080"
+	cfg, err := config.LoadServer()
+	if err != nil {
+		log.Fatalf("config: %v", err)
 	}
 
-	db, err := mneme.NewPool(ctx, mustEnv("CELINE_DB_DSN"))
+	db, err := mneme.NewPool(ctx, cfg.DBDsn)
 	if err != nil {
 		log.Fatalf("db: %v", err)
 	}
 	defer db.Close()
 
-	rdb := mneme.NewRedis(mustEnv("CELINE_REDIS_ADDR"))
+	rdb := mneme.NewRedis(cfg.RedisAddr)
 	defer rdb.Close()
 
-	// Auth — Verifier is nil when CELINE_JWT_SECRET is unset; interceptor
-	// falls back to "anon" so local dev works without Google OAuth.
 	var verifier *hermes.Verifier
-	if secret := os.Getenv("CELINE_JWT_SECRET"); secret != "" {
-		verifier = hermes.NewVerifier(secret)
+	if cfg.JWTSecret != "" {
+		verifier = hermes.NewVerifier(cfg.JWTSecret)
 	}
 	interceptor := hermes.NewAuthInterceptor(verifier)
 	opts := connect.WithInterceptors(interceptor)
 
-	// Celine service
-	brain := llm.New(mustEnv("ANTHROPIC_API_KEY"), os.Getenv("CELINE_MODEL"))
+	brain := llm.New(cfg.AnthropicKey, cfg.Model)
 	convs := mneme.NewConversationStore(db)
 	msgs := mneme.NewMessageStore(db, rdb)
 	celineSvc := rpc.NewCelineService(agent.New(brain, agent.SystemPrompt(), convs, msgs))
 
-	// Hermes service
 	var googleAuth *hermes.GoogleAuth
 	var issuer *hermes.Issuer
-	if clientID := os.Getenv("GOOGLE_CLIENT_ID"); clientID != "" {
-		googleAuth = hermes.NewGoogleAuth(clientID, mustEnv("GOOGLE_CLIENT_SECRET"))
-		issuer = hermes.NewIssuer(mustEnv("CELINE_JWT_SECRET"))
+	if cfg.GoogleClientID != "" {
+		googleAuth = hermes.NewGoogleAuth(cfg.GoogleClientID, cfg.GoogleSecret)
+		issuer = hermes.NewIssuer(cfg.JWTSecret)
 	}
 	hermesSvc := rpc.NewHermesService(googleAuth, issuer, mneme.NewClientStore(db))
 
@@ -69,22 +65,14 @@ func main() {
 	mux.Handle(hermesPath, hermesHandler)
 
 	srv := &http.Server{
-		Addr:    addr,
+		Addr:    cfg.Addr,
 		Handler: h2c.NewHandler(devCORS(mux), &http2.Server{}),
 	}
 
-	log.Printf("celine backend listening on %s", addr)
+	log.Printf("celine backend listening on %s", cfg.Addr)
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal(err)
 	}
-}
-
-func mustEnv(key string) string {
-	v := os.Getenv(key)
-	if v == "" {
-		log.Fatalf("%s is required", key)
-	}
-	return v
 }
 
 func devCORS(h http.Handler) http.Handler {
