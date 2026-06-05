@@ -45,61 +45,62 @@ celine/
 └── README.md
 ```
 
-### 5.1 Current implementation (as built — Step 2, "brain")
-
-The wiring that exists today. The one loop reads top-to-bottom on the left
-(request → Claude) and bottom-to-top on the right (deltas → paced bubbles →
-browser). The two arrows between `agent.go` and `stream.go` are a goroutine
-boundary: `StreamChat` produces text deltas on a channel while `paceBubbles`
-consumes them and emits typed events back through `streamSink`.
+### 5.1 Current implementation (as built — Step 2 + store + auth)
 
 ```
                           BROWSER (eidos/)
                   generated TS client · useChatStream
                                 │  ▲
-                ChatRequest     │  │   stream of ChatEvent
-                {conv_id,text}  │  │   (Typing · Message · Error · Done)
-                                ▼  │
-══════════════════════════════════════════════════════════ basis/  (Go binary)
-                                │  │
-  cmd/celine/main.go            │  │   h2c + devCORS, mux.Handle(path)
-   ├─ env: ANTHROPIC_API_KEY    │  │   reads CELINE_ADDR
-   ├─ llm.New(key, CELINE_MODEL)│  │
-   └─ agent.New(brain, prompt)  │  │
-                                ▼  │
-  internal/rpc/chat_service.go (CelineService.Chat)
-        │                          ▲
-        │ agent.Chat(ctx,          │ streamSink (EventSink adapter)
-        │   convID, text, sink)    │   Typing(ms) / Bubble(seq,text)
-        ▼                          │   → stream.Send(ChatEvent)
-  internal/agent/agent.go  ── the loop we own (§3.2) ──
-        │                          ▲
-        │  history[convID]         │  paced bubbles
-        │  (in-memory STOPGAP      │
-        │   → Postgres in Step 4)  │
-        │                          │
-        │  ┌─ goroutine ───────┐   │
-        │  │ llm.StreamChat    │   │
-        ▼  ▼                   │   │
-  internal/llm/claude.go       │   │      internal/agent/stream.go
-   (anthropic-sdk-go)          │   │       paceBubbles  (§14.3)
-        │   System = celine.md │   │        • accumulate deltas
-        │   (cache breakpoint) │   │        • split on \n\n
-        │   Messages = history │   │          (code-fence aware)
-        │                      │   │        • typing → sleep →
-        ▼                      │   │          bubble → pause
-   ┌──────────┐  text deltas   │   │              ▲
-   │ Claude   │ ───────────────┴───┼── chan string┘
-   │ API      │   (stream.Next)    │
-   └──────────┘                    │
-                                   │
-  internal/agent/prompts/celine.md ┘  (go:embed → SystemPrompt)
-        persona + §14.2 segmentation contract + §13.1 invariants
+              LaleoRequest      │  │   stream of LaleoEvent
+              {conv_id, text}   │  │   (Typing · Message · ToolCall
+                                ▼  │    ToolResult · Done · Error)
+══════════════════════════════════════════════════════════ basis/  (two binaries)
+
+  cmd/celine/main.go  ── config.LoadServer() ──────────────────────────────┐
+   ├─ mneme.NewPool(DBDsn)          Postgres                               │
+   ├─ mneme.NewRedis(RedisAddr)     Redis                                  │
+   ├─ hermes.NewAuthInterceptor     JWT verify, sub → ctx                  │
+   ├─ llm.New(AnthropicKey, Model)                                         │
+   └─ agent.New(brain, prompt, convs, msgs)                                │
+                                │  │                                       │
+  internal/rpc/chat_service.go  │  │  h2c + devCORS                       │
+  (Celine.Laleo)                │  │  sub ← hermes.SubFromContext          │
+        │                       ▼  │                                       │
+        │  agent.Chat(ctx, sub, convID, text, sink)                        │
+        ▼                          ▲                                       │
+  internal/agent/agent.go          │  streamSink → stream.Send(LaleoEvent) │
+   ├─ convs.GetOrCreate            │                                       │
+   ├─ msgs.GetHistory              │  internal/agent/stream.go             │
+   ├─ msgs.Save(user)              │   paceBubbles (§14.3)                 │
+   ├─ ── goroutine ──────────────┐ │   · split on \n\n                    │
+   │   llm.StreamChat            │ │   · typing → sleep → bubble           │
+   ▼                             │ │              ▲                        │
+  internal/llm/claude.go         │ │   chan string┘                        │
+   (anthropic-sdk-go)            │─┘                                       │
+   System = celine.md (cached)   │                                         │
+   Messages  = history           │                                         │
+        │                        │                                         │
+        ▼                        │                                         │
+   ┌──────────┐  text deltas ────┘                                         │
+   │ Claude   │  (stream.Next() — tool_use not yet handled)                │
+   └──────────┘                                                            │
+                                                                           │
+  internal/mneme/          Postgres store                                  │
+   ├─ ConversationStore     GetOrCreate · List                             │
+   ├─ MessageStore          Save · GetHistory · Enqueue → Redis queue      │
+   └─ ClientStore           Upsert · Get                                   │
+                                                                           │
+  internal/hermes/          auth                                           │
+   ├─ GoogleAuth             AuthURL · Exchange (server-side code swap)    │
+   ├─ Issuer / Verifier      HS256 JWT, 30-day TTL                        │
+   └─ AuthInterceptor        unary + streaming, skips /Hermes/ routes     │
+                                                                           │
+  ── cmd/worker/main.go  ── config.LoadWorker() ───────────────────────────┘
+  internal/graphe/
+   ├─ OllamaClient           POST /api/embed → snowflake-arctic-embed:xs
+   └─ Worker                 BRPOP → embed → INSERT memory_index ON CONFLICT DO NOTHING
 ```
 
-**Not wired yet:** tools/registry (§6, Step 3) · Postgres+pgvector & Redis
-queue (§11/§12, Step 4) · persona knobs + mood (§13, Step 5) · Google OIDC
-auth (§9). The in-memory `history[convID]` map is a deliberate stand-in for the
-Postgres `messages` table (§12.1).
+**Not wired yet:** `ergon/` tool registry (§6, Step 3) · memory recall read path (§12.5, Step 4) · persona knobs + mood (§13, Step 5) · eidos frontend catch-up (Greek method names, auth flow).
 
 

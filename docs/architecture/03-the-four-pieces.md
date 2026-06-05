@@ -8,19 +8,50 @@
 - Default model: latest Claude (e.g. `claude-opus-4-8` for quality, `claude-sonnet-4-6` for cheaper/faster turns). Make it configurable.
 
 ### 3.2 The agent loop — our code (the heart we own)
+
 ```
-1. Receive user message via the Chat server-streaming RPC (client identified by Google sub)
-2. Recall context (tiered, §12.5): curated profile (always) + a thresholded memory hint
-   (top-K vector search, injected only above a similarity cutoff) + recent transcript;
-   enqueue an index job for the incoming user message. Deeper memory = the `recall` tool.
-3. Call Claude with: system prompt + recalled memory + tools + history (prompt-cached)
-4. Stream ChatEvent messages back to the browser as they arrive
-5. If Claude emits tool_use blocks:
-      run each tool → append tool_result → go back to step 3
-   else:
-      final answer — persist to Postgres, enqueue an index job for the assistant message,
-      close the stream
+  LaleoRequest {conv_id, text}          sub ← AuthInterceptor (Hermes JWT)
+       │                                      │
+       └──────────────┬───────────────────────┘
+                      ▼
+         ┌────────────────────────────────────────────────┐
+         │               agent.Chat()                     │
+         │                                                │
+         │  ① convs.GetOrCreate(ownerSub, convID)         │
+         │  ② msgs.GetHistory → hist[]                    │
+         │  ③ tier-1 recall: clients.memory_md            │
+         │     always in cached system prefix             │
+         │  ④ tier-2 recall: embed query → vector search  │
+         │     inject hint only if score > threshold      │
+         │  ⑤ msgs.Save(user) + Enqueue index job         │
+         └────────────────────┬───────────────────────────┘
+                              │  system + tools + hist[]
+                              ▼
+                      ┌───────────────┐
+                      │  Claude API   │◄────────────────────┐
+                      └───────┬───────┘                     │
+                              │                             │
+             ┌────────────────┴──────────────┐             │
+             │                               │             │
+       end_turn                          tool_use          │
+             │                               │             │
+             │                               ▼             │
+             │                    ergon/registry            │
+             │                    Execute(name, input)      │
+             │                               │             │
+             │                    ┌──────────┴──────────┐  │
+             │                    │ tool_result          │  │
+             │                    │ (or error)           │  │
+             │                    └──────────────────────┘  │
+             │                    append to hist[], loop ───┘
+             │
+             ▼
+  text deltas → paceBubbles → LaleoEvent{Typing, Message}
+  msgs.Save(assistant) + Enqueue index job
+  send LaleoEvent{Done}
 ```
+
+Steps ③–④ are the read path (§12.5); step ⑤ and the final enqueue are the write path (§12.2–12.3). The tool loop (step tool_use → ergon → loop) is Step 3 of the build order (§8).
 
 ### 3.3 Tools — what makes it an *assistant*, not just chat
 Each tool = a function + a JSON schema description. Start tiny, grow later.
