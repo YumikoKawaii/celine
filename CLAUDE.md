@@ -67,9 +67,17 @@ These span multiple files (some still future) and are non-obvious:
 ## Hard constraints
 
 - **Tiny server: ~300–400 MB RAM for the Go binary + RAG** (Postgres and Redis are already deployed separately). Set `GOMEMLIMIT`, cap the `pgx` pool, keep each tenant's vector table small. Default embedder is **`voyage-3-lite`** (512-dim) to keep vectors cheap. (§ resource discussion)
-- Embeddings need a **third-party** provider (Anthropic has no embeddings API) — Voyage AI.
+- Embeddings use a **local Ollama model** (`snowflake-arctic-embed:xs`, 384-dim) via `internal/graphe/ollama.go`. No external embedding API.
 - Secrets (`ANTHROPIC_API_KEY`, OAuth creds, Voyage key) live in env / `.env`, never committed.
 
 ## Conventions
 
 - **Commit messages:** skip the technical description. Write **one evocative, incantation-style line** (like a tarot card title) — no conventional-commit prefixes, no file lists, no body. Keep the required `Co-Authored-By` trailer.
+
+- **Go — OOP best practices:**
+  - **Small, focused interfaces** — 1–3 methods. Define interfaces in the *consumer* package, not the producer. Accept interfaces, return concrete types.
+  - **Composition over embedding chains** — embed for genuine "is-a" reuse; prefer explicit field delegation for "has-a".
+  - **Constructor functions** — every exported type gets a `New*` function; no naked struct literals outside the package.
+  - **Encapsulation** — unexported fields by default. Export only what callers genuinely need.
+  - **Pointer vs value receivers** — pointer receivers for mutating or large structs; value receivers for small read-only types. Be consistent per type.
+  - **Dependency injection through constructors** — no package-level globals or `init()` side effects for dependencies. Wire at `main()`.
