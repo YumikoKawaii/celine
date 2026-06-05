@@ -4,6 +4,7 @@ CREATE TABLE clients (
     sub          TEXT PRIMARY KEY,
     email        TEXT NOT NULL,
     display_name TEXT NOT NULL DEFAULT '',
+    avatar_url   TEXT,
     memory_md    TEXT,
     preferences  JSONB        NOT NULL DEFAULT '{}',
     persona_note TEXT,

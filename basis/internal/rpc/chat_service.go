@@ -8,6 +8,7 @@ import (
 	celinev1 "github.com/YumikoKawaii/celine/basis/gen/celine/v1"
 	"github.com/YumikoKawaii/celine/basis/gen/celine/v1/celinev1connect"
 	"github.com/YumikoKawaii/celine/basis/internal/agent"
+	"github.com/YumikoKawaii/celine/basis/internal/hermes"
 )
 
 type CelineService struct {
@@ -26,8 +27,8 @@ func (s *CelineService) Laleo(
 ) error {
 	sink := &streamSink{stream: stream}
 
-	// TODO: replace "anon" with the verified sub from the Hermes auth interceptor.
-	convID, err := s.agent.Chat(ctx, "anon", req.Msg.GetConversationId(), req.Msg.GetText(), sink)
+	sub, _ := hermes.SubFromContext(ctx) // set by AuthInterceptor; "anon" in dev mode
+	convID, err := s.agent.Chat(ctx, sub, req.Msg.GetConversationId(), req.Msg.GetText(), sink)
 	if err != nil {
 		return stream.Send(&celinev1.LaleoEvent{
 			Event: &celinev1.LaleoEvent_Error{Error: err.Error()},

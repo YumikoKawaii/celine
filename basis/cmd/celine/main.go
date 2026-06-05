@@ -8,11 +8,13 @@ import (
 	"os/signal"
 	"syscall"
 
+	"connectrpc.com/connect"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
 	"github.com/YumikoKawaii/celine/basis/gen/celine/v1/celinev1connect"
 	"github.com/YumikoKawaii/celine/basis/internal/agent"
+	"github.com/YumikoKawaii/celine/basis/internal/hermes"
 	"github.com/YumikoKawaii/celine/basis/internal/llm"
 	"github.com/YumikoKawaii/celine/basis/internal/mneme"
 	"github.com/YumikoKawaii/celine/basis/internal/rpc"
@@ -36,16 +38,35 @@ func main() {
 	rdb := mneme.NewRedis(mustEnv("CELINE_REDIS_ADDR"))
 	defer rdb.Close()
 
+	// Auth — Verifier is nil when CELINE_JWT_SECRET is unset; interceptor
+	// falls back to "anon" so local dev works without Google OAuth.
+	var verifier *hermes.Verifier
+	if secret := os.Getenv("CELINE_JWT_SECRET"); secret != "" {
+		verifier = hermes.NewVerifier(secret)
+	}
+	interceptor := hermes.NewAuthInterceptor(verifier)
+	opts := connect.WithInterceptors(interceptor)
+
+	// Celine service
 	brain := llm.New(mustEnv("ANTHROPIC_API_KEY"), os.Getenv("CELINE_MODEL"))
 	convs := mneme.NewConversationStore(db)
 	msgs := mneme.NewMessageStore(db, rdb)
-	celine := agent.New(brain, agent.SystemPrompt(), convs, msgs)
+	celineSvc := rpc.NewCelineService(agent.New(brain, agent.SystemPrompt(), convs, msgs))
 
-	svc := rpc.NewCelineService(celine)
-	path, handler := celinev1connect.NewCelineHandler(svc)
+	// Hermes service
+	var googleAuth *hermes.GoogleAuth
+	var issuer *hermes.Issuer
+	if clientID := os.Getenv("GOOGLE_CLIENT_ID"); clientID != "" {
+		googleAuth = hermes.NewGoogleAuth(clientID, mustEnv("GOOGLE_CLIENT_SECRET"))
+		issuer = hermes.NewIssuer(mustEnv("CELINE_JWT_SECRET"))
+	}
+	hermesSvc := rpc.NewHermesService(googleAuth, issuer, mneme.NewClientStore(db))
 
 	mux := http.NewServeMux()
-	mux.Handle(path, handler)
+	celinePath, celineHandler := celinev1connect.NewCelineHandler(celineSvc, opts)
+	hermesPath, hermesHandler := celinev1connect.NewHermesHandler(hermesSvc, opts)
+	mux.Handle(celinePath, celineHandler)
+	mux.Handle(hermesPath, hermesHandler)
 
 	srv := &http.Server{
 		Addr:    addr,
