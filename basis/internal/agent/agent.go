@@ -17,14 +17,26 @@ type brain interface {
 	StreamChat(ctx context.Context, system string, history []llm.Message, deltas chan<- string) (string, error)
 }
 
+// convStore is the subset of mneme.ConversationStore this package needs.
+type convStore interface {
+	GetOrCreate(ctx context.Context, ownerSub, convID string) (string, error)
+}
+
+// msgStore is the subset of mneme.MessageStore this package needs.
+type msgStore interface {
+	Save(ctx context.Context, convID, role, content string) (string, error)
+	GetHistory(ctx context.Context, convID, ownerSub string) ([]mneme.Message, error)
+	Enqueue(ctx context.Context, job mneme.IndexJob) error
+}
+
 type Agent struct {
 	brain  brain
 	system string
-	convs  *mneme.ConversationStore
-	msgs   *mneme.MessageStore
+	convs  convStore
+	msgs   msgStore
 }
 
-func New(b brain, systemPrompt string, convs *mneme.ConversationStore, msgs *mneme.MessageStore) *Agent {
+func New(b brain, systemPrompt string, convs convStore, msgs msgStore) *Agent {
 	return &Agent{brain: b, system: systemPrompt, convs: convs, msgs: msgs}
 }
 
@@ -34,7 +46,6 @@ func (a *Agent) Chat(ctx context.Context, ownerSub, convID, userText string, sin
 		return "", err
 	}
 
-	// Load history from Postgres to build Claude's message context.
 	stored, err := a.msgs.GetHistory(ctx, convID, ownerSub)
 	if err != nil {
 		return "", err
@@ -45,7 +56,6 @@ func (a *Agent) Chat(ctx context.Context, ownerSub, convID, userText string, sin
 	}
 	hist = append(hist, llm.Message{Role: "user", Text: userText})
 
-	// Persist user message before streaming — durable even if the stream fails.
 	userMsgID, err := a.msgs.Save(ctx, convID, "user", userText)
 	if err != nil {
 		return convID, err
@@ -75,8 +85,6 @@ func (a *Agent) Chat(ctx context.Context, ownerSub, convID, userText string, sin
 		return convID, err
 	}
 
-	// Enqueue both messages for vector indexing. Non-blocking — a failure here
-	// doesn't break the chat; graphe will process whatever lands in the queue.
 	a.enqueue(ctx, userMsgID, ownerSub, "user", userText)
 	a.enqueue(ctx, asstMsgID, ownerSub, "assistant", res.text)
 

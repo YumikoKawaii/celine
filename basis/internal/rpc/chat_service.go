@@ -11,12 +11,17 @@ import (
 	"github.com/YumikoKawaii/celine/basis/internal/hermes"
 )
 
-type CelineService struct {
-	celinev1connect.UnimplementedCelineHandler
-	agent *agent.Agent
+// chatAgent is the subset of agent.Agent this handler needs.
+type chatAgent interface {
+	Chat(ctx context.Context, ownerSub, convID, userText string, sink agent.EventSink) (string, error)
 }
 
-func NewCelineService(a *agent.Agent) *CelineService {
+type CelineService struct {
+	celinev1connect.UnimplementedCelineHandler
+	agent chatAgent
+}
+
+func NewCelineService(a chatAgent) *CelineService {
 	return &CelineService{agent: a}
 }
 

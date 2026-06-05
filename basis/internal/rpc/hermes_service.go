@@ -12,25 +12,35 @@ import (
 	"github.com/YumikoKawaii/celine/basis/internal/mneme"
 )
 
+// clientStore is the subset of mneme.ClientStore this handler needs.
+type clientStore interface {
+	Upsert(ctx context.Context, c mneme.Client) error
+	Get(ctx context.Context, sub string) (mneme.Client, error)
+}
+
+// google and issuer are kept as concrete types because they are optionally nil
+// in dev mode (no GOOGLE_CLIENT_ID set). Assigning a nil concrete pointer to an
+// interface produces a non-nil interface value that panics on method call — the
+// nil concrete pointer is the safe, checkable form here.
 type HermesService struct {
 	celinev1connect.UnimplementedHermesHandler
 	google  *hermes.GoogleAuth
 	issuer  *hermes.Issuer
-	clients *mneme.ClientStore
+	clients clientStore
 }
 
-func NewHermesService(g *hermes.GoogleAuth, issuer *hermes.Issuer, clients *mneme.ClientStore) *HermesService {
+func NewHermesService(g *hermes.GoogleAuth, issuer *hermes.Issuer, clients clientStore) *HermesService {
 	return &HermesService{google: g, issuer: issuer, clients: clients}
 }
 
 func (s *HermesService) Eisodos(
 	_ context.Context,
-	req *connect.Request[celinev1.EisodosRequest],
+	_ *connect.Request[celinev1.EisodosRequest],
 ) (*connect.Response[celinev1.EisodosResponse], error) {
+	if s.google == nil {
+		return nil, connect.NewError(connect.CodeUnimplemented, errors.New("google auth not configured"))
+	}
 	state := hermes.NewState()
-	// redirect_uri is provided by the client on ExchangeGoogleCode; we don't
-	// need it here since AuthURL is called with an empty redirect and the
-	// client supplies the real one in Metabole.
 	url := s.google.AuthURL("", state)
 	return connect.NewResponse(&celinev1.EisodosResponse{Url: url, State: state}), nil
 }
@@ -39,6 +49,10 @@ func (s *HermesService) Metabole(
 	ctx context.Context,
 	req *connect.Request[celinev1.MetaboleRequest],
 ) (*connect.Response[celinev1.MetaboleResponse], error) {
+	if s.google == nil || s.issuer == nil {
+		return nil, connect.NewError(connect.CodeUnimplemented, errors.New("google auth not configured"))
+	}
+
 	claims, err := s.google.Exchange(ctx, req.Msg.GetCode(), req.Msg.GetRedirectUri())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeUnauthenticated, err)
@@ -71,7 +85,7 @@ func (s *HermesService) Metabole(
 
 func (s *HermesService) Gnorizo(
 	ctx context.Context,
-	req *connect.Request[celinev1.GnorizoRequest],
+	_ *connect.Request[celinev1.GnorizoRequest],
 ) (*connect.Response[celinev1.GnorizoResponse], error) {
 	sub, ok := hermes.SubFromContext(ctx)
 	if !ok {
@@ -97,6 +111,5 @@ func (s *HermesService) Exodos(
 	_ context.Context,
 	_ *connect.Request[celinev1.ExodosRequest],
 ) (*connect.Response[celinev1.ExodosResponse], error) {
-	// JWT is stateless — logout is handled client-side by discarding the token.
 	return connect.NewResponse(&celinev1.ExodosResponse{}), nil
 }
