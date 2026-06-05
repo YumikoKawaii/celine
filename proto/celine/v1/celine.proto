@@ -6,9 +6,17 @@ option go_package = "github.com/YumikoKawaii/celine/basis/gen/celine/v1;celinev1
 
 // CelineService is the single contract between the React UI and the Go backend.
 // Both the Go handlers and the TS client are generated from this file via `buf generate`.
+//
+// AUTH MODEL (client-side redirect; see the Auth section at the bottom and §9):
+// the React app runs the Google OIDC flow itself and obtains a Google ID token.
+// There is NO server-side redirect and NO /callback endpoint. The client sends
+// that ID token as an `Authorization: Bearer <id_token>` header on EVERY RPC; a
+// server interceptor verifies it and supplies the caller's `sub`. Requests carry
+// no owner field — identity always comes from the verified token, never the body.
 service CelineService {
   // Send a message; the server streams the reply (typing beats, whole bubbles,
-  // tool activity) until Done. See architecture.md §7 and §14.
+  // tool activity) until Done. See docs/architecture/07-rpc-api.md and
+  // docs/architecture/14-response-shape.md.
   rpc Chat(ChatRequest) returns (stream ChatEvent);
 
   // Load a conversation's messages.
@@ -16,6 +24,12 @@ service CelineService {
 
   // List the caller's conversations.
   rpc ListConversations(ListConversationsRequest) returns (ListConversationsResponse);
+
+  // Resolve the authenticated caller from their bearer ID token. Verifying the
+  // token also upserts the client record, so the SPA calls this once right after
+  // the client-side Google redirect completes — it's the only "auth flow"
+  // endpoint, and doubles as the session check on app load.
+  rpc GetCurrentUser(GetCurrentUserRequest) returns (User);
 }
 
 message ChatRequest {
@@ -86,4 +100,22 @@ message Conversation {
   string id = 1;
   string title = 2;
   int64 created_at_unix = 3;
+}
+
+// --- Auth ---
+//
+// Google OIDC, CLIENT-SIDE redirect (§9). The browser runs the Google sign-in
+// flow (Google Identity Services), receives a Google ID token, and sends it as
+// `Authorization: Bearer <id_token>` on every RPC. The server has no redirect
+// and no /callback endpoint: an interceptor verifies the token against Google's
+// JWKS, extracts the `sub` claim, and puts the caller on the context. Sign-out
+// is purely client-side (discard the token) — there is no server session store
+// (§12: no session TTL).
+
+message GetCurrentUserRequest {}
+
+message User {
+  string sub = 1; // Google `sub` claim — the stable per-client identity (clients.sub)
+  string email = 2;
+  string display_name = 3;
 }

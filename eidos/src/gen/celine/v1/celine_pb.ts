@@ -10,7 +10,7 @@ import type { Message as Message$1 } from "@bufbuild/protobuf";
  * Describes the file celine/v1/celine.proto.
  */
 export const file_celine_v1_celine: GenFile = /*@__PURE__*/
-  fileDesc("ChZjZWxpbmUvdjEvY2VsaW5lLnByb3RvEgljZWxpbmUudjEiNAoLQ2hhdFJlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEgwKBHRleHQYAiABKAki6gEKCUNoYXRFdmVudBIjCgZ0eXBpbmcYASABKAsyES5jZWxpbmUudjEuVHlwaW5nSAASJQoHbWVzc2FnZRgCIAEoCzISLmNlbGluZS52MS5NZXNzYWdlSAASKAoJdG9vbF9jYWxsGAMgASgLMhMuY2VsaW5lLnYxLlRvb2xDYWxsSAASLAoLdG9vbF9yZXN1bHQYBCABKAsyFS5jZWxpbmUudjEuVG9vbFJlc3VsdEgAEh8KBGRvbmUYBSABKAsyDy5jZWxpbmUudjEuRG9uZUgAEg8KBWVycm9yGAYgASgJSABCBwoFZXZlbnQiGQoGVHlwaW5nEg8KB21zX2hpbnQYASABKAUiJAoHTWVzc2FnZRILCgNzZXEYASABKAUSDAoEdGV4dBgCIAEoCSI4CghUb29sQ2FsbBIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhIKCmlucHV0X2pzb24YAyABKAkiOgoKVG9vbFJlc3VsdBIKCgJpZBgBIAEoCRIOCgZvdXRwdXQYAiABKAkSEAoIaXNfZXJyb3IYAyABKAgiHwoERG9uZRIXCg9jb252ZXJzYXRpb25faWQYASABKAkiLAoRR2V0SGlzdG9yeVJlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJIj4KEkdldEhpc3RvcnlSZXNwb25zZRIoCghtZXNzYWdlcxgBIAMoCzIWLmNlbGluZS52MS5DaGF0TWVzc2FnZSJOCgtDaGF0TWVzc2FnZRIKCgJpZBgBIAEoCRIMCgRyb2xlGAIgASgJEgwKBHRleHQYAyABKAkSFwoPY3JlYXRlZF9hdF91bml4GAQgASgDIhoKGExpc3RDb252ZXJzYXRpb25zUmVxdWVzdCJLChlMaXN0Q29udmVyc2F0aW9uc1Jlc3BvbnNlEi4KDWNvbnZlcnNhdGlvbnMYASADKAsyFy5jZWxpbmUudjEuQ29udmVyc2F0aW9uIkIKDENvbnZlcnNhdGlvbhIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIXCg9jcmVhdGVkX2F0X3VuaXgYAyABKAMy8gEKDUNlbGluZVNlcnZpY2USNgoEQ2hhdBIWLmNlbGluZS52MS5DaGF0UmVxdWVzdBoULmNlbGluZS52MS5DaGF0RXZlbnQwARJJCgpHZXRIaXN0b3J5EhwuY2VsaW5lLnYxLkdldEhpc3RvcnlSZXF1ZXN0Gh0uY2VsaW5lLnYxLkdldEhpc3RvcnlSZXNwb25zZRJeChFMaXN0Q29udmVyc2F0aW9ucxIjLmNlbGluZS52MS5MaXN0Q29udmVyc2F0aW9uc1JlcXVlc3QaJC5jZWxpbmUudjEuTGlzdENvbnZlcnNhdGlvbnNSZXNwb25zZUI9WjtnaXRodWIuY29tL1l1bWlrb0thd2FpaS9jZWxpbmUvYmFzaXMvZ2VuL2NlbGluZS92MTtjZWxpbmV2MWIGcHJvdG8z");
+  fileDesc("ChZjZWxpbmUvdjEvY2VsaW5lLnByb3RvEgljZWxpbmUudjEiNAoLQ2hhdFJlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEgwKBHRleHQYAiABKAki6gEKCUNoYXRFdmVudBIjCgZ0eXBpbmcYASABKAsyES5jZWxpbmUudjEuVHlwaW5nSAASJQoHbWVzc2FnZRgCIAEoCzISLmNlbGluZS52MS5NZXNzYWdlSAASKAoJdG9vbF9jYWxsGAMgASgLMhMuY2VsaW5lLnYxLlRvb2xDYWxsSAASLAoLdG9vbF9yZXN1bHQYBCABKAsyFS5jZWxpbmUudjEuVG9vbFJlc3VsdEgAEh8KBGRvbmUYBSABKAsyDy5jZWxpbmUudjEuRG9uZUgAEg8KBWVycm9yGAYgASgJSABCBwoFZXZlbnQiGQoGVHlwaW5nEg8KB21zX2hpbnQYASABKAUiJAoHTWVzc2FnZRILCgNzZXEYASABKAUSDAoEdGV4dBgCIAEoCSI4CghUb29sQ2FsbBIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhIKCmlucHV0X2pzb24YAyABKAkiOgoKVG9vbFJlc3VsdBIKCgJpZBgBIAEoCRIOCgZvdXRwdXQYAiABKAkSEAoIaXNfZXJyb3IYAyABKAgiHwoERG9uZRIXCg9jb252ZXJzYXRpb25faWQYASABKAkiLAoRR2V0SGlzdG9yeVJlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJIj4KEkdldEhpc3RvcnlSZXNwb25zZRIoCghtZXNzYWdlcxgBIAMoCzIWLmNlbGluZS52MS5DaGF0TWVzc2FnZSJOCgtDaGF0TWVzc2FnZRIKCgJpZBgBIAEoCRIMCgRyb2xlGAIgASgJEgwKBHRleHQYAyABKAkSFwoPY3JlYXRlZF9hdF91bml4GAQgASgDIhoKGExpc3RDb252ZXJzYXRpb25zUmVxdWVzdCJLChlMaXN0Q29udmVyc2F0aW9uc1Jlc3BvbnNlEi4KDWNvbnZlcnNhdGlvbnMYASADKAsyFy5jZWxpbmUudjEuQ29udmVyc2F0aW9uIkIKDENvbnZlcnNhdGlvbhIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIXCg9jcmVhdGVkX2F0X3VuaXgYAyABKAMiFwoVR2V0Q3VycmVudFVzZXJSZXF1ZXN0IjgKBFVzZXISCwoDc3ViGAEgASgJEg0KBWVtYWlsGAIgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCTK3AgoNQ2VsaW5lU2VydmljZRI2CgRDaGF0EhYuY2VsaW5lLnYxLkNoYXRSZXF1ZXN0GhQuY2VsaW5lLnYxLkNoYXRFdmVudDABEkkKCkdldEhpc3RvcnkSHC5jZWxpbmUudjEuR2V0SGlzdG9yeVJlcXVlc3QaHS5jZWxpbmUudjEuR2V0SGlzdG9yeVJlc3BvbnNlEl4KEUxpc3RDb252ZXJzYXRpb25zEiMuY2VsaW5lLnYxLkxpc3RDb252ZXJzYXRpb25zUmVxdWVzdBokLmNlbGluZS52MS5MaXN0Q29udmVyc2F0aW9uc1Jlc3BvbnNlEkMKDkdldEN1cnJlbnRVc2VyEiAuY2VsaW5lLnYxLkdldEN1cnJlbnRVc2VyUmVxdWVzdBoPLmNlbGluZS52MS5Vc2VyQj1aO2dpdGh1Yi5jb20vWXVtaWtvS2F3YWlpL2NlbGluZS9iYXNpcy9nZW4vY2VsaW5lL3YxO2NlbGluZXYxYgZwcm90bzM");
 
 /**
  * @generated from message celine.v1.ChatRequest
@@ -350,15 +350,65 @@ export const ConversationSchema: GenMessage<Conversation> = /*@__PURE__*/
   messageDesc(file_celine_v1_celine, 12);
 
 /**
+ * @generated from message celine.v1.GetCurrentUserRequest
+ */
+export type GetCurrentUserRequest = Message$1<"celine.v1.GetCurrentUserRequest"> & {
+};
+
+/**
+ * Describes the message celine.v1.GetCurrentUserRequest.
+ * Use `create(GetCurrentUserRequestSchema)` to create a new message.
+ */
+export const GetCurrentUserRequestSchema: GenMessage<GetCurrentUserRequest> = /*@__PURE__*/
+  messageDesc(file_celine_v1_celine, 13);
+
+/**
+ * @generated from message celine.v1.User
+ */
+export type User = Message$1<"celine.v1.User"> & {
+  /**
+   * Google `sub` claim — the stable per-client identity (clients.sub)
+   *
+   * @generated from field: string sub = 1;
+   */
+  sub: string;
+
+  /**
+   * @generated from field: string email = 2;
+   */
+  email: string;
+
+  /**
+   * @generated from field: string display_name = 3;
+   */
+  displayName: string;
+};
+
+/**
+ * Describes the message celine.v1.User.
+ * Use `create(UserSchema)` to create a new message.
+ */
+export const UserSchema: GenMessage<User> = /*@__PURE__*/
+  messageDesc(file_celine_v1_celine, 14);
+
+/**
  * CelineService is the single contract between the React UI and the Go backend.
  * Both the Go handlers and the TS client are generated from this file via `buf generate`.
+ *
+ * AUTH MODEL (client-side redirect; see the Auth section at the bottom and §9):
+ * the React app runs the Google OIDC flow itself and obtains a Google ID token.
+ * There is NO server-side redirect and NO /callback endpoint. The client sends
+ * that ID token as an `Authorization: Bearer <id_token>` header on EVERY RPC; a
+ * server interceptor verifies it and supplies the caller's `sub`. Requests carry
+ * no owner field — identity always comes from the verified token, never the body.
  *
  * @generated from service celine.v1.CelineService
  */
 export const CelineService: GenService<{
   /**
    * Send a message; the server streams the reply (typing beats, whole bubbles,
-   * tool activity) until Done. See architecture.md §7 and §14.
+   * tool activity) until Done. See docs/architecture/07-rpc-api.md and
+   * docs/architecture/14-response-shape.md.
    *
    * @generated from rpc celine.v1.CelineService.Chat
    */
@@ -386,6 +436,19 @@ export const CelineService: GenService<{
     methodKind: "unary";
     input: typeof ListConversationsRequestSchema;
     output: typeof ListConversationsResponseSchema;
+  },
+  /**
+   * Resolve the authenticated caller from their bearer ID token. Verifying the
+   * token also upserts the client record, so the SPA calls this once right after
+   * the client-side Google redirect completes — it's the only "auth flow"
+   * endpoint, and doubles as the session check on app load.
+   *
+   * @generated from rpc celine.v1.CelineService.GetCurrentUser
+   */
+  getCurrentUser: {
+    methodKind: "unary";
+    input: typeof GetCurrentUserRequestSchema;
+    output: typeof UserSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_celine_v1_celine, 0);

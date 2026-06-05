@@ -11,9 +11,6 @@ export interface Bubble {
 
 let nextId = 1;
 
-// useChatStream owns the conversation state and consumes the server-streaming
-// Chat RPC. The backend paces the bubbles (§14): a `typing` event flips the
-// indicator on, the following `message` event delivers the whole bubble.
 export function useChatStream() {
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const [typing, setTyping] = useState(false);
@@ -35,9 +32,6 @@ export function useChatStream() {
 
       try {
         for await (const ev of celine.chat(req)) {
-          // Hoist the oneof into a const local so discriminant narrowing
-          // survives the setState calls below (property-access narrowing on
-          // ev.event would be reset by an intervening function call).
           const e = ev.event;
           switch (e.case) {
             case "typing":

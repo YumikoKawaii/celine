@@ -41,17 +41,26 @@ const (
 	// CelineServiceListConversationsProcedure is the fully-qualified name of the CelineService's
 	// ListConversations RPC.
 	CelineServiceListConversationsProcedure = "/celine.v1.CelineService/ListConversations"
+	// CelineServiceGetCurrentUserProcedure is the fully-qualified name of the CelineService's
+	// GetCurrentUser RPC.
+	CelineServiceGetCurrentUserProcedure = "/celine.v1.CelineService/GetCurrentUser"
 )
 
 // CelineServiceClient is a client for the celine.v1.CelineService service.
 type CelineServiceClient interface {
 	// Send a message; the server streams the reply (typing beats, whole bubbles,
-	// tool activity) until Done. See architecture.md §7 and §14.
+	// tool activity) until Done. See docs/architecture/07-rpc-api.md and
+	// docs/architecture/14-response-shape.md.
 	Chat(context.Context, *connect.Request[v1.ChatRequest]) (*connect.ServerStreamForClient[v1.ChatEvent], error)
 	// Load a conversation's messages.
 	GetHistory(context.Context, *connect.Request[v1.GetHistoryRequest]) (*connect.Response[v1.GetHistoryResponse], error)
 	// List the caller's conversations.
 	ListConversations(context.Context, *connect.Request[v1.ListConversationsRequest]) (*connect.Response[v1.ListConversationsResponse], error)
+	// Resolve the authenticated caller from their bearer ID token. Verifying the
+	// token also upserts the client record, so the SPA calls this once right after
+	// the client-side Google redirect completes — it's the only "auth flow"
+	// endpoint, and doubles as the session check on app load.
+	GetCurrentUser(context.Context, *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.User], error)
 }
 
 // NewCelineServiceClient constructs a client for the celine.v1.CelineService service. By default,
@@ -83,6 +92,12 @@ func NewCelineServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(celineServiceMethods.ByName("ListConversations")),
 			connect.WithClientOptions(opts...),
 		),
+		getCurrentUser: connect.NewClient[v1.GetCurrentUserRequest, v1.User](
+			httpClient,
+			baseURL+CelineServiceGetCurrentUserProcedure,
+			connect.WithSchema(celineServiceMethods.ByName("GetCurrentUser")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -91,6 +106,7 @@ type celineServiceClient struct {
 	chat              *connect.Client[v1.ChatRequest, v1.ChatEvent]
 	getHistory        *connect.Client[v1.GetHistoryRequest, v1.GetHistoryResponse]
 	listConversations *connect.Client[v1.ListConversationsRequest, v1.ListConversationsResponse]
+	getCurrentUser    *connect.Client[v1.GetCurrentUserRequest, v1.User]
 }
 
 // Chat calls celine.v1.CelineService.Chat.
@@ -108,15 +124,26 @@ func (c *celineServiceClient) ListConversations(ctx context.Context, req *connec
 	return c.listConversations.CallUnary(ctx, req)
 }
 
+// GetCurrentUser calls celine.v1.CelineService.GetCurrentUser.
+func (c *celineServiceClient) GetCurrentUser(ctx context.Context, req *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.User], error) {
+	return c.getCurrentUser.CallUnary(ctx, req)
+}
+
 // CelineServiceHandler is an implementation of the celine.v1.CelineService service.
 type CelineServiceHandler interface {
 	// Send a message; the server streams the reply (typing beats, whole bubbles,
-	// tool activity) until Done. See architecture.md §7 and §14.
+	// tool activity) until Done. See docs/architecture/07-rpc-api.md and
+	// docs/architecture/14-response-shape.md.
 	Chat(context.Context, *connect.Request[v1.ChatRequest], *connect.ServerStream[v1.ChatEvent]) error
 	// Load a conversation's messages.
 	GetHistory(context.Context, *connect.Request[v1.GetHistoryRequest]) (*connect.Response[v1.GetHistoryResponse], error)
 	// List the caller's conversations.
 	ListConversations(context.Context, *connect.Request[v1.ListConversationsRequest]) (*connect.Response[v1.ListConversationsResponse], error)
+	// Resolve the authenticated caller from their bearer ID token. Verifying the
+	// token also upserts the client record, so the SPA calls this once right after
+	// the client-side Google redirect completes — it's the only "auth flow"
+	// endpoint, and doubles as the session check on app load.
+	GetCurrentUser(context.Context, *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.User], error)
 }
 
 // NewCelineServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -144,6 +171,12 @@ func NewCelineServiceHandler(svc CelineServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(celineServiceMethods.ByName("ListConversations")),
 		connect.WithHandlerOptions(opts...),
 	)
+	celineServiceGetCurrentUserHandler := connect.NewUnaryHandler(
+		CelineServiceGetCurrentUserProcedure,
+		svc.GetCurrentUser,
+		connect.WithSchema(celineServiceMethods.ByName("GetCurrentUser")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/celine.v1.CelineService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case CelineServiceChatProcedure:
@@ -152,6 +185,8 @@ func NewCelineServiceHandler(svc CelineServiceHandler, opts ...connect.HandlerOp
 			celineServiceGetHistoryHandler.ServeHTTP(w, r)
 		case CelineServiceListConversationsProcedure:
 			celineServiceListConversationsHandler.ServeHTTP(w, r)
+		case CelineServiceGetCurrentUserProcedure:
+			celineServiceGetCurrentUserHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -171,4 +206,8 @@ func (UnimplementedCelineServiceHandler) GetHistory(context.Context, *connect.Re
 
 func (UnimplementedCelineServiceHandler) ListConversations(context.Context, *connect.Request[v1.ListConversationsRequest]) (*connect.Response[v1.ListConversationsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("celine.v1.CelineService.ListConversations is not implemented"))
+}
+
+func (UnimplementedCelineServiceHandler) GetCurrentUser(context.Context, *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.User], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("celine.v1.CelineService.GetCurrentUser is not implemented"))
 }

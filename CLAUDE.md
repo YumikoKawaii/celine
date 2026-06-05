@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-**Scaffolded — first vertical slice live (Step 1, plumbing).** `architecture.md` (the **source of truth** — read it first, keep it in sync) is now backed by a working repo: a typed Connect stream runs end to end (proto → Go server → React UI) with a **hardcoded, paced, multi-bubble reply**. No brain, no DB yet. The next steps wire in Claude (the agent loop) and Postgres/Redis.
+**Scaffolded — first vertical slice live (Step 1, plumbing).** The design docs in **`docs/architecture/`** (the **source of truth** — read [`docs/architecture/README.md`](docs/architecture/README.md) first, keep it in sync) are one-file-per-section; the `§N` references throughout this file and the code map to the numbered files there (e.g. `§3.2` → `03-the-four-pieces.md`). They're now backed by a working repo: a typed Connect stream runs end to end (proto → Go server → React UI) with a **hardcoded, paced, multi-bubble reply**. No brain, no DB yet. The next steps wire in Claude (the agent loop) and Postgres/Redis.
 
 ## What Celine is
 
@@ -39,7 +39,7 @@ cd eidos && bun run build                             # tsc -b && vite build
 
 `buf.yaml` lints `STANDARD` but excepts `RPC_RESPONSE_STANDARD_NAME` — `Chat` streams a typed `ChatEvent` oneof, not a `ChatResponse` (intentional, §7).
 
-## Intended toolchain (per architecture.md)
+## Intended toolchain (per docs/architecture/)
 
 | Concern | Choice | Status |
 |---|---|---|
@@ -50,13 +50,13 @@ cd eidos && bun run build                             # tsc -b && vite build
 | Brain SDK | `anthropic-sdk-go` (Messages API, tool use, streaming, prompt caching) | ⏳ not yet |
 | Durable store | **Postgres** (`pgx`) + **pgvector** | ⏳ not yet |
 | Hot state | **Redis** (indexing job queue, caching, rate limiting; no session TTL) | ⏳ not yet |
-| Auth | **Google OAuth / OIDC only** — verify ID token; key all data on the `sub` claim | ⏳ not yet |
+| Auth | **Google OIDC, client-side redirect** — browser holds the ID token; a server interceptor verifies the `Bearer` token per RPC and keys data on the `sub` claim. No server `/callback`. `GetCurrentUser` is the one auth-flow RPC | ⏳ proto only |
 
 ## Architecture you must understand before editing
 
 These span multiple files (some still future) and are non-obvious:
 
-- **Agent loop** (`basis/internal/agent/`, not yet built) — the heart we own. Recall context → call Claude with the cached system prefix + tools + history → if `tool_use` blocks, run tools and loop; else finalize. See architecture.md §3.2.
+- **Agent loop** (`basis/internal/agent/`, not yet built) — the heart we own. Recall context → call Claude with the cached system prefix + tools + history → if `tool_use` blocks, run tools and loop; else finalize. See `docs/architecture/03-the-four-pieces.md` §3.2.
 - **Response shape — segmentation + pacing (§14, decided):** Celine replies as a **sequence of short bubbles**, not one wall of text. **Model side** segments by writing a blank line (`\n\n`) between thoughts (a §13 response-contract rule); **backend side** (`basis/internal/agent/stream.go`, future) is a code-fence-aware splitter + pacer: *typing beat → delay → whole bubble → pause*, firing the first bubble at the first `\n\n`. One generation, no extra token cost. The current `internal/rpc/chat_service.go` is this pacer in miniature over hardcoded bubbles. (The earlier "forced structured output `messages: string[]`" idea was **rejected** in favor of the blank-line delimiter.)
 - **Layered system prompt (cached prefix), most-stable → least-stable:** base persona → response contract → tool defs → project prompt → project KB → curated profile (`memory.md`) → **cache breakpoint** → per-turn RAG recall → history. **Never put per-turn-dynamic content (RAG recall) above the breakpoint** — it would break caching every turn. (§13)
 - **Memory is RAG, not sessions.** Every message (user *and* assistant — twice per turn) is embedded and indexed into `memory_index`, scoped by `owner_sub`; recall is a filtered vector search at the next turn's start. There is **no idle-timeout session** and no end-of-session distill job. Indexing is async via a **bounded Redis-list queue** to protect the tiny server. (§12)

@@ -9,6 +9,8 @@ import (
 	"golang.org/x/net/http2/h2c"
 
 	"github.com/YumikoKawaii/celine/basis/gen/celine/v1/celinev1connect"
+	"github.com/YumikoKawaii/celine/basis/internal/agent"
+	"github.com/YumikoKawaii/celine/basis/internal/llm"
 	"github.com/YumikoKawaii/celine/basis/internal/rpc"
 )
 
@@ -18,17 +20,21 @@ func main() {
 		addr = ":8080"
 	}
 
-	svc := rpc.NewCelineService()
+	apiKey := os.Getenv("ANTHROPIC_API_KEY")
+	if apiKey == "" {
+		log.Fatal("ANTHROPIC_API_KEY is required (set it in env/.env — never commit it)")
+	}
+	brain := llm.New(apiKey, os.Getenv("CELINE_MODEL"))
+	celine := agent.New(brain, agent.SystemPrompt())
+
+	svc := rpc.NewCelineService(celine)
 	path, handler := celinev1connect.NewCelineServiceHandler(svc)
 
 	mux := http.NewServeMux()
 	mux.Handle(path, handler)
 
 	srv := &http.Server{
-		Addr: addr,
-		// h2c lets gRPC clients speak HTTP/2 cleartext; the browser uses the
-		// Connect protocol over HTTP/1.1 on the same handler. devCORS opens it
-		// up for the Vite dev server during step 1.
+		Addr:    addr,
 		Handler: h2c.NewHandler(devCORS(mux), &http2.Server{}),
 	}
 
@@ -38,9 +44,6 @@ func main() {
 	}
 }
 
-// devCORS is a permissive CORS shim for local development so the Vite dev
-// server (a different origin) can call the Connect endpoint. Tighten or drop
-// this once the app is served from a single origin.
 func devCORS(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if origin := r.Header.Get("Origin"); origin != "" {

@@ -777,6 +777,102 @@ func (x *Conversation) GetCreatedAtUnix() int64 {
 	return 0
 }
 
+type GetCurrentUserRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCurrentUserRequest) Reset() {
+	*x = GetCurrentUserRequest{}
+	mi := &file_celine_v1_celine_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCurrentUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCurrentUserRequest) ProtoMessage() {}
+
+func (x *GetCurrentUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_celine_v1_celine_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetCurrentUserRequest.ProtoReflect.Descriptor instead.
+func (*GetCurrentUserRequest) Descriptor() ([]byte, []int) {
+	return file_celine_v1_celine_proto_rawDescGZIP(), []int{13}
+}
+
+type User struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Sub           string                 `protobuf:"bytes,1,opt,name=sub,proto3" json:"sub,omitempty"` // Google `sub` claim — the stable per-client identity (clients.sub)
+	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	DisplayName   string                 `protobuf:"bytes,3,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *User) Reset() {
+	*x = User{}
+	mi := &file_celine_v1_celine_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *User) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*User) ProtoMessage() {}
+
+func (x *User) ProtoReflect() protoreflect.Message {
+	mi := &file_celine_v1_celine_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use User.ProtoReflect.Descriptor instead.
+func (*User) Descriptor() ([]byte, []int) {
+	return file_celine_v1_celine_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *User) GetSub() string {
+	if x != nil {
+		return x.Sub
+	}
+	return ""
+}
+
+func (x *User) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *User) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
 var File_celine_v1_celine_proto protoreflect.FileDescriptor
 
 const file_celine_v1_celine_proto_rawDesc = "" +
@@ -826,12 +922,18 @@ const file_celine_v1_celine_proto_rawDesc = "" +
 	"\fConversation\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12&\n" +
-	"\x0fcreated_at_unix\x18\x03 \x01(\x03R\rcreatedAtUnix2\xf2\x01\n" +
+	"\x0fcreated_at_unix\x18\x03 \x01(\x03R\rcreatedAtUnix\"\x17\n" +
+	"\x15GetCurrentUserRequest\"Q\n" +
+	"\x04User\x12\x10\n" +
+	"\x03sub\x18\x01 \x01(\tR\x03sub\x12\x14\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email\x12!\n" +
+	"\fdisplay_name\x18\x03 \x01(\tR\vdisplayName2\xb7\x02\n" +
 	"\rCelineService\x126\n" +
 	"\x04Chat\x12\x16.celine.v1.ChatRequest\x1a\x14.celine.v1.ChatEvent0\x01\x12I\n" +
 	"\n" +
 	"GetHistory\x12\x1c.celine.v1.GetHistoryRequest\x1a\x1d.celine.v1.GetHistoryResponse\x12^\n" +
-	"\x11ListConversations\x12#.celine.v1.ListConversationsRequest\x1a$.celine.v1.ListConversationsResponseB=Z;github.com/YumikoKawaii/celine/basis/gen/celine/v1;celinev1b\x06proto3"
+	"\x11ListConversations\x12#.celine.v1.ListConversationsRequest\x1a$.celine.v1.ListConversationsResponse\x12C\n" +
+	"\x0eGetCurrentUser\x12 .celine.v1.GetCurrentUserRequest\x1a\x0f.celine.v1.UserB=Z;github.com/YumikoKawaii/celine/basis/gen/celine/v1;celinev1b\x06proto3"
 
 var (
 	file_celine_v1_celine_proto_rawDescOnce sync.Once
@@ -845,7 +947,7 @@ func file_celine_v1_celine_proto_rawDescGZIP() []byte {
 	return file_celine_v1_celine_proto_rawDescData
 }
 
-var file_celine_v1_celine_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_celine_v1_celine_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_celine_v1_celine_proto_goTypes = []any{
 	(*ChatRequest)(nil),               // 0: celine.v1.ChatRequest
 	(*ChatEvent)(nil),                 // 1: celine.v1.ChatEvent
@@ -860,6 +962,8 @@ var file_celine_v1_celine_proto_goTypes = []any{
 	(*ListConversationsRequest)(nil),  // 10: celine.v1.ListConversationsRequest
 	(*ListConversationsResponse)(nil), // 11: celine.v1.ListConversationsResponse
 	(*Conversation)(nil),              // 12: celine.v1.Conversation
+	(*GetCurrentUserRequest)(nil),     // 13: celine.v1.GetCurrentUserRequest
+	(*User)(nil),                      // 14: celine.v1.User
 }
 var file_celine_v1_celine_proto_depIdxs = []int32{
 	2,  // 0: celine.v1.ChatEvent.typing:type_name -> celine.v1.Typing
@@ -872,11 +976,13 @@ var file_celine_v1_celine_proto_depIdxs = []int32{
 	0,  // 7: celine.v1.CelineService.Chat:input_type -> celine.v1.ChatRequest
 	7,  // 8: celine.v1.CelineService.GetHistory:input_type -> celine.v1.GetHistoryRequest
 	10, // 9: celine.v1.CelineService.ListConversations:input_type -> celine.v1.ListConversationsRequest
-	1,  // 10: celine.v1.CelineService.Chat:output_type -> celine.v1.ChatEvent
-	8,  // 11: celine.v1.CelineService.GetHistory:output_type -> celine.v1.GetHistoryResponse
-	11, // 12: celine.v1.CelineService.ListConversations:output_type -> celine.v1.ListConversationsResponse
-	10, // [10:13] is the sub-list for method output_type
-	7,  // [7:10] is the sub-list for method input_type
+	13, // 10: celine.v1.CelineService.GetCurrentUser:input_type -> celine.v1.GetCurrentUserRequest
+	1,  // 11: celine.v1.CelineService.Chat:output_type -> celine.v1.ChatEvent
+	8,  // 12: celine.v1.CelineService.GetHistory:output_type -> celine.v1.GetHistoryResponse
+	11, // 13: celine.v1.CelineService.ListConversations:output_type -> celine.v1.ListConversationsResponse
+	14, // 14: celine.v1.CelineService.GetCurrentUser:output_type -> celine.v1.User
+	11, // [11:15] is the sub-list for method output_type
+	7,  // [7:11] is the sub-list for method input_type
 	7,  // [7:7] is the sub-list for extension type_name
 	7,  // [7:7] is the sub-list for extension extendee
 	0,  // [0:7] is the sub-list for field type_name
@@ -901,7 +1007,7 @@ func file_celine_v1_celine_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_celine_v1_celine_proto_rawDesc), len(file_celine_v1_celine_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
