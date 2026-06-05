@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -11,21 +14,32 @@ import (
 	"github.com/YumikoKawaii/celine/basis/gen/celine/v1/celinev1connect"
 	"github.com/YumikoKawaii/celine/basis/internal/agent"
 	"github.com/YumikoKawaii/celine/basis/internal/llm"
+	"github.com/YumikoKawaii/celine/basis/internal/mneme"
 	"github.com/YumikoKawaii/celine/basis/internal/rpc"
 )
 
 func main() {
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
 	addr := os.Getenv("CELINE_ADDR")
 	if addr == "" {
 		addr = ":8080"
 	}
 
-	apiKey := os.Getenv("ANTHROPIC_API_KEY")
-	if apiKey == "" {
-		log.Fatal("ANTHROPIC_API_KEY is required (set it in env/.env — never commit it)")
+	db, err := mneme.NewPool(ctx, mustEnv("CELINE_DB_DSN"))
+	if err != nil {
+		log.Fatalf("db: %v", err)
 	}
-	brain := llm.New(apiKey, os.Getenv("CELINE_MODEL"))
-	celine := agent.New(brain, agent.SystemPrompt())
+	defer db.Close()
+
+	rdb := mneme.NewRedis(mustEnv("CELINE_REDIS_ADDR"))
+	defer rdb.Close()
+
+	brain := llm.New(mustEnv("ANTHROPIC_API_KEY"), os.Getenv("CELINE_MODEL"))
+	convs := mneme.NewConversationStore(db)
+	msgs := mneme.NewMessageStore(db, rdb)
+	celine := agent.New(brain, agent.SystemPrompt(), convs, msgs)
 
 	svc := rpc.NewCelineService(celine)
 	path, handler := celinev1connect.NewCelineHandler(svc)
@@ -42,6 +56,14 @@ func main() {
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal(err)
 	}
+}
+
+func mustEnv(key string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		log.Fatalf("%s is required", key)
+	}
+	return v
 }
 
 func devCORS(h http.Handler) http.Handler {

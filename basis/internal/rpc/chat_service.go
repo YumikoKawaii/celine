@@ -26,7 +26,8 @@ func (s *CelineService) Laleo(
 ) error {
 	sink := &streamSink{stream: stream}
 
-	convID, err := s.agent.Chat(ctx, req.Msg.GetConversationId(), req.Msg.GetText(), sink)
+	// TODO: replace "anon" with the verified sub from the Hermes auth interceptor.
+	convID, err := s.agent.Chat(ctx, "anon", req.Msg.GetConversationId(), req.Msg.GetText(), sink)
 	if err != nil {
 		return stream.Send(&celinev1.LaleoEvent{
 			Event: &celinev1.LaleoEvent_Error{Error: err.Error()},
