@@ -36,7 +36,7 @@ CREATE TABLE memory_index (
     message_id TEXT        NOT NULL REFERENCES messages(id)  ON DELETE CASCADE,
     role       TEXT        NOT NULL CHECK (role IN ('user', 'assistant')),
     content    TEXT        NOT NULL,
-    embedding  vector(512) NOT NULL,
+    embedding  vector(384) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (message_id)
 );

@@ -24,10 +24,10 @@ func main() {
 	rdb := mneme.NewRedis(mustEnv("CELINE_REDIS_ADDR"))
 	defer rdb.Close()
 
-	embedder := graphe.NewVoyageClient(os.Getenv("VOYAGE_API_KEY"))
+	embedder := graphe.NewOllamaClient(os.Getenv("OLLAMA_URL"))
 	w := graphe.NewWorker(db, rdb, embedder)
 
-	// §12.3: 1–2 concurrent workers caps Voyage calls and in-flight memory.
+	// §12.3: 1–2 concurrent workers caps concurrent embed calls and in-flight memory.
 	const numWorkers = 2
 	done := make(chan struct{}, numWorkers)
 	for range numWorkers {
