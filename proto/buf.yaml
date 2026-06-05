@@ -1,0 +1,12 @@
+version: v2
+modules:
+  - path: .
+lint:
+  use:
+    - STANDARD
+  except:
+    # Chat streams ChatEvent (a typed oneof), not a "ChatResponse" — intentional, see §7.
+    - RPC_RESPONSE_STANDARD_NAME
+breaking:
+  use:
+    - FILE

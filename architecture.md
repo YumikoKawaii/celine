@@ -105,16 +105,16 @@ Celine is **one bot serving many clients**; memory is keyed per client (Google `
 
 ## 5. Proposed repo layout
 
-Monorepo: the **Go module lives in `backend/` (not at the root)**, the React app in `web/`, and the proto + Buf config sit at the top so codegen fans out into both.
+Monorepo: the **Go module lives in `basis/` (not at the root)**, the React app in `eidos/`, and the proto + Buf config sit at the top so codegen fans out into both.
 
 ```
 celine/
-├── proto/
-│   └── celine/v1/celine.proto    # service + message definitions (source of truth)
-├── buf.yaml                      # Buf module config
-├── buf.gen.yaml                  # codegen: Go → backend/gen, TS client → web/src/gen
-├── backend/                      # the Go module (go.mod lives HERE, not at root)
-│   ├── go.mod                    # module github.com/YumikoKawaii/celine/backend (go 1.25)
+├── proto/                        # the contract + its codegen config (run buf here)
+│   ├── celine/v1/celine.proto    # service + message definitions (source of truth)
+│   ├── buf.yaml                  # Buf module config
+│   └── buf.gen.yaml              # codegen: Go → ../basis/gen, TS client → ../eidos/src/gen
+├── basis/                        # the Go module (go.mod lives HERE, not at root)
+│   ├── go.mod                    # module github.com/YumikoKawaii/celine/basis (go 1.25)
 │   ├── gen/                      # generated Go (checked in or build-step)
 │   │   └── celine/v1/...
 │   ├── cmd/celine/main.go        # entrypoint, wires everything
@@ -136,7 +136,7 @@ celine/
 │       │   └── redis.go
 │       └── llm/                  # anthropic client wrapper + caching
 │           └── claude.go
-├── web/                          # React app (Vite + TS)
+├── eidos/                        # React app (Vite + TS)
 │   ├── src/
 │   │   ├── gen/                  # generated TS client (from buf)
 │   │   ├── App.tsx

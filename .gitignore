@@ -1,0 +1,20 @@
+# Go
+/bin/
+/celine
+*.out
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Node / web
+eidos/node_modules/
+eidos/dist/
+node_modules/
+*.tsbuildinfo
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/

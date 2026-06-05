@@ -1,0 +1,17 @@
+# Run from this folder: `cd proto && buf generate`. Out paths are relative to
+# the proto/ working dir, so they climb one level to the sibling module dirs.
+version: v2
+clean: true
+plugins:
+  # Go: messages + Connect handlers → basis/gen
+  - remote: buf.build/protocolbuffers/go
+    out: ../basis/gen
+    opt: paths=source_relative
+  - remote: buf.build/connectrpc/go
+    out: ../basis/gen
+    opt: paths=source_relative
+  # TypeScript client (Connect-ES v2: protoc-gen-es emits messages + service defs) → eidos/src/gen
+  - remote: buf.build/bufbuild/es
+    out: ../eidos/src/gen
+    opt:
+      - target=ts

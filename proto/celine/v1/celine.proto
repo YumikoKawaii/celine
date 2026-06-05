@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package celine.v1;
+
+option go_package = "github.com/YumikoKawaii/celine/basis/gen/celine/v1;celinev1";
+
+// CelineService is the single contract between the React UI and the Go backend.
+// Both the Go handlers and the TS client are generated from this file via `buf generate`.
+service CelineService {
+  // Send a message; the server streams the reply (typing beats, whole bubbles,
+  // tool activity) until Done. See architecture.md §7 and §14.
+  rpc Chat(ChatRequest) returns (stream ChatEvent);
+
+  // Load a conversation's messages.
+  rpc GetHistory(GetHistoryRequest) returns (GetHistoryResponse);
+
+  // List the caller's conversations.
+  rpc ListConversations(ListConversationsRequest) returns (ListConversationsResponse);
+}
+
+message ChatRequest {
+  string conversation_id = 1; // empty = start a new conversation
+  string text = 2;
+}
+
+// One streamed event. The oneof keeps the stream typed end to end.
+// Celine delivers whole bubbles with typing beats, not token deltas (§14).
+message ChatEvent {
+  oneof event {
+    Typing typing = 1; // "…" indicator before a bubble
+    Message message = 2; // one complete chat bubble
+    ToolCall tool_call = 3; // a tool started
+    ToolResult tool_result = 4; // a tool finished
+    Done done = 5; // final event; the stream closes after
+    string error = 6;
+  }
+}
+
+message Typing {
+  int32 ms_hint = 1; // how long to show the indicator before the bubble
+}
+
+message Message {
+  int32 seq = 1; // bubble order within the turn
+  string text = 2; // the whole bubble
+}
+
+message ToolCall {
+  string id = 1;
+  string name = 2;
+  string input_json = 3; // tool input, JSON-encoded
+}
+
+message ToolResult {
+  string id = 1; // matches ToolCall.id
+  string output = 2;
+  bool is_error = 3;
+}
+
+message Done {
+  string conversation_id = 1; // the (possibly newly created) conversation
+}
+
+message GetHistoryRequest {
+  string conversation_id = 1;
+}
+
+message GetHistoryResponse {
+  repeated ChatMessage messages = 1;
+}
+
+message ChatMessage {
+  string id = 1;
+  string role = 2; // "user" | "assistant"
+  string text = 3;
+  int64 created_at_unix = 4;
+}
+
+message ListConversationsRequest {}
+
+message ListConversationsResponse {
+  repeated Conversation conversations = 1;
+}
+
+message Conversation {
+  string id = 1;
+  string title = 2;
+  int64 created_at_unix = 3;
+}
