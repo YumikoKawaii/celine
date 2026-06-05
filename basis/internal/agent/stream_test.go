@@ -8,11 +8,10 @@ import (
 
 type collectSink struct{ bubbles []string }
 
-func (c *collectSink) Typing(int32) error { return nil }
-func (c *collectSink) Bubble(_ int32, text string) error {
-	c.bubbles = append(c.bubbles, text)
-	return nil
-}
+func (c *collectSink) Typing(int32) error                        { return nil }
+func (c *collectSink) Bubble(_ int32, text string) error         { c.bubbles = append(c.bubbles, text); return nil }
+func (c *collectSink) ToolCall(_, _, _ string) error             { return nil }
+func (c *collectSink) ToolResult(_, _ string, _ bool) error      { return nil }
 
 func feed(t *testing.T, s string) []string {
 	t.Helper()

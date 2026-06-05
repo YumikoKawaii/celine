@@ -11,7 +11,6 @@ import (
 	"github.com/YumikoKawaii/celine/basis/internal/hermes"
 )
 
-// chatAgent is the subset of agent.Agent this handler needs.
 type chatAgent interface {
 	Chat(ctx context.Context, ownerSub, convID, userText string, sink agent.EventSink) (string, error)
 }
@@ -31,15 +30,13 @@ func (s *CelineService) Laleo(
 	stream *connect.ServerStream[celinev1.LaleoEvent],
 ) error {
 	sink := &streamSink{stream: stream}
-
-	sub, _ := hermes.SubFromContext(ctx) // set by AuthInterceptor; "anon" in dev mode
+	sub, _ := hermes.SubFromContext(ctx)
 	convID, err := s.agent.Chat(ctx, sub, req.Msg.GetConversationId(), req.Msg.GetText(), sink)
 	if err != nil {
 		return stream.Send(&celinev1.LaleoEvent{
 			Event: &celinev1.LaleoEvent_Error{Error: err.Error()},
 		})
 	}
-
 	return stream.Send(&celinev1.LaleoEvent{
 		Event: &celinev1.LaleoEvent_Done{Done: &celinev1.Done{ConversationId: convID}},
 	})
@@ -58,5 +55,21 @@ func (s *streamSink) Typing(msHint int32) error {
 func (s *streamSink) Bubble(seq int32, text string) error {
 	return s.stream.Send(&celinev1.LaleoEvent{
 		Event: &celinev1.LaleoEvent_Message{Message: &celinev1.Message{Seq: seq, Text: text}},
+	})
+}
+
+func (s *streamSink) ToolCall(id, name, inputJSON string) error {
+	return s.stream.Send(&celinev1.LaleoEvent{
+		Event: &celinev1.LaleoEvent_ToolCall{ToolCall: &celinev1.ToolCall{
+			Id: id, Name: name, InputJson: inputJSON,
+		}},
+	})
+}
+
+func (s *streamSink) ToolResult(id, output string, isError bool) error {
+	return s.stream.Send(&celinev1.LaleoEvent{
+		Event: &celinev1.LaleoEvent_ToolResult{ToolResult: &celinev1.ToolResult{
+			Id: id, Output: output, IsError: isError,
+		}},
 	})
 }

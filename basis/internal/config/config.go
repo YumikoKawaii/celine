@@ -16,6 +16,7 @@ type Server struct {
 	JWTSecret      string // CELINE_JWT_SECRET, optional — empty = dev mode, no auth enforced
 	GoogleClientID string // GOOGLE_CLIENT_ID, optional — empty = Google OAuth disabled
 	GoogleSecret   string // GOOGLE_CLIENT_SECRET, required when GoogleClientID is set
+	BraveAPIKey    string // BRAVE_API_KEY, optional — empty = web_search returns error
 }
 
 // Worker holds all configuration for the graphe worker binary.
@@ -35,6 +36,7 @@ func LoadServer() (Server, error) {
 		JWTSecret:      os.Getenv("CELINE_JWT_SECRET"),
 		GoogleClientID: os.Getenv("GOOGLE_CLIENT_ID"),
 		GoogleSecret:   os.Getenv("GOOGLE_CLIENT_SECRET"),
+		BraveAPIKey:    os.Getenv("BRAVE_API_KEY"),
 	}
 	return c, c.validate()
 }

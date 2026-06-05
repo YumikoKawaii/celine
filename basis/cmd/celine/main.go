@@ -14,6 +14,7 @@ import (
 	"github.com/YumikoKawaii/celine/basis/gen/celine/v1/celinev1connect"
 	"github.com/YumikoKawaii/celine/basis/internal/agent"
 	"github.com/YumikoKawaii/celine/basis/internal/config"
+	"github.com/YumikoKawaii/celine/basis/internal/ergon"
 	"github.com/YumikoKawaii/celine/basis/internal/hermes"
 	"github.com/YumikoKawaii/celine/basis/internal/llm"
 	"github.com/YumikoKawaii/celine/basis/internal/mneme"
@@ -45,10 +46,13 @@ func main() {
 	interceptor := hermes.NewAuthInterceptor(verifier)
 	opts := connect.WithInterceptors(interceptor)
 
+	tools := ergon.NewRegistry()
+	tools.Register(ergon.NewWebSearch(cfg.BraveAPIKey))
+
 	brain := llm.New(cfg.AnthropicKey, cfg.Model)
 	convs := mneme.NewConversationStore(db)
 	msgs := mneme.NewMessageStore(db, rdb)
-	celineSvc := rpc.NewCelineService(agent.New(brain, agent.SystemPrompt(), convs, msgs))
+	celineSvc := rpc.NewCelineService(agent.New(brain, agent.SystemPrompt(), convs, msgs, tools))
 
 	var googleAuth *hermes.GoogleAuth
 	var issuer *hermes.Issuer
