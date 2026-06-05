@@ -14,8 +14,6 @@ CREATE TABLE clients (
 CREATE TABLE conversations (
     id         TEXT        PRIMARY KEY,
     owner_sub  TEXT        NOT NULL REFERENCES clients(sub) ON DELETE CASCADE,
-    project_id BIGINT,
-    title      TEXT        NOT NULL DEFAULT '',
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

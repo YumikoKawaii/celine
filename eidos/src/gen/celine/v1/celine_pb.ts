@@ -10,15 +10,13 @@ import type { Message as Message$1 } from "@bufbuild/protobuf";
  * Describes the file celine/v1/celine.proto.
  */
 export const file_celine_v1_celine: GenFile = /*@__PURE__*/
-  fileDesc("ChZjZWxpbmUvdjEvY2VsaW5lLnByb3RvEgljZWxpbmUudjEiNAoLQ2hhdFJlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEgwKBHRleHQYAiABKAki6gEKCUNoYXRFdmVudBIjCgZ0eXBpbmcYASABKAsyES5jZWxpbmUudjEuVHlwaW5nSAASJQoHbWVzc2FnZRgCIAEoCzISLmNlbGluZS52MS5NZXNzYWdlSAASKAoJdG9vbF9jYWxsGAMgASgLMhMuY2VsaW5lLnYxLlRvb2xDYWxsSAASLAoLdG9vbF9yZXN1bHQYBCABKAsyFS5jZWxpbmUudjEuVG9vbFJlc3VsdEgAEh8KBGRvbmUYBSABKAsyDy5jZWxpbmUudjEuRG9uZUgAEg8KBWVycm9yGAYgASgJSABCBwoFZXZlbnQiGQoGVHlwaW5nEg8KB21zX2hpbnQYASABKAUiJAoHTWVzc2FnZRILCgNzZXEYASABKAUSDAoEdGV4dBgCIAEoCSI4CghUb29sQ2FsbBIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhIKCmlucHV0X2pzb24YAyABKAkiOgoKVG9vbFJlc3VsdBIKCgJpZBgBIAEoCRIOCgZvdXRwdXQYAiABKAkSEAoIaXNfZXJyb3IYAyABKAgiHwoERG9uZRIXCg9jb252ZXJzYXRpb25faWQYASABKAkiLAoRR2V0SGlzdG9yeVJlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJIj4KEkdldEhpc3RvcnlSZXNwb25zZRIoCghtZXNzYWdlcxgBIAMoCzIWLmNlbGluZS52MS5DaGF0TWVzc2FnZSJOCgtDaGF0TWVzc2FnZRIKCgJpZBgBIAEoCRIMCgRyb2xlGAIgASgJEgwKBHRleHQYAyABKAkSFwoPY3JlYXRlZF9hdF91bml4GAQgASgDIhoKGExpc3RDb252ZXJzYXRpb25zUmVxdWVzdCJLChlMaXN0Q29udmVyc2F0aW9uc1Jlc3BvbnNlEi4KDWNvbnZlcnNhdGlvbnMYASADKAsyFy5jZWxpbmUudjEuQ29udmVyc2F0aW9uIkIKDENvbnZlcnNhdGlvbhIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIXCg9jcmVhdGVkX2F0X3VuaXgYAyABKAMiFwoVR2V0Q3VycmVudFVzZXJSZXF1ZXN0IjgKBFVzZXISCwoDc3ViGAEgASgJEg0KBWVtYWlsGAIgASgJEhQKDGRpc3BsYXlfbmFtZRgDIAEoCTK3AgoNQ2VsaW5lU2VydmljZRI2CgRDaGF0EhYuY2VsaW5lLnYxLkNoYXRSZXF1ZXN0GhQuY2VsaW5lLnYxLkNoYXRFdmVudDABEkkKCkdldEhpc3RvcnkSHC5jZWxpbmUudjEuR2V0SGlzdG9yeVJlcXVlc3QaHS5jZWxpbmUudjEuR2V0SGlzdG9yeVJlc3BvbnNlEl4KEUxpc3RDb252ZXJzYXRpb25zEiMuY2VsaW5lLnYxLkxpc3RDb252ZXJzYXRpb25zUmVxdWVzdBokLmNlbGluZS52MS5MaXN0Q29udmVyc2F0aW9uc1Jlc3BvbnNlEkMKDkdldEN1cnJlbnRVc2VyEiAuY2VsaW5lLnYxLkdldEN1cnJlbnRVc2VyUmVxdWVzdBoPLmNlbGluZS52MS5Vc2VyQj1aO2dpdGh1Yi5jb20vWXVtaWtvS2F3YWlpL2NlbGluZS9iYXNpcy9nZW4vY2VsaW5lL3YxO2NlbGluZXYxYgZwcm90bzM");
+  fileDesc("ChZjZWxpbmUvdjEvY2VsaW5lLnByb3RvEgljZWxpbmUudjEiNQoMTGFsZW9SZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCRIMCgR0ZXh0GAIgASgJIusBCgpMYWxlb0V2ZW50EiMKBnR5cGluZxgBIAEoCzIRLmNlbGluZS52MS5UeXBpbmdIABIlCgdtZXNzYWdlGAIgASgLMhIuY2VsaW5lLnYxLk1lc3NhZ2VIABIoCgl0b29sX2NhbGwYAyABKAsyEy5jZWxpbmUudjEuVG9vbENhbGxIABIsCgt0b29sX3Jlc3VsdBgEIAEoCzIVLmNlbGluZS52MS5Ub29sUmVzdWx0SAASHwoEZG9uZRgFIAEoCzIPLmNlbGluZS52MS5Eb25lSAASDwoFZXJyb3IYBiABKAlIAEIHCgVldmVudCIZCgZUeXBpbmcSDwoHbXNfaGludBgBIAEoBSIkCgdNZXNzYWdlEgsKA3NlcRgBIAEoBRIMCgR0ZXh0GAIgASgJIjgKCFRvb2xDYWxsEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEgoKaW5wdXRfanNvbhgDIAEoCSI6CgpUb29sUmVzdWx0EgoKAmlkGAEgASgJEg4KBm91dHB1dBgCIAEoCRIQCghpc19lcnJvchgDIAEoCCIfCgREb25lEhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCSIrChBBbmFtbmVzaXNSZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCSI9ChFBbmFtbmVzaXNSZXNwb25zZRIoCghtZXNzYWdlcxgBIAMoCzIWLmNlbGluZS52MS5DaGF0TWVzc2FnZSJOCgtDaGF0TWVzc2FnZRIKCgJpZBgBIAEoCRIMCgRyb2xlGAIgASgJEgwKBHRleHQYAyABKAkSFwoPY3JlYXRlZF9hdF91bml4GAQgASgDIhIKEEthdGFsb2dvc1JlcXVlc3QiQwoRS2F0YWxvZ29zUmVzcG9uc2USLgoNY29udmVyc2F0aW9ucxgBIAMoCzIXLmNlbGluZS52MS5Db252ZXJzYXRpb24iMwoMQ29udmVyc2F0aW9uEgoKAmlkGAEgASgJEhcKD2NyZWF0ZWRfYXRfdW5peBgCIAEoAzLTAQoGQ2VsaW5lEjkKBUxhbGVvEhcuY2VsaW5lLnYxLkxhbGVvUmVxdWVzdBoVLmNlbGluZS52MS5MYWxlb0V2ZW50MAESRgoJQW5hbW5lc2lzEhsuY2VsaW5lLnYxLkFuYW1uZXNpc1JlcXVlc3QaHC5jZWxpbmUudjEuQW5hbW5lc2lzUmVzcG9uc2USRgoJS2F0YWxvZ29zEhsuY2VsaW5lLnYxLkthdGFsb2dvc1JlcXVlc3QaHC5jZWxpbmUudjEuS2F0YWxvZ29zUmVzcG9uc2VCPVo7Z2l0aHViLmNvbS9ZdW1pa29LYXdhaWkvY2VsaW5lL2Jhc2lzL2dlbi9jZWxpbmUvdjE7Y2VsaW5ldjFiBnByb3RvMw");
 
 /**
- * @generated from message celine.v1.ChatRequest
+ * @generated from message celine.v1.LaleoRequest
  */
-export type ChatRequest = Message$1<"celine.v1.ChatRequest"> & {
+export type LaleoRequest = Message$1<"celine.v1.LaleoRequest"> & {
   /**
-   * empty = start a new conversation
-   *
    * @generated from field: string conversation_id = 1;
    */
   conversationId: string;
@@ -30,58 +28,45 @@ export type ChatRequest = Message$1<"celine.v1.ChatRequest"> & {
 };
 
 /**
- * Describes the message celine.v1.ChatRequest.
- * Use `create(ChatRequestSchema)` to create a new message.
+ * Describes the message celine.v1.LaleoRequest.
+ * Use `create(LaleoRequestSchema)` to create a new message.
  */
-export const ChatRequestSchema: GenMessage<ChatRequest> = /*@__PURE__*/
+export const LaleoRequestSchema: GenMessage<LaleoRequest> = /*@__PURE__*/
   messageDesc(file_celine_v1_celine, 0);
 
 /**
- * One streamed event. The oneof keeps the stream typed end to end.
- * Celine delivers whole bubbles with typing beats, not token deltas (§14).
- *
- * @generated from message celine.v1.ChatEvent
+ * @generated from message celine.v1.LaleoEvent
  */
-export type ChatEvent = Message$1<"celine.v1.ChatEvent"> & {
+export type LaleoEvent = Message$1<"celine.v1.LaleoEvent"> & {
   /**
-   * @generated from oneof celine.v1.ChatEvent.event
+   * @generated from oneof celine.v1.LaleoEvent.event
    */
   event: {
     /**
-     * "…" indicator before a bubble
-     *
      * @generated from field: celine.v1.Typing typing = 1;
      */
     value: Typing;
     case: "typing";
   } | {
     /**
-     * one complete chat bubble
-     *
      * @generated from field: celine.v1.Message message = 2;
      */
     value: Message;
     case: "message";
   } | {
     /**
-     * a tool started
-     *
      * @generated from field: celine.v1.ToolCall tool_call = 3;
      */
     value: ToolCall;
     case: "toolCall";
   } | {
     /**
-     * a tool finished
-     *
      * @generated from field: celine.v1.ToolResult tool_result = 4;
      */
     value: ToolResult;
     case: "toolResult";
   } | {
     /**
-     * final event; the stream closes after
-     *
      * @generated from field: celine.v1.Done done = 5;
      */
     value: Done;
@@ -96,10 +81,10 @@ export type ChatEvent = Message$1<"celine.v1.ChatEvent"> & {
 };
 
 /**
- * Describes the message celine.v1.ChatEvent.
- * Use `create(ChatEventSchema)` to create a new message.
+ * Describes the message celine.v1.LaleoEvent.
+ * Use `create(LaleoEventSchema)` to create a new message.
  */
-export const ChatEventSchema: GenMessage<ChatEvent> = /*@__PURE__*/
+export const LaleoEventSchema: GenMessage<LaleoEvent> = /*@__PURE__*/
   messageDesc(file_celine_v1_celine, 1);
 
 /**
@@ -107,8 +92,6 @@ export const ChatEventSchema: GenMessage<ChatEvent> = /*@__PURE__*/
  */
 export type Typing = Message$1<"celine.v1.Typing"> & {
   /**
-   * how long to show the indicator before the bubble
-   *
    * @generated from field: int32 ms_hint = 1;
    */
   msHint: number;
@@ -126,15 +109,11 @@ export const TypingSchema: GenMessage<Typing> = /*@__PURE__*/
  */
 export type Message = Message$1<"celine.v1.Message"> & {
   /**
-   * bubble order within the turn
-   *
    * @generated from field: int32 seq = 1;
    */
   seq: number;
 
   /**
-   * the whole bubble
-   *
    * @generated from field: string text = 2;
    */
   text: string;
@@ -162,8 +141,6 @@ export type ToolCall = Message$1<"celine.v1.ToolCall"> & {
   name: string;
 
   /**
-   * tool input, JSON-encoded
-   *
    * @generated from field: string input_json = 3;
    */
   inputJson: string;
@@ -181,8 +158,6 @@ export const ToolCallSchema: GenMessage<ToolCall> = /*@__PURE__*/
  */
 export type ToolResult = Message$1<"celine.v1.ToolResult"> & {
   /**
-   * matches ToolCall.id
-   *
    * @generated from field: string id = 1;
    */
   id: string;
@@ -210,8 +185,6 @@ export const ToolResultSchema: GenMessage<ToolResult> = /*@__PURE__*/
  */
 export type Done = Message$1<"celine.v1.Done"> & {
   /**
-   * the (possibly newly created) conversation
-   *
    * @generated from field: string conversation_id = 1;
    */
   conversationId: string;
@@ -225,9 +198,9 @@ export const DoneSchema: GenMessage<Done> = /*@__PURE__*/
   messageDesc(file_celine_v1_celine, 6);
 
 /**
- * @generated from message celine.v1.GetHistoryRequest
+ * @generated from message celine.v1.AnamnesisRequest
  */
-export type GetHistoryRequest = Message$1<"celine.v1.GetHistoryRequest"> & {
+export type AnamnesisRequest = Message$1<"celine.v1.AnamnesisRequest"> & {
   /**
    * @generated from field: string conversation_id = 1;
    */
@@ -235,16 +208,16 @@ export type GetHistoryRequest = Message$1<"celine.v1.GetHistoryRequest"> & {
 };
 
 /**
- * Describes the message celine.v1.GetHistoryRequest.
- * Use `create(GetHistoryRequestSchema)` to create a new message.
+ * Describes the message celine.v1.AnamnesisRequest.
+ * Use `create(AnamnesisRequestSchema)` to create a new message.
  */
-export const GetHistoryRequestSchema: GenMessage<GetHistoryRequest> = /*@__PURE__*/
+export const AnamnesisRequestSchema: GenMessage<AnamnesisRequest> = /*@__PURE__*/
   messageDesc(file_celine_v1_celine, 7);
 
 /**
- * @generated from message celine.v1.GetHistoryResponse
+ * @generated from message celine.v1.AnamnesisResponse
  */
-export type GetHistoryResponse = Message$1<"celine.v1.GetHistoryResponse"> & {
+export type AnamnesisResponse = Message$1<"celine.v1.AnamnesisResponse"> & {
   /**
    * @generated from field: repeated celine.v1.ChatMessage messages = 1;
    */
@@ -252,10 +225,10 @@ export type GetHistoryResponse = Message$1<"celine.v1.GetHistoryResponse"> & {
 };
 
 /**
- * Describes the message celine.v1.GetHistoryResponse.
- * Use `create(GetHistoryResponseSchema)` to create a new message.
+ * Describes the message celine.v1.AnamnesisResponse.
+ * Use `create(AnamnesisResponseSchema)` to create a new message.
  */
-export const GetHistoryResponseSchema: GenMessage<GetHistoryResponse> = /*@__PURE__*/
+export const AnamnesisResponseSchema: GenMessage<AnamnesisResponse> = /*@__PURE__*/
   messageDesc(file_celine_v1_celine, 8);
 
 /**
@@ -268,8 +241,6 @@ export type ChatMessage = Message$1<"celine.v1.ChatMessage"> & {
   id: string;
 
   /**
-   * "user" | "assistant"
-   *
    * @generated from field: string role = 2;
    */
   role: string;
@@ -293,22 +264,22 @@ export const ChatMessageSchema: GenMessage<ChatMessage> = /*@__PURE__*/
   messageDesc(file_celine_v1_celine, 9);
 
 /**
- * @generated from message celine.v1.ListConversationsRequest
+ * @generated from message celine.v1.KatalogosRequest
  */
-export type ListConversationsRequest = Message$1<"celine.v1.ListConversationsRequest"> & {
+export type KatalogosRequest = Message$1<"celine.v1.KatalogosRequest"> & {
 };
 
 /**
- * Describes the message celine.v1.ListConversationsRequest.
- * Use `create(ListConversationsRequestSchema)` to create a new message.
+ * Describes the message celine.v1.KatalogosRequest.
+ * Use `create(KatalogosRequestSchema)` to create a new message.
  */
-export const ListConversationsRequestSchema: GenMessage<ListConversationsRequest> = /*@__PURE__*/
+export const KatalogosRequestSchema: GenMessage<KatalogosRequest> = /*@__PURE__*/
   messageDesc(file_celine_v1_celine, 10);
 
 /**
- * @generated from message celine.v1.ListConversationsResponse
+ * @generated from message celine.v1.KatalogosResponse
  */
-export type ListConversationsResponse = Message$1<"celine.v1.ListConversationsResponse"> & {
+export type KatalogosResponse = Message$1<"celine.v1.KatalogosResponse"> & {
   /**
    * @generated from field: repeated celine.v1.Conversation conversations = 1;
    */
@@ -316,10 +287,10 @@ export type ListConversationsResponse = Message$1<"celine.v1.ListConversationsRe
 };
 
 /**
- * Describes the message celine.v1.ListConversationsResponse.
- * Use `create(ListConversationsResponseSchema)` to create a new message.
+ * Describes the message celine.v1.KatalogosResponse.
+ * Use `create(KatalogosResponseSchema)` to create a new message.
  */
-export const ListConversationsResponseSchema: GenMessage<ListConversationsResponse> = /*@__PURE__*/
+export const KatalogosResponseSchema: GenMessage<KatalogosResponse> = /*@__PURE__*/
   messageDesc(file_celine_v1_celine, 11);
 
 /**
@@ -332,12 +303,7 @@ export type Conversation = Message$1<"celine.v1.Conversation"> & {
   id: string;
 
   /**
-   * @generated from field: string title = 2;
-   */
-  title: string;
-
-  /**
-   * @generated from field: int64 created_at_unix = 3;
+   * @generated from field: int64 created_at_unix = 2;
    */
   createdAtUnix: bigint;
 };
@@ -350,105 +316,32 @@ export const ConversationSchema: GenMessage<Conversation> = /*@__PURE__*/
   messageDesc(file_celine_v1_celine, 12);
 
 /**
- * @generated from message celine.v1.GetCurrentUserRequest
+ * @generated from service celine.v1.Celine
  */
-export type GetCurrentUserRequest = Message$1<"celine.v1.GetCurrentUserRequest"> & {
-};
-
-/**
- * Describes the message celine.v1.GetCurrentUserRequest.
- * Use `create(GetCurrentUserRequestSchema)` to create a new message.
- */
-export const GetCurrentUserRequestSchema: GenMessage<GetCurrentUserRequest> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 13);
-
-/**
- * @generated from message celine.v1.User
- */
-export type User = Message$1<"celine.v1.User"> & {
+export const Celine: GenService<{
   /**
-   * Google `sub` claim — the stable per-client identity (clients.sub)
-   *
-   * @generated from field: string sub = 1;
+   * @generated from rpc celine.v1.Celine.Laleo
    */
-  sub: string;
-
-  /**
-   * @generated from field: string email = 2;
-   */
-  email: string;
-
-  /**
-   * @generated from field: string display_name = 3;
-   */
-  displayName: string;
-};
-
-/**
- * Describes the message celine.v1.User.
- * Use `create(UserSchema)` to create a new message.
- */
-export const UserSchema: GenMessage<User> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 14);
-
-/**
- * CelineService is the single contract between the React UI and the Go backend.
- * Both the Go handlers and the TS client are generated from this file via `buf generate`.
- *
- * AUTH MODEL (client-side redirect; see the Auth section at the bottom and §9):
- * the React app runs the Google OIDC flow itself and obtains a Google ID token.
- * There is NO server-side redirect and NO /callback endpoint. The client sends
- * that ID token as an `Authorization: Bearer <id_token>` header on EVERY RPC; a
- * server interceptor verifies it and supplies the caller's `sub`. Requests carry
- * no owner field — identity always comes from the verified token, never the body.
- *
- * @generated from service celine.v1.CelineService
- */
-export const CelineService: GenService<{
-  /**
-   * Send a message; the server streams the reply (typing beats, whole bubbles,
-   * tool activity) until Done. See docs/architecture/07-rpc-api.md and
-   * docs/architecture/14-response-shape.md.
-   *
-   * @generated from rpc celine.v1.CelineService.Chat
-   */
-  chat: {
+  laleo: {
     methodKind: "server_streaming";
-    input: typeof ChatRequestSchema;
-    output: typeof ChatEventSchema;
+    input: typeof LaleoRequestSchema;
+    output: typeof LaleoEventSchema;
   },
   /**
-   * Load a conversation's messages.
-   *
-   * @generated from rpc celine.v1.CelineService.GetHistory
+   * @generated from rpc celine.v1.Celine.Anamnesis
    */
-  getHistory: {
+  anamnesis: {
     methodKind: "unary";
-    input: typeof GetHistoryRequestSchema;
-    output: typeof GetHistoryResponseSchema;
+    input: typeof AnamnesisRequestSchema;
+    output: typeof AnamnesisResponseSchema;
   },
   /**
-   * List the caller's conversations.
-   *
-   * @generated from rpc celine.v1.CelineService.ListConversations
+   * @generated from rpc celine.v1.Celine.Katalogos
    */
-  listConversations: {
+  katalogos: {
     methodKind: "unary";
-    input: typeof ListConversationsRequestSchema;
-    output: typeof ListConversationsResponseSchema;
-  },
-  /**
-   * Resolve the authenticated caller from their bearer ID token. Verifying the
-   * token also upserts the client record, so the SPA calls this once right after
-   * the client-side Google redirect completes — it's the only "auth flow"
-   * endpoint, and doubles as the session check on app load.
-   *
-   * @generated from rpc celine.v1.CelineService.GetCurrentUser
-   */
-  getCurrentUser: {
-    methodKind: "unary";
-    input: typeof GetCurrentUserRequestSchema;
-    output: typeof UserSchema;
+    input: typeof KatalogosRequestSchema;
+    output: typeof KatalogosResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_celine_v1_celine, 0);

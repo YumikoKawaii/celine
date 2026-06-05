@@ -4,118 +4,75 @@ package celine.v1;
 
 option go_package = "github.com/YumikoKawaii/celine/basis/gen/celine/v1;celinev1";
 
-// CelineService is the single contract between the React UI and the Go backend.
-// Both the Go handlers and the TS client are generated from this file via `buf generate`.
-//
-// AUTH MODEL (client-side redirect; see the Auth section at the bottom and §9):
-// the React app runs the Google OIDC flow itself and obtains a Google ID token.
-// There is NO server-side redirect and NO /callback endpoint. The client sends
-// that ID token as an `Authorization: Bearer <id_token>` header on EVERY RPC; a
-// server interceptor verifies it and supplies the caller's `sub`. Requests carry
-// no owner field — identity always comes from the verified token, never the body.
-service CelineService {
-  // Send a message; the server streams the reply (typing beats, whole bubbles,
-  // tool activity) until Done. See docs/architecture/07-rpc-api.md and
-  // docs/architecture/14-response-shape.md.
-  rpc Chat(ChatRequest) returns (stream ChatEvent);
-
-  // Load a conversation's messages.
-  rpc GetHistory(GetHistoryRequest) returns (GetHistoryResponse);
-
-  // List the caller's conversations.
-  rpc ListConversations(ListConversationsRequest) returns (ListConversationsResponse);
-
-  // Resolve the authenticated caller from their bearer ID token. Verifying the
-  // token also upserts the client record, so the SPA calls this once right after
-  // the client-side Google redirect completes — it's the only "auth flow"
-  // endpoint, and doubles as the session check on app load.
-  rpc GetCurrentUser(GetCurrentUserRequest) returns (User);
+service Celine {
+  rpc Laleo     (LaleoRequest)     returns (stream LaleoEvent);
+  rpc Anamnesis (AnamnesisRequest) returns (AnamnesisResponse);
+  rpc Katalogos (KatalogosRequest) returns (KatalogosResponse);
 }
 
-message ChatRequest {
-  string conversation_id = 1; // empty = start a new conversation
-  string text = 2;
+message LaleoRequest {
+  string conversation_id = 1;
+  string text            = 2;
 }
 
-// One streamed event. The oneof keeps the stream typed end to end.
-// Celine delivers whole bubbles with typing beats, not token deltas (§14).
-message ChatEvent {
+message LaleoEvent {
   oneof event {
-    Typing typing = 1; // "…" indicator before a bubble
-    Message message = 2; // one complete chat bubble
-    ToolCall tool_call = 3; // a tool started
-    ToolResult tool_result = 4; // a tool finished
-    Done done = 5; // final event; the stream closes after
-    string error = 6;
+    Typing     typing      = 1;
+    Message    message     = 2;
+    ToolCall   tool_call   = 3;
+    ToolResult tool_result = 4;
+    Done       done        = 5;
+    string     error       = 6;
   }
 }
 
 message Typing {
-  int32 ms_hint = 1; // how long to show the indicator before the bubble
+  int32 ms_hint = 1;
 }
 
 message Message {
-  int32 seq = 1; // bubble order within the turn
-  string text = 2; // the whole bubble
+  int32  seq  = 1;
+  string text = 2;
 }
 
 message ToolCall {
-  string id = 1;
-  string name = 2;
-  string input_json = 3; // tool input, JSON-encoded
+  string id         = 1;
+  string name       = 2;
+  string input_json = 3;
 }
 
 message ToolResult {
-  string id = 1; // matches ToolCall.id
-  string output = 2;
-  bool is_error = 3;
+  string id       = 1;
+  string output   = 2;
+  bool   is_error = 3;
 }
 
 message Done {
-  string conversation_id = 1; // the (possibly newly created) conversation
-}
-
-message GetHistoryRequest {
   string conversation_id = 1;
 }
 
-message GetHistoryResponse {
+message AnamnesisRequest {
+  string conversation_id = 1;
+}
+
+message AnamnesisResponse {
   repeated ChatMessage messages = 1;
 }
 
 message ChatMessage {
-  string id = 1;
-  string role = 2; // "user" | "assistant"
-  string text = 3;
-  int64 created_at_unix = 4;
+  string id              = 1;
+  string role            = 2;
+  string text            = 3;
+  int64  created_at_unix = 4;
 }
 
-message ListConversationsRequest {}
+message KatalogosRequest {}
 
-message ListConversationsResponse {
+message KatalogosResponse {
   repeated Conversation conversations = 1;
 }
 
 message Conversation {
-  string id = 1;
-  string title = 2;
-  int64 created_at_unix = 3;
-}
-
-// --- Auth ---
-//
-// Google OIDC, CLIENT-SIDE redirect (§9). The browser runs the Google sign-in
-// flow (Google Identity Services), receives a Google ID token, and sends it as
-// `Authorization: Bearer <id_token>` on every RPC. The server has no redirect
-// and no /callback endpoint: an interceptor verifies the token against Google's
-// JWKS, extracts the `sub` claim, and puts the caller on the context. Sign-out
-// is purely client-side (discard the token) — there is no server session store
-// (§12: no session TTL).
-
-message GetCurrentUserRequest {}
-
-message User {
-  string sub = 1; // Google `sub` claim — the stable per-client identity (clients.sub)
-  string email = 2;
-  string display_name = 3;
+  string id              = 1;
+  int64  created_at_unix = 2;
 }

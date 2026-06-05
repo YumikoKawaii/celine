@@ -11,7 +11,7 @@ import (
 )
 
 type CelineService struct {
-	celinev1connect.UnimplementedCelineServiceHandler
+	celinev1connect.UnimplementedCelineHandler
 	agent *agent.Agent
 }
 
@@ -19,37 +19,37 @@ func NewCelineService(a *agent.Agent) *CelineService {
 	return &CelineService{agent: a}
 }
 
-func (s *CelineService) Chat(
+func (s *CelineService) Laleo(
 	ctx context.Context,
-	req *connect.Request[celinev1.ChatRequest],
-	stream *connect.ServerStream[celinev1.ChatEvent],
+	req *connect.Request[celinev1.LaleoRequest],
+	stream *connect.ServerStream[celinev1.LaleoEvent],
 ) error {
 	sink := &streamSink{stream: stream}
 
 	convID, err := s.agent.Chat(ctx, req.Msg.GetConversationId(), req.Msg.GetText(), sink)
 	if err != nil {
-		return stream.Send(&celinev1.ChatEvent{
-			Event: &celinev1.ChatEvent_Error{Error: err.Error()},
+		return stream.Send(&celinev1.LaleoEvent{
+			Event: &celinev1.LaleoEvent_Error{Error: err.Error()},
 		})
 	}
 
-	return stream.Send(&celinev1.ChatEvent{
-		Event: &celinev1.ChatEvent_Done{Done: &celinev1.Done{ConversationId: convID}},
+	return stream.Send(&celinev1.LaleoEvent{
+		Event: &celinev1.LaleoEvent_Done{Done: &celinev1.Done{ConversationId: convID}},
 	})
 }
 
 type streamSink struct {
-	stream *connect.ServerStream[celinev1.ChatEvent]
+	stream *connect.ServerStream[celinev1.LaleoEvent]
 }
 
 func (s *streamSink) Typing(msHint int32) error {
-	return s.stream.Send(&celinev1.ChatEvent{
-		Event: &celinev1.ChatEvent_Typing{Typing: &celinev1.Typing{MsHint: msHint}},
+	return s.stream.Send(&celinev1.LaleoEvent{
+		Event: &celinev1.LaleoEvent_Typing{Typing: &celinev1.Typing{MsHint: msHint}},
 	})
 }
 
 func (s *streamSink) Bubble(seq int32, text string) error {
-	return s.stream.Send(&celinev1.ChatEvent{
-		Event: &celinev1.ChatEvent_Message{Message: &celinev1.Message{Seq: seq, Text: text}},
+	return s.stream.Send(&celinev1.LaleoEvent{
+		Event: &celinev1.LaleoEvent_Message{Message: &celinev1.Message{Seq: seq, Text: text}},
 	})
 }

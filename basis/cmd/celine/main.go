@@ -28,7 +28,7 @@ func main() {
 	celine := agent.New(brain, agent.SystemPrompt())
 
 	svc := rpc.NewCelineService(celine)
-	path, handler := celinev1connect.NewCelineServiceHandler(svc)
+	path, handler := celinev1connect.NewCelineHandler(svc)
 
 	mux := http.NewServeMux()
 	mux.Handle(path, handler)
@@ -38,7 +38,7 @@ func main() {
 		Handler: h2c.NewHandler(devCORS(mux), &http2.Server{}),
 	}
 
-	log.Printf("celine backend listening on %s (CelineService at %s)", addr, path)
+	log.Printf("celine backend listening on %s", addr)
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal(err)
 	}

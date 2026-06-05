@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package celine.v1;
+
+option go_package = "github.com/YumikoKawaii/celine/basis/gen/celine/v1;celinev1";
+
+service Hermes {
+  rpc Eisodos  (EisodosRequest)  returns (EisodosResponse);
+  rpc Metabole (MetaboleRequest) returns (MetaboleResponse);
+  rpc Gnorizo  (GnorizoRequest)  returns (GnorizoResponse);
+  rpc Exodos   (ExodosRequest)   returns (ExodosResponse);
+}
+
+message EisodosRequest  {}
+message EisodosResponse {
+  string url   = 1;
+  string state = 2;
+}
+
+message MetaboleRequest {
+  string code         = 1;
+  string redirect_uri = 2;
+}
+
+message MetaboleResponse {
+  string token = 1;
+  User   user  = 2;
+}
+
+message GnorizoRequest  {}
+message GnorizoResponse { User user = 1; }
+
+message ExodosRequest  {}
+message ExodosResponse {}
+
+message User {
+  string sub          = 1;
+  string email        = 2;
+  string display_name = 3;
+  string avatar_url   = 4;
+}

@@ -21,8 +21,8 @@ import (
 const _ = connect.IsAtLeastVersion1_13_0
 
 const (
-	// CelineServiceName is the fully-qualified name of the CelineService service.
-	CelineServiceName = "celine.v1.CelineService"
+	// CelineName is the fully-qualified name of the Celine service.
+	CelineName = "celine.v1.Celine"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -33,181 +33,132 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// CelineServiceChatProcedure is the fully-qualified name of the CelineService's Chat RPC.
-	CelineServiceChatProcedure = "/celine.v1.CelineService/Chat"
-	// CelineServiceGetHistoryProcedure is the fully-qualified name of the CelineService's GetHistory
-	// RPC.
-	CelineServiceGetHistoryProcedure = "/celine.v1.CelineService/GetHistory"
-	// CelineServiceListConversationsProcedure is the fully-qualified name of the CelineService's
-	// ListConversations RPC.
-	CelineServiceListConversationsProcedure = "/celine.v1.CelineService/ListConversations"
-	// CelineServiceGetCurrentUserProcedure is the fully-qualified name of the CelineService's
-	// GetCurrentUser RPC.
-	CelineServiceGetCurrentUserProcedure = "/celine.v1.CelineService/GetCurrentUser"
+	// CelineLaleoProcedure is the fully-qualified name of the Celine's Laleo RPC.
+	CelineLaleoProcedure = "/celine.v1.Celine/Laleo"
+	// CelineAnamnesisProcedure is the fully-qualified name of the Celine's Anamnesis RPC.
+	CelineAnamnesisProcedure = "/celine.v1.Celine/Anamnesis"
+	// CelineKatalogosProcedure is the fully-qualified name of the Celine's Katalogos RPC.
+	CelineKatalogosProcedure = "/celine.v1.Celine/Katalogos"
 )
 
-// CelineServiceClient is a client for the celine.v1.CelineService service.
-type CelineServiceClient interface {
-	// Send a message; the server streams the reply (typing beats, whole bubbles,
-	// tool activity) until Done. See docs/architecture/07-rpc-api.md and
-	// docs/architecture/14-response-shape.md.
-	Chat(context.Context, *connect.Request[v1.ChatRequest]) (*connect.ServerStreamForClient[v1.ChatEvent], error)
-	// Load a conversation's messages.
-	GetHistory(context.Context, *connect.Request[v1.GetHistoryRequest]) (*connect.Response[v1.GetHistoryResponse], error)
-	// List the caller's conversations.
-	ListConversations(context.Context, *connect.Request[v1.ListConversationsRequest]) (*connect.Response[v1.ListConversationsResponse], error)
-	// Resolve the authenticated caller from their bearer ID token. Verifying the
-	// token also upserts the client record, so the SPA calls this once right after
-	// the client-side Google redirect completes — it's the only "auth flow"
-	// endpoint, and doubles as the session check on app load.
-	GetCurrentUser(context.Context, *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.User], error)
+// CelineClient is a client for the celine.v1.Celine service.
+type CelineClient interface {
+	Laleo(context.Context, *connect.Request[v1.LaleoRequest]) (*connect.ServerStreamForClient[v1.LaleoEvent], error)
+	Anamnesis(context.Context, *connect.Request[v1.AnamnesisRequest]) (*connect.Response[v1.AnamnesisResponse], error)
+	Katalogos(context.Context, *connect.Request[v1.KatalogosRequest]) (*connect.Response[v1.KatalogosResponse], error)
 }
 
-// NewCelineServiceClient constructs a client for the celine.v1.CelineService service. By default,
-// it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and
-// sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC()
-// or connect.WithGRPCWeb() options.
+// NewCelineClient constructs a client for the celine.v1.Celine service. By default, it uses the
+// Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
+// connect.WithGRPCWeb() options.
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
-func NewCelineServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) CelineServiceClient {
+func NewCelineClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) CelineClient {
 	baseURL = strings.TrimRight(baseURL, "/")
-	celineServiceMethods := v1.File_celine_v1_celine_proto.Services().ByName("CelineService").Methods()
-	return &celineServiceClient{
-		chat: connect.NewClient[v1.ChatRequest, v1.ChatEvent](
+	celineMethods := v1.File_celine_v1_celine_proto.Services().ByName("Celine").Methods()
+	return &celineClient{
+		laleo: connect.NewClient[v1.LaleoRequest, v1.LaleoEvent](
 			httpClient,
-			baseURL+CelineServiceChatProcedure,
-			connect.WithSchema(celineServiceMethods.ByName("Chat")),
+			baseURL+CelineLaleoProcedure,
+			connect.WithSchema(celineMethods.ByName("Laleo")),
 			connect.WithClientOptions(opts...),
 		),
-		getHistory: connect.NewClient[v1.GetHistoryRequest, v1.GetHistoryResponse](
+		anamnesis: connect.NewClient[v1.AnamnesisRequest, v1.AnamnesisResponse](
 			httpClient,
-			baseURL+CelineServiceGetHistoryProcedure,
-			connect.WithSchema(celineServiceMethods.ByName("GetHistory")),
+			baseURL+CelineAnamnesisProcedure,
+			connect.WithSchema(celineMethods.ByName("Anamnesis")),
 			connect.WithClientOptions(opts...),
 		),
-		listConversations: connect.NewClient[v1.ListConversationsRequest, v1.ListConversationsResponse](
+		katalogos: connect.NewClient[v1.KatalogosRequest, v1.KatalogosResponse](
 			httpClient,
-			baseURL+CelineServiceListConversationsProcedure,
-			connect.WithSchema(celineServiceMethods.ByName("ListConversations")),
-			connect.WithClientOptions(opts...),
-		),
-		getCurrentUser: connect.NewClient[v1.GetCurrentUserRequest, v1.User](
-			httpClient,
-			baseURL+CelineServiceGetCurrentUserProcedure,
-			connect.WithSchema(celineServiceMethods.ByName("GetCurrentUser")),
+			baseURL+CelineKatalogosProcedure,
+			connect.WithSchema(celineMethods.ByName("Katalogos")),
 			connect.WithClientOptions(opts...),
 		),
 	}
 }
 
-// celineServiceClient implements CelineServiceClient.
-type celineServiceClient struct {
-	chat              *connect.Client[v1.ChatRequest, v1.ChatEvent]
-	getHistory        *connect.Client[v1.GetHistoryRequest, v1.GetHistoryResponse]
-	listConversations *connect.Client[v1.ListConversationsRequest, v1.ListConversationsResponse]
-	getCurrentUser    *connect.Client[v1.GetCurrentUserRequest, v1.User]
+// celineClient implements CelineClient.
+type celineClient struct {
+	laleo     *connect.Client[v1.LaleoRequest, v1.LaleoEvent]
+	anamnesis *connect.Client[v1.AnamnesisRequest, v1.AnamnesisResponse]
+	katalogos *connect.Client[v1.KatalogosRequest, v1.KatalogosResponse]
 }
 
-// Chat calls celine.v1.CelineService.Chat.
-func (c *celineServiceClient) Chat(ctx context.Context, req *connect.Request[v1.ChatRequest]) (*connect.ServerStreamForClient[v1.ChatEvent], error) {
-	return c.chat.CallServerStream(ctx, req)
+// Laleo calls celine.v1.Celine.Laleo.
+func (c *celineClient) Laleo(ctx context.Context, req *connect.Request[v1.LaleoRequest]) (*connect.ServerStreamForClient[v1.LaleoEvent], error) {
+	return c.laleo.CallServerStream(ctx, req)
 }
 
-// GetHistory calls celine.v1.CelineService.GetHistory.
-func (c *celineServiceClient) GetHistory(ctx context.Context, req *connect.Request[v1.GetHistoryRequest]) (*connect.Response[v1.GetHistoryResponse], error) {
-	return c.getHistory.CallUnary(ctx, req)
+// Anamnesis calls celine.v1.Celine.Anamnesis.
+func (c *celineClient) Anamnesis(ctx context.Context, req *connect.Request[v1.AnamnesisRequest]) (*connect.Response[v1.AnamnesisResponse], error) {
+	return c.anamnesis.CallUnary(ctx, req)
 }
 
-// ListConversations calls celine.v1.CelineService.ListConversations.
-func (c *celineServiceClient) ListConversations(ctx context.Context, req *connect.Request[v1.ListConversationsRequest]) (*connect.Response[v1.ListConversationsResponse], error) {
-	return c.listConversations.CallUnary(ctx, req)
+// Katalogos calls celine.v1.Celine.Katalogos.
+func (c *celineClient) Katalogos(ctx context.Context, req *connect.Request[v1.KatalogosRequest]) (*connect.Response[v1.KatalogosResponse], error) {
+	return c.katalogos.CallUnary(ctx, req)
 }
 
-// GetCurrentUser calls celine.v1.CelineService.GetCurrentUser.
-func (c *celineServiceClient) GetCurrentUser(ctx context.Context, req *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.User], error) {
-	return c.getCurrentUser.CallUnary(ctx, req)
+// CelineHandler is an implementation of the celine.v1.Celine service.
+type CelineHandler interface {
+	Laleo(context.Context, *connect.Request[v1.LaleoRequest], *connect.ServerStream[v1.LaleoEvent]) error
+	Anamnesis(context.Context, *connect.Request[v1.AnamnesisRequest]) (*connect.Response[v1.AnamnesisResponse], error)
+	Katalogos(context.Context, *connect.Request[v1.KatalogosRequest]) (*connect.Response[v1.KatalogosResponse], error)
 }
 
-// CelineServiceHandler is an implementation of the celine.v1.CelineService service.
-type CelineServiceHandler interface {
-	// Send a message; the server streams the reply (typing beats, whole bubbles,
-	// tool activity) until Done. See docs/architecture/07-rpc-api.md and
-	// docs/architecture/14-response-shape.md.
-	Chat(context.Context, *connect.Request[v1.ChatRequest], *connect.ServerStream[v1.ChatEvent]) error
-	// Load a conversation's messages.
-	GetHistory(context.Context, *connect.Request[v1.GetHistoryRequest]) (*connect.Response[v1.GetHistoryResponse], error)
-	// List the caller's conversations.
-	ListConversations(context.Context, *connect.Request[v1.ListConversationsRequest]) (*connect.Response[v1.ListConversationsResponse], error)
-	// Resolve the authenticated caller from their bearer ID token. Verifying the
-	// token also upserts the client record, so the SPA calls this once right after
-	// the client-side Google redirect completes — it's the only "auth flow"
-	// endpoint, and doubles as the session check on app load.
-	GetCurrentUser(context.Context, *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.User], error)
-}
-
-// NewCelineServiceHandler builds an HTTP handler from the service implementation. It returns the
-// path on which to mount the handler and the handler itself.
+// NewCelineHandler builds an HTTP handler from the service implementation. It returns the path on
+// which to mount the handler and the handler itself.
 //
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
-func NewCelineServiceHandler(svc CelineServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	celineServiceMethods := v1.File_celine_v1_celine_proto.Services().ByName("CelineService").Methods()
-	celineServiceChatHandler := connect.NewServerStreamHandler(
-		CelineServiceChatProcedure,
-		svc.Chat,
-		connect.WithSchema(celineServiceMethods.ByName("Chat")),
+func NewCelineHandler(svc CelineHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	celineMethods := v1.File_celine_v1_celine_proto.Services().ByName("Celine").Methods()
+	celineLaleoHandler := connect.NewServerStreamHandler(
+		CelineLaleoProcedure,
+		svc.Laleo,
+		connect.WithSchema(celineMethods.ByName("Laleo")),
 		connect.WithHandlerOptions(opts...),
 	)
-	celineServiceGetHistoryHandler := connect.NewUnaryHandler(
-		CelineServiceGetHistoryProcedure,
-		svc.GetHistory,
-		connect.WithSchema(celineServiceMethods.ByName("GetHistory")),
+	celineAnamnesisHandler := connect.NewUnaryHandler(
+		CelineAnamnesisProcedure,
+		svc.Anamnesis,
+		connect.WithSchema(celineMethods.ByName("Anamnesis")),
 		connect.WithHandlerOptions(opts...),
 	)
-	celineServiceListConversationsHandler := connect.NewUnaryHandler(
-		CelineServiceListConversationsProcedure,
-		svc.ListConversations,
-		connect.WithSchema(celineServiceMethods.ByName("ListConversations")),
+	celineKatalogosHandler := connect.NewUnaryHandler(
+		CelineKatalogosProcedure,
+		svc.Katalogos,
+		connect.WithSchema(celineMethods.ByName("Katalogos")),
 		connect.WithHandlerOptions(opts...),
 	)
-	celineServiceGetCurrentUserHandler := connect.NewUnaryHandler(
-		CelineServiceGetCurrentUserProcedure,
-		svc.GetCurrentUser,
-		connect.WithSchema(celineServiceMethods.ByName("GetCurrentUser")),
-		connect.WithHandlerOptions(opts...),
-	)
-	return "/celine.v1.CelineService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return "/celine.v1.Celine/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case CelineServiceChatProcedure:
-			celineServiceChatHandler.ServeHTTP(w, r)
-		case CelineServiceGetHistoryProcedure:
-			celineServiceGetHistoryHandler.ServeHTTP(w, r)
-		case CelineServiceListConversationsProcedure:
-			celineServiceListConversationsHandler.ServeHTTP(w, r)
-		case CelineServiceGetCurrentUserProcedure:
-			celineServiceGetCurrentUserHandler.ServeHTTP(w, r)
+		case CelineLaleoProcedure:
+			celineLaleoHandler.ServeHTTP(w, r)
+		case CelineAnamnesisProcedure:
+			celineAnamnesisHandler.ServeHTTP(w, r)
+		case CelineKatalogosProcedure:
+			celineKatalogosHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
 	})
 }
 
-// UnimplementedCelineServiceHandler returns CodeUnimplemented from all methods.
-type UnimplementedCelineServiceHandler struct{}
+// UnimplementedCelineHandler returns CodeUnimplemented from all methods.
+type UnimplementedCelineHandler struct{}
 
-func (UnimplementedCelineServiceHandler) Chat(context.Context, *connect.Request[v1.ChatRequest], *connect.ServerStream[v1.ChatEvent]) error {
-	return connect.NewError(connect.CodeUnimplemented, errors.New("celine.v1.CelineService.Chat is not implemented"))
+func (UnimplementedCelineHandler) Laleo(context.Context, *connect.Request[v1.LaleoRequest], *connect.ServerStream[v1.LaleoEvent]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("celine.v1.Celine.Laleo is not implemented"))
 }
 
-func (UnimplementedCelineServiceHandler) GetHistory(context.Context, *connect.Request[v1.GetHistoryRequest]) (*connect.Response[v1.GetHistoryResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("celine.v1.CelineService.GetHistory is not implemented"))
+func (UnimplementedCelineHandler) Anamnesis(context.Context, *connect.Request[v1.AnamnesisRequest]) (*connect.Response[v1.AnamnesisResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("celine.v1.Celine.Anamnesis is not implemented"))
 }
 
-func (UnimplementedCelineServiceHandler) ListConversations(context.Context, *connect.Request[v1.ListConversationsRequest]) (*connect.Response[v1.ListConversationsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("celine.v1.CelineService.ListConversations is not implemented"))
-}
-
-func (UnimplementedCelineServiceHandler) GetCurrentUser(context.Context, *connect.Request[v1.GetCurrentUserRequest]) (*connect.Response[v1.User], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("celine.v1.CelineService.GetCurrentUser is not implemented"))
+func (UnimplementedCelineHandler) Katalogos(context.Context, *connect.Request[v1.KatalogosRequest]) (*connect.Response[v1.KatalogosResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("celine.v1.Celine.Katalogos is not implemented"))
 }
