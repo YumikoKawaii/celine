@@ -47,9 +47,8 @@ type Scope interface {
 	Scope(q *gorm.DB) *gorm.DB
 }
 
-// KataSub, KataProsopon, and KataConversation are the primordial Scope
-// implementations — cover the common lookup patterns so consumers don't have
-// to rewrite basic WHERE clauses. Custom logic: implement Scope.
+// Primordial Scope implementations — cover the common lookup patterns.
+// Custom query logic (ordering, joins, etc.) belongs in the consumer package.
 
 type KataSub struct {
 	Sub string
@@ -65,14 +64,6 @@ type KataProsopon struct {
 
 func (f KataProsopon) Scope(q *gorm.DB) *gorm.DB {
 	return q.Where("prosopon_id = ?", f.ProsoponId)
-}
-
-type KataConversation struct {
-	ConversationId int64
-}
-
-func (f KataConversation) Scope(q *gorm.DB) *gorm.DB {
-	return q.Where("conversation_id = ?", f.ConversationId)
 }
 
 type KataMessage struct {

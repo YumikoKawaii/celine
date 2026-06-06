@@ -11,10 +11,11 @@ import (
 const DefaultTokenTTL = 72 * time.Hour
 
 // Claims is the payload of every server-issued JWT.
-// pid (prosopon ID) is included so handlers can skip a DB lookup on each RPC.
+// pid and cid are included so handlers can skip DB lookups on every RPC.
 type Claims struct {
 	jwt.RegisteredClaims
-	ProsoponId int64 `json:"pid"`
+	ProsoponId     int64 `json:"pid"`
+	ConversationId int64 `json:"cid"`
 }
 
 type Issuer struct {
@@ -26,8 +27,9 @@ func NewIssuer(secret string, ttl time.Duration) *Issuer {
 	return &Issuer{secret: []byte(secret), ttl: ttl}
 }
 
-// Issue signs a new JWT for the given sub and prosopon ID, valid for the configured TTL.
-func (i *Issuer) Issue(sub string, prosoponId int64) (string, error) {
+// Issue signs a new JWT for the given sub, prosopon ID, and conversation ID,
+// valid for the configured TTL.
+func (i *Issuer) Issue(sub string, prosoponId, convId int64) (string, error) {
 	now := time.Now()
 	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -35,7 +37,8 @@ func (i *Issuer) Issue(sub string, prosoponId int64) (string, error) {
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(i.ttl)),
 		},
-		ProsoponId: prosoponId,
+		ProsoponId:     prosoponId,
+		ConversationId: convId,
 	}
 	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return tok.SignedString(i.secret)

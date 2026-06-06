@@ -14,6 +14,7 @@ type contextKey string
 const (
 	subKey        contextKey = "sub"
 	prosoponIdKey contextKey = "prosopon_id"
+	convIdKey     contextKey = "conv_id"
 )
 
 // ContextWithSub stores only the sub — used for the dev-mode anon path where
@@ -22,10 +23,11 @@ func ContextWithSub(ctx context.Context, sub string) context.Context {
 	return context.WithValue(ctx, subKey, sub)
 }
 
-// contextWithClaims stores both sub and prosopon ID from a verified token.
+// contextWithClaims stores sub, prosopon ID, and conversation ID from a verified token.
 func contextWithClaims(ctx context.Context, c Claims) context.Context {
 	ctx = context.WithValue(ctx, subKey, c.Subject)
 	ctx = context.WithValue(ctx, prosoponIdKey, c.ProsoponId)
+	ctx = context.WithValue(ctx, convIdKey, c.ConversationId)
 	return ctx
 }
 
@@ -39,6 +41,13 @@ func SubFromContext(ctx context.Context) (string, bool) {
 // Returns (0, false) in dev-mode (anon) or when the token predates this field.
 func ProsoponIdFromContext(ctx context.Context) (int64, bool) {
 	id, ok := ctx.Value(prosoponIdKey).(int64)
+	return id, ok && id != 0
+}
+
+// ConversationIDFromContext retrieves the conversation ID set by the interceptor.
+// Returns (0, false) in dev-mode (anon) or when the token predates this field.
+func ConversationIDFromContext(ctx context.Context) (int64, bool) {
+	id, ok := ctx.Value(convIdKey).(int64)
 	return id, ok && id != 0
 }
 

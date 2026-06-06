@@ -2,7 +2,6 @@ package agent
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 
 	"github.com/YumikoKawaii/celine/basis/internal/arche"
@@ -10,43 +9,8 @@ import (
 	"github.com/YumikoKawaii/celine/basis/internal/mneme"
 )
 
-// celineProsoponId is the fixed DB id of Celine's own prosopon record (seeded in 001_init.sql).
-// Used to map message.ProsoponID back to "assistant" role when reconstructing history.
-const celineProsoponId int64 = 1
-
-// EventSink receives all events produced during a single Chat turn.
-type EventSink interface {
-	Typing(msHint int32) error
-	Bubble(seq int32, text string) error
-	ToolCall(id, name, inputJSON string) error
-	ToolResult(id, output string, isError bool) error
-}
-
-type brain interface {
-	StreamChat(ctx context.Context, system string, history []llm.Message, tools []llm.ToolDef, deltas chan<- string) (llm.Turn, error)
-}
-
-type prosopons interface {
-	Get(ctx context.Context, parameters mneme.Scope) (mneme.Prosopon, error)
-}
-
-type conversations interface {
-	GetOrCreate(ctx context.Context, filter mneme.KataProsopon) (*mneme.Conversation, error)
-}
-
-type messages interface {
-	Create(ctx context.Context, message *mneme.Message) error
-	List(ctx context.Context, parameters mneme.Scope, pagination *mneme.Pagination) ([]mneme.Message, error)
-}
-
-type queue interface {
-	Enqueue(ctx context.Context, topic string, message interface{}) error
-}
-
-type toolRunner interface {
-	Defs() []llm.ToolDef
-	Execute(ctx context.Context, name string, input json.RawMessage) (string, error)
-}
+// celineProsoponId aliases arche.CelineProsoponID for package-local readability.
+const celineProsoponId = arche.CelineProsoponID
 
 type Agent struct {
 	brain         brain
@@ -90,7 +54,7 @@ func (a *Agent) Chat(ctx context.Context, ownerSub string, userText string, sink
 	}
 	convID := conv.Id
 
-	stored, err := a.messages.List(ctx, mneme.KataConversation{ConversationId: convID}, nil)
+	stored, err := a.messages.List(ctx, historyMessages{convID: convID}, nil)
 	if err != nil {
 		return 0, err
 	}

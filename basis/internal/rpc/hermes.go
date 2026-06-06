@@ -12,11 +12,6 @@ import (
 	"github.com/YumikoKawaii/celine/basis/internal/mneme"
 )
 
-type prosoponStore interface {
-	Upsert(ctx context.Context, p *mneme.Prosopon) error
-	Get(ctx context.Context, parameters mneme.Scope) (mneme.Prosopon, error)
-}
-
 // google and issuer are kept as concrete types because they are optionally nil
 // in dev mode (no GOOGLE_CLIENT_ID set). Assigning a nil concrete pointer to an
 // interface produces a non-nil interface value that panics on method call — the
@@ -26,10 +21,11 @@ type Hermes struct {
 	google    *hermes.GoogleAuth
 	issuer    *hermes.Issuer
 	prosopons prosoponStore
+	convs     convReader
 }
 
-func NewHermes(g *hermes.GoogleAuth, issuer *hermes.Issuer, prosopons prosoponStore) *Hermes {
-	return &Hermes{google: g, issuer: issuer, prosopons: prosopons}
+func NewHermes(g *hermes.GoogleAuth, issuer *hermes.Issuer, prosopons prosoponStore, convs convReader) *Hermes {
+	return &Hermes{google: g, issuer: issuer, prosopons: prosopons, convs: convs}
 }
 
 func (s *Hermes) Eisodos(
@@ -62,7 +58,12 @@ func (s *Hermes) Metabole(
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	token, err := s.issuer.Issue(claims.Sub, p.Id)
+	conv, err := s.convs.GetOrCreate(ctx, mneme.KataProsopon{ProsoponId: p.Id})
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	token, err := s.issuer.Issue(claims.Sub, p.Id, conv.Id)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}

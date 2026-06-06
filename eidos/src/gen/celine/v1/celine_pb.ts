@@ -4,13 +4,15 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message as Message$1 } from "@bufbuild/protobuf";
 
 /**
  * Describes the file celine/v1/celine.proto.
  */
 export const file_celine_v1_celine: GenFile = /*@__PURE__*/
-  fileDesc("ChZjZWxpbmUvdjEvY2VsaW5lLnByb3RvEgljZWxpbmUudjEiEQoPUGFyb3VzaWFSZXF1ZXN0Iu4BCg1QYXJvdXNpYUV2ZW50EiMKBnR5cGluZxgBIAEoCzIRLmNlbGluZS52MS5UeXBpbmdIABIlCgdtZXNzYWdlGAIgASgLMhIuY2VsaW5lLnYxLk1lc3NhZ2VIABIoCgl0b29sX2NhbGwYAyABKAsyEy5jZWxpbmUudjEuVG9vbENhbGxIABIsCgt0b29sX3Jlc3VsdBgEIAEoCzIVLmNlbGluZS52MS5Ub29sUmVzdWx0SAASHwoEZG9uZRgFIAEoCzIPLmNlbGluZS52MS5Eb25lSAASDwoFZXJyb3IYBiABKAlIAEIHCgVldmVudCI1CgxQZW1wb1JlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEgwKBHRleHQYAiABKAkiDwoNUGVtcG9SZXNwb25zZSIZCgZUeXBpbmcSDwoHbXNfaGludBgBIAEoBSIkCgdNZXNzYWdlEgsKA3NlcRgBIAEoBRIMCgR0ZXh0GAIgASgJIjgKCFRvb2xDYWxsEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEgoKaW5wdXRfanNvbhgDIAEoCSI6CgpUb29sUmVzdWx0EgoKAmlkGAEgASgJEg4KBm91dHB1dBgCIAEoCRIQCghpc19lcnJvchgDIAEoCCIfCgREb25lEhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCSIrChBBbmFtbmVzaXNSZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCSI9ChFBbmFtbmVzaXNSZXNwb25zZRIoCghtZXNzYWdlcxgBIAMoCzIWLmNlbGluZS52MS5DaGF0TWVzc2FnZSJOCgtDaGF0TWVzc2FnZRIKCgJpZBgBIAEoCRIMCgRyb2xlGAIgASgJEgwKBHRleHQYAyABKAkSFwoPY3JlYXRlZF9hdF91bml4GAQgASgDIhIKEEthdGFsb2dvc1JlcXVlc3QiQwoRS2F0YWxvZ29zUmVzcG9uc2USLgoNY29udmVyc2F0aW9ucxgBIAMoCzIXLmNlbGluZS52MS5Db252ZXJzYXRpb24iMwoMQ29udmVyc2F0aW9uEgoKAmlkGAEgASgJEhcKD2NyZWF0ZWRfYXRfdW5peBgCIAEoAzKYAgoGQ2VsaW5lEkIKCFBhcm91c2lhEhouY2VsaW5lLnYxLlBhcm91c2lhUmVxdWVzdBoYLmNlbGluZS52MS5QYXJvdXNpYUV2ZW50MAESOgoFUGVtcG8SFy5jZWxpbmUudjEuUGVtcG9SZXF1ZXN0GhguY2VsaW5lLnYxLlBlbXBvUmVzcG9uc2USRgoJQW5hbW5lc2lzEhsuY2VsaW5lLnYxLkFuYW1uZXNpc1JlcXVlc3QaHC5jZWxpbmUudjEuQW5hbW5lc2lzUmVzcG9uc2USRgoJS2F0YWxvZ29zEhsuY2VsaW5lLnYxLkthdGFsb2dvc1JlcXVlc3QaHC5jZWxpbmUudjEuS2F0YWxvZ29zUmVzcG9uc2VCPVo7Z2l0aHViLmNvbS9ZdW1pa29LYXdhaWkvY2VsaW5lL2Jhc2lzL2dlbi9jZWxpbmUvdjE7Y2VsaW5ldjFiBnByb3RvMw");
+  fileDesc("ChZjZWxpbmUvdjEvY2VsaW5lLnByb3RvEgljZWxpbmUudjEiEQoPUGFyb3VzaWFSZXF1ZXN0Iu4BCg1QYXJvdXNpYUV2ZW50EiMKBnR5cGluZxgBIAEoCzIRLmNlbGluZS52MS5UeXBpbmdIABIlCgdtZXNzYWdlGAIgASgLMhIuY2VsaW5lLnYxLk1lc3NhZ2VIABIoCgl0b29sX2NhbGwYAyABKAsyEy5jZWxpbmUudjEuVG9vbENhbGxIABIsCgt0b29sX3Jlc3VsdBgEIAEoCzIVLmNlbGluZS52MS5Ub29sUmVzdWx0SAASHwoEZG9uZRgFIAEoCzIPLmNlbGluZS52MS5Eb25lSAASDwoFZXJyb3IYBiABKAlIAEIHCgVldmVudCIcCgxQZW1wb1JlcXVlc3QSDAoEdGV4dBgBIAEoCSIPCg1QZW1wb1Jlc3BvbnNlIhkKBlR5cGluZxIPCgdtc19oaW50GAEgASgFIiQKB01lc3NhZ2USCwoDc2VxGAEgASgFEgwKBHRleHQYAiABKAkiOAoIVG9vbENhbGwSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRISCgppbnB1dF9qc29uGAMgASgJIjoKClRvb2xSZXN1bHQSCgoCaWQYASABKAkSDgoGb3V0cHV0GAIgASgJEhAKCGlzX2Vycm9yGAMgASgIIh8KBERvbmUSFwoPY29udmVyc2F0aW9uX2lkGAEgASgDIhIKEEFuYW1uZXNpc1JlcXVlc3QiPQoRQW5hbW5lc2lzUmVzcG9uc2USKAoIbWVzc2FnZXMYASADKAsyFi5jZWxpbmUudjEuQ2hhdE1lc3NhZ2UibAoLQ2hhdE1lc3NhZ2USCgoCaWQYASABKAMSEwoLcHJvc29wb25faWQYAiABKAMSDAoEdGV4dBgDIAEoCRIuCgpjcmVhdGVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcDLQAQoGQ2VsaW5lEkIKCFBhcm91c2lhEhouY2VsaW5lLnYxLlBhcm91c2lhUmVxdWVzdBoYLmNlbGluZS52MS5QYXJvdXNpYUV2ZW50MAESOgoFUGVtcG8SFy5jZWxpbmUudjEuUGVtcG9SZXF1ZXN0GhguY2VsaW5lLnYxLlBlbXBvUmVzcG9uc2USRgoJQW5hbW5lc2lzEhsuY2VsaW5lLnYxLkFuYW1uZXNpc1JlcXVlc3QaHC5jZWxpbmUudjEuQW5hbW5lc2lzUmVzcG9uc2VCPVo7Z2l0aHViLmNvbS9ZdW1pa29LYXdhaWkvY2VsaW5lL2Jhc2lzL2dlbi9jZWxpbmUvdjE7Y2VsaW5ldjFiBnByb3RvMw", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message celine.v1.ParousiaRequest
@@ -83,12 +85,7 @@ export const ParousiaEventSchema: GenMessage<ParousiaEvent> = /*@__PURE__*/
  */
 export type PempoRequest = Message$1<"celine.v1.PempoRequest"> & {
   /**
-   * @generated from field: string conversation_id = 1;
-   */
-  conversationId: string;
-
-  /**
-   * @generated from field: string text = 2;
+   * @generated from field: string text = 1;
    */
   text: string;
 };
@@ -211,9 +208,9 @@ export const ToolResultSchema: GenMessage<ToolResult> = /*@__PURE__*/
  */
 export type Done = Message$1<"celine.v1.Done"> & {
   /**
-   * @generated from field: string conversation_id = 1;
+   * @generated from field: int64 conversation_id = 1;
    */
-  conversationId: string;
+  conversationId: bigint;
 };
 
 /**
@@ -227,10 +224,6 @@ export const DoneSchema: GenMessage<Done> = /*@__PURE__*/
  * @generated from message celine.v1.AnamnesisRequest
  */
 export type AnamnesisRequest = Message$1<"celine.v1.AnamnesisRequest"> & {
-  /**
-   * @generated from field: string conversation_id = 1;
-   */
-  conversationId: string;
 };
 
 /**
@@ -262,14 +255,14 @@ export const AnamnesisResponseSchema: GenMessage<AnamnesisResponse> = /*@__PURE_
  */
 export type ChatMessage = Message$1<"celine.v1.ChatMessage"> & {
   /**
-   * @generated from field: string id = 1;
+   * @generated from field: int64 id = 1;
    */
-  id: string;
+  id: bigint;
 
   /**
-   * @generated from field: string role = 2;
+   * @generated from field: int64 prosopon_id = 2;
    */
-  role: string;
+  prosoponId: bigint;
 
   /**
    * @generated from field: string text = 3;
@@ -277,9 +270,9 @@ export type ChatMessage = Message$1<"celine.v1.ChatMessage"> & {
   text: string;
 
   /**
-   * @generated from field: int64 created_at_unix = 4;
+   * @generated from field: google.protobuf.Timestamp created_at = 4;
    */
-  createdAtUnix: bigint;
+  createdAt?: Timestamp | undefined;
 };
 
 /**
@@ -288,58 +281,6 @@ export type ChatMessage = Message$1<"celine.v1.ChatMessage"> & {
  */
 export const ChatMessageSchema: GenMessage<ChatMessage> = /*@__PURE__*/
   messageDesc(file_celine_v1_celine, 11);
-
-/**
- * @generated from message celine.v1.KatalogosRequest
- */
-export type KatalogosRequest = Message$1<"celine.v1.KatalogosRequest"> & {
-};
-
-/**
- * Describes the message celine.v1.KatalogosRequest.
- * Use `create(KatalogosRequestSchema)` to create a new message.
- */
-export const KatalogosRequestSchema: GenMessage<KatalogosRequest> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 12);
-
-/**
- * @generated from message celine.v1.KatalogosResponse
- */
-export type KatalogosResponse = Message$1<"celine.v1.KatalogosResponse"> & {
-  /**
-   * @generated from field: repeated celine.v1.Conversation conversations = 1;
-   */
-  conversations: Conversation[];
-};
-
-/**
- * Describes the message celine.v1.KatalogosResponse.
- * Use `create(KatalogosResponseSchema)` to create a new message.
- */
-export const KatalogosResponseSchema: GenMessage<KatalogosResponse> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 13);
-
-/**
- * @generated from message celine.v1.Conversation
- */
-export type Conversation = Message$1<"celine.v1.Conversation"> & {
-  /**
-   * @generated from field: string id = 1;
-   */
-  id: string;
-
-  /**
-   * @generated from field: int64 created_at_unix = 2;
-   */
-  createdAtUnix: bigint;
-};
-
-/**
- * Describes the message celine.v1.Conversation.
- * Use `create(ConversationSchema)` to create a new message.
- */
-export const ConversationSchema: GenMessage<Conversation> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 14);
 
 /**
  * @generated from service celine.v1.Celine
@@ -374,14 +315,6 @@ export const Celine: GenService<{
     methodKind: "unary";
     input: typeof AnamnesisRequestSchema;
     output: typeof AnamnesisResponseSchema;
-  },
-  /**
-   * @generated from rpc celine.v1.Celine.Katalogos
-   */
-  katalogos: {
-    methodKind: "unary";
-    input: typeof KatalogosRequestSchema;
-    output: typeof KatalogosResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_celine_v1_celine, 0);

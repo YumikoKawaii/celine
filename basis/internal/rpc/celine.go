@@ -3,30 +3,26 @@ package rpc
 import (
 	"context"
 	"errors"
-	"strconv"
 	"time"
 
 	"connectrpc.com/connect"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	celinev1 "github.com/YumikoKawaii/celine/basis/gen/celine/v1"
 	"github.com/YumikoKawaii/celine/basis/gen/celine/v1/celinev1connect"
-	"github.com/YumikoKawaii/celine/basis/internal/agent"
 	"github.com/YumikoKawaii/celine/basis/internal/hermes"
 )
-
-type chatAgent interface {
-	Chat(ctx context.Context, ownerSub string, userText string, sink agent.EventSink) (int64, error)
-}
 
 type Celine struct {
 	celinev1connect.UnimplementedCelineHandler
 	agent    chatAgent
+	msgs     msgReader
 	sessions *sessionStore
 	debounce time.Duration
 }
 
-func NewCeline(a chatAgent, debounce time.Duration) *Celine {
-	return &Celine{agent: a, sessions: newSessionStore(), debounce: debounce}
+func NewCeline(a chatAgent, msgs msgReader, debounce time.Duration) *Celine {
+	return &Celine{agent: a, msgs: msgs, sessions: newSessionStore(), debounce: debounce}
 }
 
 func (s *Celine) Parousia(
@@ -72,6 +68,34 @@ func (s *Celine) Pempo(
 	return connect.NewResponse(&celinev1.PempoResponse{}), nil
 }
 
+// Anamnesis returns the messages in the user's conversation, oldest first.
+// The conversation ID comes from the JWT claim — no DB lookup or ownership check needed.
+func (s *Celine) Anamnesis(
+	ctx context.Context,
+	_ *connect.Request[celinev1.AnamnesisRequest],
+) (*connect.Response[celinev1.AnamnesisResponse], error) {
+	convID, ok := hermes.ConversationIDFromContext(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("not authenticated"))
+	}
+
+	msgs, err := s.msgs.List(ctx, anamnesisMessages{convID: convID}, nil)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	out := make([]*celinev1.ChatMessage, len(msgs))
+	for i, m := range msgs {
+		out[i] = &celinev1.ChatMessage{
+			Id:         m.Id,
+			ProsoponId: m.ProsoponId,
+			Text:       m.Content,
+			CreatedAt:  timestamppb.New(m.CreatedAt),
+		}
+	}
+	return connect.NewResponse(&celinev1.AnamnesisResponse{Messages: out}), nil
+}
+
 func (s *Celine) runFlush(sub string) {
 	sess, ok := s.sessions.get(sub)
 	if !ok {
@@ -92,9 +116,7 @@ func (s *Celine) runFlush(sub string) {
 		})
 	} else {
 		sink.send(&celinev1.ParousiaEvent{
-			Event: &celinev1.ParousiaEvent_Done{Done: &celinev1.Done{
-				ConversationId: strconv.FormatInt(id, 10),
-			}},
+			Event: &celinev1.ParousiaEvent_Done{Done: &celinev1.Done{ConversationId: id}},
 		})
 	}
 

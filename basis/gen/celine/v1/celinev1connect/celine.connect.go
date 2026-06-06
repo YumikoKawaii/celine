@@ -39,8 +39,6 @@ const (
 	CelinePempoProcedure = "/celine.v1.Celine/Pempo"
 	// CelineAnamnesisProcedure is the fully-qualified name of the Celine's Anamnesis RPC.
 	CelineAnamnesisProcedure = "/celine.v1.Celine/Anamnesis"
-	// CelineKatalogosProcedure is the fully-qualified name of the Celine's Katalogos RPC.
-	CelineKatalogosProcedure = "/celine.v1.Celine/Katalogos"
 )
 
 // CelineClient is a client for the celine.v1.Celine service.
@@ -52,7 +50,6 @@ type CelineClient interface {
 	// the actual reply arrives through the open Parousia stream.
 	Pempo(context.Context, *connect.Request[v1.PempoRequest]) (*connect.Response[v1.PempoResponse], error)
 	Anamnesis(context.Context, *connect.Request[v1.AnamnesisRequest]) (*connect.Response[v1.AnamnesisResponse], error)
-	Katalogos(context.Context, *connect.Request[v1.KatalogosRequest]) (*connect.Response[v1.KatalogosResponse], error)
 }
 
 // NewCelineClient constructs a client for the celine.v1.Celine service. By default, it uses the
@@ -84,12 +81,6 @@ func NewCelineClient(httpClient connect.HTTPClient, baseURL string, opts ...conn
 			connect.WithSchema(celineMethods.ByName("Anamnesis")),
 			connect.WithClientOptions(opts...),
 		),
-		katalogos: connect.NewClient[v1.KatalogosRequest, v1.KatalogosResponse](
-			httpClient,
-			baseURL+CelineKatalogosProcedure,
-			connect.WithSchema(celineMethods.ByName("Katalogos")),
-			connect.WithClientOptions(opts...),
-		),
 	}
 }
 
@@ -98,7 +89,6 @@ type celineClient struct {
 	parousia  *connect.Client[v1.ParousiaRequest, v1.ParousiaEvent]
 	pempo     *connect.Client[v1.PempoRequest, v1.PempoResponse]
 	anamnesis *connect.Client[v1.AnamnesisRequest, v1.AnamnesisResponse]
-	katalogos *connect.Client[v1.KatalogosRequest, v1.KatalogosResponse]
 }
 
 // Parousia calls celine.v1.Celine.Parousia.
@@ -116,11 +106,6 @@ func (c *celineClient) Anamnesis(ctx context.Context, req *connect.Request[v1.An
 	return c.anamnesis.CallUnary(ctx, req)
 }
 
-// Katalogos calls celine.v1.Celine.Katalogos.
-func (c *celineClient) Katalogos(ctx context.Context, req *connect.Request[v1.KatalogosRequest]) (*connect.Response[v1.KatalogosResponse], error) {
-	return c.katalogos.CallUnary(ctx, req)
-}
-
 // CelineHandler is an implementation of the celine.v1.Celine service.
 type CelineHandler interface {
 	// Persistent server-streaming connection opened on login.
@@ -130,7 +115,6 @@ type CelineHandler interface {
 	// the actual reply arrives through the open Parousia stream.
 	Pempo(context.Context, *connect.Request[v1.PempoRequest]) (*connect.Response[v1.PempoResponse], error)
 	Anamnesis(context.Context, *connect.Request[v1.AnamnesisRequest]) (*connect.Response[v1.AnamnesisResponse], error)
-	Katalogos(context.Context, *connect.Request[v1.KatalogosRequest]) (*connect.Response[v1.KatalogosResponse], error)
 }
 
 // NewCelineHandler builds an HTTP handler from the service implementation. It returns the path on
@@ -158,12 +142,6 @@ func NewCelineHandler(svc CelineHandler, opts ...connect.HandlerOption) (string,
 		connect.WithSchema(celineMethods.ByName("Anamnesis")),
 		connect.WithHandlerOptions(opts...),
 	)
-	celineKatalogosHandler := connect.NewUnaryHandler(
-		CelineKatalogosProcedure,
-		svc.Katalogos,
-		connect.WithSchema(celineMethods.ByName("Katalogos")),
-		connect.WithHandlerOptions(opts...),
-	)
 	return "/celine.v1.Celine/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case CelineParousiaProcedure:
@@ -172,8 +150,6 @@ func NewCelineHandler(svc CelineHandler, opts ...connect.HandlerOption) (string,
 			celinePempoHandler.ServeHTTP(w, r)
 		case CelineAnamnesisProcedure:
 			celineAnamnesisHandler.ServeHTTP(w, r)
-		case CelineKatalogosProcedure:
-			celineKatalogosHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -193,8 +169,4 @@ func (UnimplementedCelineHandler) Pempo(context.Context, *connect.Request[v1.Pem
 
 func (UnimplementedCelineHandler) Anamnesis(context.Context, *connect.Request[v1.AnamnesisRequest]) (*connect.Response[v1.AnamnesisResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("celine.v1.Celine.Anamnesis is not implemented"))
-}
-
-func (UnimplementedCelineHandler) Katalogos(context.Context, *connect.Request[v1.KatalogosRequest]) (*connect.Response[v1.KatalogosResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("celine.v1.Celine.Katalogos is not implemented"))
 }

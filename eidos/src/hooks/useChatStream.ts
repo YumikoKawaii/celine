@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { create } from "@bufbuild/protobuf";
 import { PempoRequestSchema } from "../gen/celine/v1/celine_pb";
 import { celine } from "../client";
@@ -15,7 +15,6 @@ export function useChatStream() {
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const [typing, setTyping] = useState(false);
   const [busy, setBusy] = useState(false);
-  const conversationId = useRef("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -39,7 +38,6 @@ export function useChatStream() {
               ]);
               break;
             case "done":
-              conversationId.current = e.value.conversationId;
               setBusy(false);
               break;
             case "error":
@@ -71,12 +69,7 @@ export function useChatStream() {
       setBubbles((b) => [...b, { id: nextId++, from: "user", text: trimmed }]);
 
       try {
-        await celine.pempo(
-          create(PempoRequestSchema, {
-            conversationId: conversationId.current,
-            text: trimmed,
-          }),
-        );
+        await celine.pempo(create(PempoRequestSchema, { text: trimmed }));
       } catch (err) {
         setBubbles((b) => [
           ...b,

@@ -9,6 +9,7 @@ package celinev1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -204,11 +205,10 @@ func (*ParousiaEvent_Done) isParousiaEvent_Event() {}
 func (*ParousiaEvent_Error) isParousiaEvent_Event() {}
 
 type PempoRequest struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	ConversationId string                 `protobuf:"bytes,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
-	Text           string                 `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PempoRequest) Reset() {
@@ -239,13 +239,6 @@ func (x *PempoRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use PempoRequest.ProtoReflect.Descriptor instead.
 func (*PempoRequest) Descriptor() ([]byte, []int) {
 	return file_celine_v1_celine_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *PempoRequest) GetConversationId() string {
-	if x != nil {
-		return x.ConversationId
-	}
-	return ""
 }
 
 func (x *PempoRequest) GetText() string {
@@ -509,7 +502,7 @@ func (x *ToolResult) GetIsError() bool {
 
 type Done struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
-	ConversationId string                 `protobuf:"bytes,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
+	ConversationId int64                  `protobuf:"varint,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -544,18 +537,17 @@ func (*Done) Descriptor() ([]byte, []int) {
 	return file_celine_v1_celine_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *Done) GetConversationId() string {
+func (x *Done) GetConversationId() int64 {
 	if x != nil {
 		return x.ConversationId
 	}
-	return ""
+	return 0
 }
 
 type AnamnesisRequest struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	ConversationId string                 `protobuf:"bytes,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AnamnesisRequest) Reset() {
@@ -586,13 +578,6 @@ func (x *AnamnesisRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use AnamnesisRequest.ProtoReflect.Descriptor instead.
 func (*AnamnesisRequest) Descriptor() ([]byte, []int) {
 	return file_celine_v1_celine_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *AnamnesisRequest) GetConversationId() string {
-	if x != nil {
-		return x.ConversationId
-	}
-	return ""
 }
 
 type AnamnesisResponse struct {
@@ -641,10 +626,10 @@ func (x *AnamnesisResponse) GetMessages() []*ChatMessage {
 
 type ChatMessage struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Role          string                 `protobuf:"bytes,2,opt,name=role,proto3" json:"role,omitempty"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ProsoponId    int64                  `protobuf:"varint,2,opt,name=prosopon_id,json=prosoponId,proto3" json:"prosopon_id,omitempty"`
 	Text          string                 `protobuf:"bytes,3,opt,name=text,proto3" json:"text,omitempty"`
-	CreatedAtUnix int64                  `protobuf:"varint,4,opt,name=created_at_unix,json=createdAtUnix,proto3" json:"created_at_unix,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -679,18 +664,18 @@ func (*ChatMessage) Descriptor() ([]byte, []int) {
 	return file_celine_v1_celine_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *ChatMessage) GetId() string {
+func (x *ChatMessage) GetId() int64 {
 	if x != nil {
 		return x.Id
 	}
-	return ""
+	return 0
 }
 
-func (x *ChatMessage) GetRole() string {
+func (x *ChatMessage) GetProsoponId() int64 {
 	if x != nil {
-		return x.Role
+		return x.ProsoponId
 	}
-	return ""
+	return 0
 }
 
 func (x *ChatMessage) GetText() string {
@@ -700,150 +685,18 @@ func (x *ChatMessage) GetText() string {
 	return ""
 }
 
-func (x *ChatMessage) GetCreatedAtUnix() int64 {
+func (x *ChatMessage) GetCreatedAt() *timestamppb.Timestamp {
 	if x != nil {
-		return x.CreatedAtUnix
-	}
-	return 0
-}
-
-type KatalogosRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *KatalogosRequest) Reset() {
-	*x = KatalogosRequest{}
-	mi := &file_celine_v1_celine_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *KatalogosRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*KatalogosRequest) ProtoMessage() {}
-
-func (x *KatalogosRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_celine_v1_celine_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use KatalogosRequest.ProtoReflect.Descriptor instead.
-func (*KatalogosRequest) Descriptor() ([]byte, []int) {
-	return file_celine_v1_celine_proto_rawDescGZIP(), []int{12}
-}
-
-type KatalogosResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Conversations []*Conversation        `protobuf:"bytes,1,rep,name=conversations,proto3" json:"conversations,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *KatalogosResponse) Reset() {
-	*x = KatalogosResponse{}
-	mi := &file_celine_v1_celine_proto_msgTypes[13]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *KatalogosResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*KatalogosResponse) ProtoMessage() {}
-
-func (x *KatalogosResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_celine_v1_celine_proto_msgTypes[13]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use KatalogosResponse.ProtoReflect.Descriptor instead.
-func (*KatalogosResponse) Descriptor() ([]byte, []int) {
-	return file_celine_v1_celine_proto_rawDescGZIP(), []int{13}
-}
-
-func (x *KatalogosResponse) GetConversations() []*Conversation {
-	if x != nil {
-		return x.Conversations
+		return x.CreatedAt
 	}
 	return nil
-}
-
-type Conversation struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	CreatedAtUnix int64                  `protobuf:"varint,2,opt,name=created_at_unix,json=createdAtUnix,proto3" json:"created_at_unix,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Conversation) Reset() {
-	*x = Conversation{}
-	mi := &file_celine_v1_celine_proto_msgTypes[14]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Conversation) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Conversation) ProtoMessage() {}
-
-func (x *Conversation) ProtoReflect() protoreflect.Message {
-	mi := &file_celine_v1_celine_proto_msgTypes[14]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Conversation.ProtoReflect.Descriptor instead.
-func (*Conversation) Descriptor() ([]byte, []int) {
-	return file_celine_v1_celine_proto_rawDescGZIP(), []int{14}
-}
-
-func (x *Conversation) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *Conversation) GetCreatedAtUnix() int64 {
-	if x != nil {
-		return x.CreatedAtUnix
-	}
-	return 0
 }
 
 var File_celine_v1_celine_proto protoreflect.FileDescriptor
 
 const file_celine_v1_celine_proto_rawDesc = "" +
 	"\n" +
-	"\x16celine/v1/celine.proto\x12\tceline.v1\"\x11\n" +
+	"\x16celine/v1/celine.proto\x12\tceline.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x11\n" +
 	"\x0fParousiaRequest\"\xa2\x02\n" +
 	"\rParousiaEvent\x12+\n" +
 	"\x06typing\x18\x01 \x01(\v2\x11.celine.v1.TypingH\x00R\x06typing\x12.\n" +
@@ -853,10 +706,9 @@ const file_celine_v1_celine_proto_rawDesc = "" +
 	"toolResult\x12%\n" +
 	"\x04done\x18\x05 \x01(\v2\x0f.celine.v1.DoneH\x00R\x04done\x12\x16\n" +
 	"\x05error\x18\x06 \x01(\tH\x00R\x05errorB\a\n" +
-	"\x05event\"K\n" +
-	"\fPempoRequest\x12'\n" +
-	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\x12\x12\n" +
-	"\x04text\x18\x02 \x01(\tR\x04text\"\x0f\n" +
+	"\x05event\"\"\n" +
+	"\fPempoRequest\x12\x12\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text\"\x0f\n" +
 	"\rPempoResponse\"!\n" +
 	"\x06Typing\x12\x17\n" +
 	"\ams_hint\x18\x01 \x01(\x05R\x06msHint\"/\n" +
@@ -874,27 +726,21 @@ const file_celine_v1_celine_proto_rawDesc = "" +
 	"\x06output\x18\x02 \x01(\tR\x06output\x12\x19\n" +
 	"\bis_error\x18\x03 \x01(\bR\aisError\"/\n" +
 	"\x04Done\x12'\n" +
-	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\";\n" +
-	"\x10AnamnesisRequest\x12'\n" +
-	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\"G\n" +
+	"\x0fconversation_id\x18\x01 \x01(\x03R\x0econversationId\"\x12\n" +
+	"\x10AnamnesisRequest\"G\n" +
 	"\x11AnamnesisResponse\x122\n" +
-	"\bmessages\x18\x01 \x03(\v2\x16.celine.v1.ChatMessageR\bmessages\"m\n" +
+	"\bmessages\x18\x01 \x03(\v2\x16.celine.v1.ChatMessageR\bmessages\"\x8d\x01\n" +
 	"\vChatMessage\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04role\x18\x02 \x01(\tR\x04role\x12\x12\n" +
-	"\x04text\x18\x03 \x01(\tR\x04text\x12&\n" +
-	"\x0fcreated_at_unix\x18\x04 \x01(\x03R\rcreatedAtUnix\"\x12\n" +
-	"\x10KatalogosRequest\"R\n" +
-	"\x11KatalogosResponse\x12=\n" +
-	"\rconversations\x18\x01 \x03(\v2\x17.celine.v1.ConversationR\rconversations\"F\n" +
-	"\fConversation\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12&\n" +
-	"\x0fcreated_at_unix\x18\x02 \x01(\x03R\rcreatedAtUnix2\x98\x02\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1f\n" +
+	"\vprosopon_id\x18\x02 \x01(\x03R\n" +
+	"prosoponId\x12\x12\n" +
+	"\x04text\x18\x03 \x01(\tR\x04text\x129\n" +
+	"\n" +
+	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt2\xd0\x01\n" +
 	"\x06Celine\x12B\n" +
 	"\bParousia\x12\x1a.celine.v1.ParousiaRequest\x1a\x18.celine.v1.ParousiaEvent0\x01\x12:\n" +
 	"\x05Pempo\x12\x17.celine.v1.PempoRequest\x1a\x18.celine.v1.PempoResponse\x12F\n" +
-	"\tAnamnesis\x12\x1b.celine.v1.AnamnesisRequest\x1a\x1c.celine.v1.AnamnesisResponse\x12F\n" +
-	"\tKatalogos\x12\x1b.celine.v1.KatalogosRequest\x1a\x1c.celine.v1.KatalogosResponseB=Z;github.com/YumikoKawaii/celine/basis/gen/celine/v1;celinev1b\x06proto3"
+	"\tAnamnesis\x12\x1b.celine.v1.AnamnesisRequest\x1a\x1c.celine.v1.AnamnesisResponseB=Z;github.com/YumikoKawaii/celine/basis/gen/celine/v1;celinev1b\x06proto3"
 
 var (
 	file_celine_v1_celine_proto_rawDescOnce sync.Once
@@ -908,23 +754,21 @@ func file_celine_v1_celine_proto_rawDescGZIP() []byte {
 	return file_celine_v1_celine_proto_rawDescData
 }
 
-var file_celine_v1_celine_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_celine_v1_celine_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_celine_v1_celine_proto_goTypes = []any{
-	(*ParousiaRequest)(nil),   // 0: celine.v1.ParousiaRequest
-	(*ParousiaEvent)(nil),     // 1: celine.v1.ParousiaEvent
-	(*PempoRequest)(nil),      // 2: celine.v1.PempoRequest
-	(*PempoResponse)(nil),     // 3: celine.v1.PempoResponse
-	(*Typing)(nil),            // 4: celine.v1.Typing
-	(*Message)(nil),           // 5: celine.v1.Message
-	(*ToolCall)(nil),          // 6: celine.v1.ToolCall
-	(*ToolResult)(nil),        // 7: celine.v1.ToolResult
-	(*Done)(nil),              // 8: celine.v1.Done
-	(*AnamnesisRequest)(nil),  // 9: celine.v1.AnamnesisRequest
-	(*AnamnesisResponse)(nil), // 10: celine.v1.AnamnesisResponse
-	(*ChatMessage)(nil),       // 11: celine.v1.ChatMessage
-	(*KatalogosRequest)(nil),  // 12: celine.v1.KatalogosRequest
-	(*KatalogosResponse)(nil), // 13: celine.v1.KatalogosResponse
-	(*Conversation)(nil),      // 14: celine.v1.Conversation
+	(*ParousiaRequest)(nil),       // 0: celine.v1.ParousiaRequest
+	(*ParousiaEvent)(nil),         // 1: celine.v1.ParousiaEvent
+	(*PempoRequest)(nil),          // 2: celine.v1.PempoRequest
+	(*PempoResponse)(nil),         // 3: celine.v1.PempoResponse
+	(*Typing)(nil),                // 4: celine.v1.Typing
+	(*Message)(nil),               // 5: celine.v1.Message
+	(*ToolCall)(nil),              // 6: celine.v1.ToolCall
+	(*ToolResult)(nil),            // 7: celine.v1.ToolResult
+	(*Done)(nil),                  // 8: celine.v1.Done
+	(*AnamnesisRequest)(nil),      // 9: celine.v1.AnamnesisRequest
+	(*AnamnesisResponse)(nil),     // 10: celine.v1.AnamnesisResponse
+	(*ChatMessage)(nil),           // 11: celine.v1.ChatMessage
+	(*timestamppb.Timestamp)(nil), // 12: google.protobuf.Timestamp
 }
 var file_celine_v1_celine_proto_depIdxs = []int32{
 	4,  // 0: celine.v1.ParousiaEvent.typing:type_name -> celine.v1.Typing
@@ -933,17 +777,15 @@ var file_celine_v1_celine_proto_depIdxs = []int32{
 	7,  // 3: celine.v1.ParousiaEvent.tool_result:type_name -> celine.v1.ToolResult
 	8,  // 4: celine.v1.ParousiaEvent.done:type_name -> celine.v1.Done
 	11, // 5: celine.v1.AnamnesisResponse.messages:type_name -> celine.v1.ChatMessage
-	14, // 6: celine.v1.KatalogosResponse.conversations:type_name -> celine.v1.Conversation
+	12, // 6: celine.v1.ChatMessage.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 7: celine.v1.Celine.Parousia:input_type -> celine.v1.ParousiaRequest
 	2,  // 8: celine.v1.Celine.Pempo:input_type -> celine.v1.PempoRequest
 	9,  // 9: celine.v1.Celine.Anamnesis:input_type -> celine.v1.AnamnesisRequest
-	12, // 10: celine.v1.Celine.Katalogos:input_type -> celine.v1.KatalogosRequest
-	1,  // 11: celine.v1.Celine.Parousia:output_type -> celine.v1.ParousiaEvent
-	3,  // 12: celine.v1.Celine.Pempo:output_type -> celine.v1.PempoResponse
-	10, // 13: celine.v1.Celine.Anamnesis:output_type -> celine.v1.AnamnesisResponse
-	13, // 14: celine.v1.Celine.Katalogos:output_type -> celine.v1.KatalogosResponse
-	11, // [11:15] is the sub-list for method output_type
-	7,  // [7:11] is the sub-list for method input_type
+	1,  // 10: celine.v1.Celine.Parousia:output_type -> celine.v1.ParousiaEvent
+	3,  // 11: celine.v1.Celine.Pempo:output_type -> celine.v1.PempoResponse
+	10, // 12: celine.v1.Celine.Anamnesis:output_type -> celine.v1.AnamnesisResponse
+	10, // [10:13] is the sub-list for method output_type
+	7,  // [7:10] is the sub-list for method input_type
 	7,  // [7:7] is the sub-list for extension type_name
 	7,  // [7:7] is the sub-list for extension extendee
 	0,  // [0:7] is the sub-list for field type_name
@@ -968,7 +810,7 @@ func file_celine_v1_celine_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_celine_v1_celine_proto_rawDesc), len(file_celine_v1_celine_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   15,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

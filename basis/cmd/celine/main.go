@@ -59,6 +59,7 @@ func main() {
 	brain := llm.New(cfg.AnthropicKey, cfg.Model, cfg.MaxTokens)
 	celineSvc := rpc.NewCeline(
 		agent.New(brain, agent.SystemPrompt(), store.Prosopons(), store.Conversations(), store.Messages(), tx, tools),
+		store.Messages(),
 		cfg.DebounceDuration,
 	)
 
@@ -68,7 +69,7 @@ func main() {
 		googleAuth = hermes.NewGoogleAuth(cfg.GoogleClientID, cfg.GoogleSecret)
 		issuer = hermes.NewIssuer(cfg.JWTSecret, cfg.TokenTTL)
 	}
-	hermesSvc := rpc.NewHermes(googleAuth, issuer, store.Prosopons())
+	hermesSvc := rpc.NewHermes(googleAuth, issuer, store.Prosopons(), store.Conversations())
 
 	mux := http.NewServeMux()
 	celinePath, celineHandler := celinev1connect.NewCelineHandler(celineSvc, opts)
