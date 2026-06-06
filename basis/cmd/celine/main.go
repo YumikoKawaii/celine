@@ -39,7 +39,7 @@ func main() {
 	rdb := mneme.NewRedis(cfg.RedisAddr)
 	defer rdb.Close()
 
-	uow := mneme.New(db, rdb)
+	store := mneme.NewStore(db, rdb)
 
 	var verifier *hermes.Verifier
 	if cfg.JWTSecret != "" {
@@ -53,7 +53,7 @@ func main() {
 
 	brain := llm.New(cfg.AnthropicKey, cfg.Model)
 	celineSvc := rpc.NewCelineService(
-		agent.New(brain, agent.SystemPrompt(), uow.Store().Conversations, uow.Store().Messages, tools),
+		agent.New(brain, agent.SystemPrompt(), store.Conversations(), store.Messages(), tools),
 	)
 
 	var googleAuth *hermes.GoogleAuth
@@ -62,7 +62,7 @@ func main() {
 		googleAuth = hermes.NewGoogleAuth(cfg.GoogleClientID, cfg.GoogleSecret)
 		issuer = hermes.NewIssuer(cfg.JWTSecret)
 	}
-	hermesSvc := rpc.NewHermesService(googleAuth, issuer, uow.Store().Clients)
+	hermesSvc := rpc.NewHermesService(googleAuth, issuer, store.Clients())
 
 	mux := http.NewServeMux()
 	celinePath, celineHandler := celinev1connect.NewCelineHandler(celineSvc, opts)

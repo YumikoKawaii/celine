@@ -7,54 +7,28 @@ import (
 	"gorm.io/gorm"
 )
 
-// Store exposes every repository bound to one GORM session — either the base
-// connection (returned by UnitOfWork.Store) or a transaction (passed into Do).
-// Fields are concrete types; consumers define their own narrow interfaces and
-// receive these by value, satisfied implicitly by Go's structural typing.
+// Store is the top-level persistence entry point.
+// For single-repo operations call the accessor methods directly.
+// For multi-repo atomic operations use Tx.
 type Store struct {
-	Clients       *ClientRepo
-	Conversations *ConversationRepo
-	Messages      *MessageRepo
-	MemoryIndex   *MemoryIndexRepo
+	db  *gorm.DB
+	rdb *redis.Client
 }
 
-func newStore(db *gorm.DB, rdb *redis.Client) *Store {
-	return &Store{
-		Clients:       &ClientRepo{db: db},
-		Conversations: &ConversationRepo{db: db},
-		Messages:      &MessageRepo{db: db, rdb: rdb},
-		MemoryIndex:   &MemoryIndexRepo{db: db},
-	}
+func NewStore(db *gorm.DB, rdb *redis.Client) *Store {
+	return &Store{db: db, rdb: rdb}
 }
 
-// UnitOfWork hands out repositories either directly (Store, base connection)
-// or atomically within a transaction (Do).
-type UnitOfWork interface {
-	// Store returns repositories bound to the base connection — no transaction.
-	// Use for reads and single-table writes that don't need atomicity.
-	Store() *Store
-	// Do runs fn inside a transaction, committing on nil and rolling back on
-	// error or panic. Nested Do calls use savepoints automatically.
-	// Keep side-effects that must not be undone (Redis writes, post-commit reads)
-	// AFTER Do returns nil.
-	Do(ctx context.Context, fn func(s *Store) error) error
-}
+func (s *Store) Clients() *ClientRepo          { return &ClientRepo{db: s.db} }
+func (s *Store) Conversations() *ConversationRepo { return &ConversationRepo{db: s.db} }
+func (s *Store) Messages() *MessageRepo        { return &MessageRepo{db: s.db, rdb: s.rdb} }
+func (s *Store) MemoryIndex() *MemoryIndexRepo { return &MemoryIndexRepo{db: s.db} }
 
-type unitOfWork struct {
-	db    *gorm.DB
-	rdb   *redis.Client
-	store *Store
-}
-
-// New returns a UnitOfWork backed by db and rdb.
-func New(db *gorm.DB, rdb *redis.Client) UnitOfWork {
-	return &unitOfWork{db: db, rdb: rdb, store: newStore(db, rdb)}
-}
-
-func (u *unitOfWork) Store() *Store { return u.store }
-
-func (u *unitOfWork) Do(ctx context.Context, fn func(s *Store) error) error {
-	return u.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		return fn(newStore(tx, u.rdb))
+// Tx runs fn inside a DB transaction, passing a tx-scoped *Store.
+// Commits on nil return, rolls back on error or panic.
+// Nested Tx calls use savepoints automatically (GORM behaviour).
+func (s *Store) Tx(ctx context.Context, fn func(*Store) error) error {
+	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		return fn(&Store{db: tx, rdb: s.rdb})
 	})
 }
