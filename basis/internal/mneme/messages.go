@@ -14,19 +14,26 @@ func (r *Messages) Create(ctx context.Context, message *Message) error {
 	return r.db.WithContext(ctx).Create(message).Error
 }
 
-func (r *Messages) List(ctx context.Context, parameters MessageParameters) ([]Message, error) {
+func (r *Messages) Get(ctx context.Context, scope Scope) (Message, error) {
+	m := Message{}
+	query := r.db.WithContext(ctx).Model(&Message{})
+	if scope != nil {
+		query = scope.Scope(query)
+	}
+	err := query.First(&m).Error
+	return m, err
+}
+
+func (r *Messages) List(ctx context.Context, scope Scope, pagination *Pagination) ([]Message, error) {
 	var msgs []Message
 	query := r.db.WithContext(ctx).Model(&Message{})
-	query = query.Where("conversation_id = ?", parameters.ConversationID)
-	if parameters.Pagination != nil {
-		query = query.Limit(parameters.Pagination.PageSize).Offset(parameters.Pagination.Offset())
+	if scope != nil {
+		query = scope.Scope(query)
+	}
+	if pagination != nil {
+		query = query.Limit(pagination.PageSize).Offset(pagination.Offset())
 	}
 
 	err := query.Find(&msgs).Error
 	return msgs, err
-}
-
-type MessageParameters struct {
-	ConversationID int64
-	Pagination     *Pagination
 }

@@ -8,16 +8,16 @@ import (
 	"gorm.io/gorm"
 )
 
-// vector(384) is not a native GORM type — writes use raw SQL with a ::vector cast.
 type Memories struct {
 	db *gorm.DB
 }
 
+// Insert vector(384) is not a native GORM type — writes use raw SQL with a ::vector cast.
 func (r *Memories) Insert(ctx context.Context, memory Memory, embedding []float32) error {
 	return r.db.WithContext(ctx).Exec(
 		"insert into memories (message_id, embedding) "+
 			"VALUES (?, ?::vector) ON CONFLICT (message_id) DO NOTHING",
-		memory.MessageID, vecLiteral(embedding),
+		memory.MessageId, vecLiteral(embedding),
 	).Error
 }
 

@@ -3,10 +3,12 @@ package mneme
 import (
 	"encoding/json"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type Prosopon struct {
-	ID          int64           `gorm:"primaryKey;column:id"`
+	Id          int64           `gorm:"primaryKey;column:id"`
 	Sub         string          `gorm:"uniqueIndex;column:sub"`
 	Email       string          `gorm:"column:email"`
 	DisplayName string          `gorm:"column:display_name"`
@@ -18,15 +20,15 @@ type Prosopon struct {
 }
 
 type Conversation struct {
-	ID         int64     `gorm:"primaryKey;column:id"`
-	ProsoponID int64     `gorm:"column:prosopon_id"`
+	Id         int64     `gorm:"primaryKey;column:id"`
+	ProsoponId int64     `gorm:"column:prosopon_id"`
 	CreatedAt  time.Time `gorm:"column:created_at"`
 }
 
 type Message struct {
-	ID             int64     `gorm:"primaryKey;column:id"`
-	ConversationID int64     `gorm:"column:conversation_id"`
-	ProsoponID     int64     `gorm:"column:prosopon_id"`
+	Id             int64     `gorm:"primaryKey;column:id"`
+	ConversationId int64     `gorm:"column:conversation_id"`
+	ProsoponId     int64     `gorm:"column:prosopon_id"`
 	Content        string    `gorm:"column:content"`
 	CreatedAt      time.Time `gorm:"column:created_at"`
 }
@@ -34,12 +36,52 @@ type Message struct {
 // Memory — embedding column is vector(384), not mapped to a Go type.
 // All writes go through raw SQL in MemoryRepo.
 type Memory struct {
-	ID        int64     `gorm:"primaryKey;column:id"`
-	MessageID int64     `gorm:"column:message_id"`
+	Id        int64     `gorm:"primaryKey;column:id"`
+	MessageId int64     `gorm:"column:message_id"`
 	CreatedAt time.Time `gorm:"column:created_at"`
 }
 
 func (Memory) TableName() string { return "memories" }
+
+type Scope interface {
+	Scope(q *gorm.DB) *gorm.DB
+}
+
+// KataSub, KataProsopon, and KataConversation are the primordial Scope
+// implementations — cover the common lookup patterns so consumers don't have
+// to rewrite basic WHERE clauses. Custom logic: implement Scope.
+
+type KataSub struct {
+	Sub string
+}
+
+func (f KataSub) Scope(q *gorm.DB) *gorm.DB {
+	return q.Where("sub = ?", f.Sub)
+}
+
+type KataProsopon struct {
+	ProsoponId int64
+}
+
+func (f KataProsopon) Scope(q *gorm.DB) *gorm.DB {
+	return q.Where("prosopon_id = ?", f.ProsoponId)
+}
+
+type KataConversation struct {
+	ConversationId int64
+}
+
+func (f KataConversation) Scope(q *gorm.DB) *gorm.DB {
+	return q.Where("conversation_id = ?", f.ConversationId)
+}
+
+type KataMessage struct {
+	Id int64
+}
+
+func (f KataMessage) Scope(q *gorm.DB) *gorm.DB {
+	return q.Where("id = ?", f.Id)
+}
 
 type Pagination struct {
 	Page     int

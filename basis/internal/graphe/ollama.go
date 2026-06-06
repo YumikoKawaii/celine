@@ -10,13 +10,8 @@ import (
 
 const (
 	defaultOllamaURL = "http://localhost:11434"
-	ollamaModel      = "snowflake-arctic-embed:xs"
+	model            = "snowflake-arctic-embed:xs"
 )
-
-// Embedder produces a vector for a text string.
-type Embedder interface {
-	Embed(ctx context.Context, text string) ([]float32, error)
-}
 
 // OllamaClient calls a local Ollama server for embeddings.
 // Model: snowflake-arctic-embed:xs (384-dim, optimised for short text).
@@ -34,7 +29,7 @@ func NewOllamaClient(baseURL string) *OllamaClient {
 
 func (c *OllamaClient) Embed(ctx context.Context, text string) ([]float32, error) {
 	body, err := json.Marshal(map[string]any{
-		"model": ollamaModel,
+		"model": model,
 		"input": text,
 	})
 	if err != nil {

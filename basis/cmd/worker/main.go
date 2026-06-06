@@ -11,6 +11,7 @@ import (
 	"github.com/YumikoKawaii/celine/basis/internal/config"
 	"github.com/YumikoKawaii/celine/basis/internal/graphe"
 	"github.com/YumikoKawaii/celine/basis/internal/mneme"
+	"github.com/YumikoKawaii/celine/basis/internal/taxis"
 )
 
 func main() {
@@ -32,22 +33,24 @@ func main() {
 	defer rdb.Close()
 
 	store := mneme.NewMneme(db)
+	tx := taxis.New(rdb)
 	embedder := graphe.NewOllamaClient(cfg.OllamaURL)
-	w := graphe.NewWorker(rdb, embedder, store.Memories())
+	w := graphe.NewWorker(rdb, embedder, store.Messages(), store.Memories(), tx)
 
 	// §12.3: 1–2 concurrent workers caps concurrent embed calls and in-flight memory.
 	const numWorkers = 2
-	done := make(chan struct{}, numWorkers)
+	done := make(chan error, numWorkers)
 	for range numWorkers {
 		go func() {
-			defer func() { done <- struct{}{} }()
-			w.Run(ctx)
+			done <- w.Run(ctx)
 		}()
 	}
 
 	<-ctx.Done()
 	log.Println("graphe: shutting down, draining workers...")
 	for range numWorkers {
-		<-done
+		if err := <-done; err != nil {
+			log.Printf("graphe: worker error: %v", err)
+		}
 	}
 }

@@ -27,14 +27,14 @@ type ToolDef struct {
 
 // ToolUse is one tool_use block from an assistant response.
 type ToolUse struct {
-	ID    string
+	Id    string
 	Name  string
 	Input json.RawMessage
 }
 
 // ToolResult is one tool_result block to feed back to Claude.
 type ToolResult struct {
-	ID      string
+	Id      string
 	Output  string
 	IsError bool
 }
@@ -133,7 +133,7 @@ func (c *Client) StreamChat(
 		for _, block := range acc.Content {
 			if block.Type == "tool_use" {
 				turn.Uses = append(turn.Uses, ToolUse{
-					ID:    block.ID,
+					Id:    block.ID,
 					Name:  block.Name,
 					Input: block.Input,
 				})
@@ -149,7 +149,7 @@ func toParam(m Message) anthropic.MessageParam {
 	if len(m.ToolResults) > 0 {
 		blocks := make([]anthropic.ContentBlockParamUnion, len(m.ToolResults))
 		for i, r := range m.ToolResults {
-			blocks[i] = anthropic.NewToolResultBlock(r.ID, r.Output, r.IsError)
+			blocks[i] = anthropic.NewToolResultBlock(r.Id, r.Output, r.IsError)
 		}
 		return anthropic.NewUserMessage(blocks...)
 	}
@@ -162,7 +162,7 @@ func toParam(m Message) anthropic.MessageParam {
 		for _, u := range m.ToolUses {
 			var input any
 			_ = json.Unmarshal(u.Input, &input)
-			blocks = append(blocks, anthropic.NewToolUseBlock(u.ID, input, u.Name))
+			blocks = append(blocks, anthropic.NewToolUseBlock(u.Id, input, u.Name))
 		}
 		return anthropic.NewAssistantMessage(blocks...)
 	}

@@ -5,14 +5,14 @@ import (
 	"encoding/json"
 	"log"
 
+	"github.com/YumikoKawaii/celine/basis/internal/arche"
 	"github.com/YumikoKawaii/celine/basis/internal/llm"
 	"github.com/YumikoKawaii/celine/basis/internal/mneme"
-	"github.com/YumikoKawaii/celine/basis/internal/taxis"
 )
 
-// celineProsoponID is the fixed DB id of Celine's own prosopon record (seeded in 001_init.sql).
+// celineProsoponId is the fixed DB id of Celine's own prosopon record (seeded in 001_init.sql).
 // Used to map message.ProsoponID back to "assistant" role when reconstructing history.
-const celineProsoponID int64 = 1
+const celineProsoponId int64 = 1
 
 // EventSink receives all events produced during a single Chat turn.
 type EventSink interface {
@@ -27,16 +27,16 @@ type brain interface {
 }
 
 type prosopons interface {
-	Get(ctx context.Context, filter mneme.ProsoponFilter) (mneme.Prosopon, error)
+	Get(ctx context.Context, parameters mneme.Scope) (mneme.Prosopon, error)
 }
 
 type conversations interface {
-	GetOrCreate(ctx context.Context, prosoponId int64) (*mneme.Conversation, error)
+	GetOrCreate(ctx context.Context, filter mneme.KataProsopon) (*mneme.Conversation, error)
 }
 
 type messages interface {
 	Create(ctx context.Context, message *mneme.Message) error
-	List(ctx context.Context, parameters mneme.MessageParameters) ([]mneme.Message, error)
+	List(ctx context.Context, parameters mneme.Scope, pagination *mneme.Pagination) ([]mneme.Message, error)
 }
 
 type queue interface {
@@ -79,36 +79,36 @@ func New(
 }
 
 func (a *Agent) Chat(ctx context.Context, ownerSub string, userText string, sink EventSink) (int64, error) {
-	p, err := a.prosopons.Get(ctx, mneme.ProsoponFilter{Sub: ownerSub})
+	p, err := a.prosopons.Get(ctx, mneme.KataSub{Sub: ownerSub})
 	if err != nil {
 		return 0, err
 	}
 
-	conv, err := a.conversations.GetOrCreate(ctx, p.ID)
+	conv, err := a.conversations.GetOrCreate(ctx, mneme.KataProsopon{ProsoponId: p.Id})
 	if err != nil {
 		return 0, err
 	}
-	convID := conv.ID
+	convID := conv.Id
 
-	stored, err := a.messages.List(ctx, mneme.MessageParameters{ConversationID: convID})
+	stored, err := a.messages.List(ctx, mneme.KataConversation{ConversationId: convID}, nil)
 	if err != nil {
 		return 0, err
 	}
 	hist := make([]llm.Message, 0, len(stored)+1)
 	for _, m := range stored {
 		role := "user"
-		if m.ProsoponID == celineProsoponID {
+		if m.ProsoponId == celineProsoponId {
 			role = "assistant"
 		}
 		hist = append(hist, llm.Message{Role: role, Text: m.Content})
 	}
 	hist = append(hist, llm.Message{Role: "user", Text: userText})
 
-	userMsg := &mneme.Message{ConversationID: convID, ProsoponID: p.ID, Content: userText}
+	userMsg := &mneme.Message{ConversationId: convID, ProsoponId: p.Id, Content: userText}
 	if err := a.messages.Create(ctx, userMsg); err != nil {
 		return convID, err
 	}
-	a.enqueue(ctx, userMsg.ID, userText)
+	a.enqueue(ctx, userMsg.Id)
 
 	// countingSink remaps each per-segment bubble seq to a global turn-level
 	// seq so indices stay unique across multiple StreamChat iterations.
@@ -149,17 +149,17 @@ func (a *Agent) Chat(ctx context.Context, ownerSub string, userText string, sink
 
 		toolResults := make([]llm.ToolResult, 0, len(res.turn.Uses))
 		for _, use := range res.turn.Uses {
-			_ = sink.ToolCall(use.ID, use.Name, string(use.Input))
+			_ = sink.ToolCall(use.Id, use.Name, string(use.Input))
 
 			output, execErr := a.tools.Execute(ctx, use.Name, use.Input)
 			isErr := execErr != nil
 			if isErr {
 				output = execErr.Error()
 			}
-			_ = sink.ToolResult(use.ID, output, isErr)
+			_ = sink.ToolResult(use.Id, output, isErr)
 
 			toolResults = append(toolResults, llm.ToolResult{
-				ID:      use.ID,
+				Id:      use.Id,
 				Output:  output,
 				IsError: isErr,
 			})
@@ -168,20 +168,17 @@ func (a *Agent) Chat(ctx context.Context, ownerSub string, userText string, sink
 		hist = append(hist, llm.Message{Role: "user", ToolResults: toolResults})
 	}
 
-	asstMsg := &mneme.Message{ConversationID: convID, ProsoponID: celineProsoponID, Content: finalText}
+	asstMsg := &mneme.Message{ConversationId: convID, ProsoponId: celineProsoponId, Content: finalText}
 	if err := a.messages.Create(ctx, asstMsg); err != nil {
 		return convID, err
 	}
-	a.enqueue(ctx, asstMsg.ID, finalText)
+	a.enqueue(ctx, asstMsg.Id)
 
 	return convID, nil
 }
 
-func (a *Agent) enqueue(ctx context.Context, msgID int64, content string) {
-	if err := a.queue.Enqueue(ctx, taxis.IndexQueue, taxis.IndexJob{
-		MessageID: msgID,
-		Content:   content,
-	}); err != nil {
+func (a *Agent) enqueue(ctx context.Context, msgID int64) {
+	if err := a.queue.Enqueue(ctx, arche.GrapheQueue, msgID); err != nil {
 		log.Printf("agent: enqueue %d: %v", msgID, err)
 	}
 }

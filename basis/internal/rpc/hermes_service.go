@@ -14,7 +14,7 @@ import (
 
 type prosoponStore interface {
 	Upsert(ctx context.Context, p *mneme.Prosopon) error
-	Get(ctx context.Context, filter mneme.ProsoponFilter) (mneme.Prosopon, error)
+	Get(ctx context.Context, parameters mneme.Scope) (mneme.Prosopon, error)
 }
 
 // google and issuer are kept as concrete types because they are optionally nil
@@ -87,7 +87,7 @@ func (s *HermesService) Gnorizo(
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("not authenticated"))
 	}
 
-	p, err := s.prosopons.Get(ctx, mneme.ProsoponFilter{Sub: sub})
+	p, err := s.prosopons.Get(ctx, mneme.KataSub{Sub: sub})
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}

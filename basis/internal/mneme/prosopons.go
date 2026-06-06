@@ -21,15 +21,15 @@ func (r *Prosopons) Upsert(ctx context.Context, c *Prosopon) error {
 		Create(c).Error
 }
 
-func (r *Prosopons) Get(ctx context.Context, filter ProsoponFilter) (Prosopon, error) {
+func (r *Prosopons) Get(ctx context.Context, scope Scope) (Prosopon, error) {
 	var c Prosopon
-	err := r.db.WithContext(ctx).Where("sub = ?", filter.Sub).First(&c).Error
+	query := r.db.WithContext(ctx).Model(&Prosopon{})
+	if scope != nil {
+		query = scope.Scope(query)
+	}
+	err := query.First(&c).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return Prosopon{}, err
 	}
 	return c, err
-}
-
-type ProsoponFilter struct {
-	Sub string
 }
