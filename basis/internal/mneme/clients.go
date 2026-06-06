@@ -2,45 +2,38 @@ package mneme
 
 import (
 	"context"
+	"errors"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
-type Client struct {
-	Sub         string
-	Email       string
-	DisplayName string
-	AvatarURL   string
+// ClientRepo provides persistence operations for the clients table.
+type ClientRepo struct {
+	db *gorm.DB
 }
 
-type ClientStore struct {
-	db *pgxpool.Pool
+// Upsert inserts a new client or updates email, display_name, and avatar_url
+// on conflict with an existing sub.
+func (r *ClientRepo) Upsert(ctx context.Context, c Client) error {
+	return r.db.WithContext(ctx).
+		Clauses(clause.OnConflict{
+			Columns: []clause.Column{{Name: "sub"}},
+			// Only update mutable profile fields; never overwrite memory_md or persona_note.
+			DoUpdates: clause.AssignmentColumns([]string{
+				"email", "display_name", "avatar_url", "updated_at",
+			}),
+		}).
+		Create(&c).Error
 }
 
-func NewClientStore(db *pgxpool.Pool) *ClientStore {
-	return &ClientStore{db: db}
-}
-
-func (s *ClientStore) Upsert(ctx context.Context, c Client) error {
-	_, err := s.db.Exec(ctx,
-		`INSERT INTO clients (sub, email, display_name, avatar_url)
-		 VALUES ($1, $2, $3, $4)
-		 ON CONFLICT (sub) DO UPDATE SET
-		   email        = excluded.email,
-		   display_name = excluded.display_name,
-		   avatar_url   = excluded.avatar_url,
-		   updated_at   = now()`,
-		c.Sub, c.Email, c.DisplayName, c.AvatarURL,
-	)
-	return err
-}
-
-func (s *ClientStore) Get(ctx context.Context, sub string) (Client, error) {
+// Get returns the client with the given sub.
+// Returns gorm.ErrRecordNotFound (wrapped) if the sub does not exist.
+func (r *ClientRepo) Get(ctx context.Context, sub string) (Client, error) {
 	var c Client
-	err := s.db.QueryRow(ctx,
-		`SELECT sub, email, display_name, coalesce(avatar_url, '')
-		 FROM clients WHERE sub = $1`,
-		sub,
-	).Scan(&c.Sub, &c.Email, &c.DisplayName, &c.AvatarURL)
+	err := r.db.WithContext(ctx).Where("sub = ?", sub).First(&c).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return Client{}, err
+	}
 	return c, err
 }

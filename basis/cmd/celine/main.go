@@ -30,14 +30,16 @@ func main() {
 		log.Fatalf("config: %v", err)
 	}
 
-	db, err := mneme.NewPool(ctx, cfg.DBDsn)
+	db, err := mneme.NewDB(cfg.DBDsn)
 	if err != nil {
 		log.Fatalf("db: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = mneme.CloseDB(db) }()
 
 	rdb := mneme.NewRedis(cfg.RedisAddr)
 	defer rdb.Close()
+
+	store := mneme.NewStore(db, rdb)
 
 	var verifier *hermes.Verifier
 	if cfg.JWTSecret != "" {
@@ -50,9 +52,9 @@ func main() {
 	tools.Register(ergon.NewWebSearch(cfg.BraveAPIKey))
 
 	brain := llm.New(cfg.AnthropicKey, cfg.Model)
-	convs := mneme.NewConversationStore(db)
-	msgs := mneme.NewMessageStore(db, rdb)
-	celineSvc := rpc.NewCelineService(agent.New(brain, agent.SystemPrompt(), convs, msgs, tools))
+	celineSvc := rpc.NewCelineService(
+		agent.New(brain, agent.SystemPrompt(), store.Conversations(), store.Messages(), tools),
+	)
 
 	var googleAuth *hermes.GoogleAuth
 	var issuer *hermes.Issuer
@@ -60,7 +62,7 @@ func main() {
 		googleAuth = hermes.NewGoogleAuth(cfg.GoogleClientID, cfg.GoogleSecret)
 		issuer = hermes.NewIssuer(cfg.JWTSecret)
 	}
-	hermesSvc := rpc.NewHermesService(googleAuth, issuer, mneme.NewClientStore(db))
+	hermesSvc := rpc.NewHermesService(googleAuth, issuer, store.Clients())
 
 	mux := http.NewServeMux()
 	celinePath, celineHandler := celinev1connect.NewCelineHandler(celineSvc, opts)
@@ -72,6 +74,12 @@ func main() {
 		Addr:    cfg.Addr,
 		Handler: h2c.NewHandler(devCORS(mux), &http2.Server{}),
 	}
+
+	// Shut down gracefully when the signal context is cancelled.
+	go func() {
+		<-ctx.Done()
+		_ = srv.Shutdown(context.Background())
+	}()
 
 	log.Printf("celine backend listening on %s", cfg.Addr)
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {

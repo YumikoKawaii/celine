@@ -12,7 +12,7 @@ import (
 	"github.com/YumikoKawaii/celine/basis/internal/mneme"
 )
 
-// clientStore is the subset of mneme.ClientStore this handler needs.
+// clientStore is the subset of mneme.ClientRepo this handler needs.
 type clientStore interface {
 	Upsert(ctx context.Context, c mneme.Client) error
 	Get(ctx context.Context, sub string) (mneme.Client, error)
@@ -58,12 +58,9 @@ func (s *HermesService) Metabole(
 		return nil, connect.NewError(connect.CodeUnauthenticated, err)
 	}
 
-	if err := s.clients.Upsert(ctx, mneme.Client{
-		Sub:         claims.Sub,
-		Email:       claims.Email,
-		DisplayName: claims.Name,
-		AvatarURL:   claims.Picture,
-	}); err != nil {
+	if err := s.clients.Upsert(ctx, mneme.NewClient(
+		claims.Sub, claims.Email, claims.Name, claims.Picture,
+	)); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
@@ -97,12 +94,16 @@ func (s *HermesService) Gnorizo(
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
+	avatarURL := ""
+	if client.AvatarURL != nil {
+		avatarURL = *client.AvatarURL
+	}
 	return connect.NewResponse(&celinev1.GnorizoResponse{
 		User: &celinev1.User{
 			Sub:         client.Sub,
 			Email:       client.Email,
 			DisplayName: client.DisplayName,
-			AvatarUrl:   client.AvatarURL,
+			AvatarUrl:   avatarURL,
 		},
 	}), nil
 }

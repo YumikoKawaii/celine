@@ -20,17 +20,18 @@ func main() {
 		log.Fatalf("config: %v", err)
 	}
 
-	db, err := mneme.NewPool(ctx, cfg.DBDsn)
+	db, err := mneme.NewDB(cfg.DBDsn)
 	if err != nil {
 		log.Fatalf("db: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = mneme.CloseDB(db) }()
 
 	rdb := mneme.NewRedis(cfg.RedisAddr)
 	defer rdb.Close()
 
+	store := mneme.NewStore(db, rdb)
 	embedder := graphe.NewOllamaClient(cfg.OllamaURL)
-	w := graphe.NewWorker(db, rdb, embedder)
+	w := graphe.NewWorker(rdb, embedder, store.MemoryIndex())
 
 	// §12.3: 1–2 concurrent workers caps concurrent embed calls and in-flight memory.
 	const numWorkers = 2

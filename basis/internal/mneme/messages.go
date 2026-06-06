@@ -4,20 +4,12 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
 )
 
-type Message struct {
-	ID             string
-	ConversationID string
-	Role           string // "user" | "assistant"
-	Content        string
-	CreatedAtUnix  int64
-}
-
-// IndexJob is the payload pushed onto IndexQueue by the server and consumed
-// by the graphe worker.
+// IndexJob is the payload pushed onto IndexQueue by the RPC server and
+// consumed by the graphe worker for async embedding.
 type IndexJob struct {
 	MessageID string `json:"message_id"`
 	OwnerSub  string `json:"owner_sub"`
@@ -25,57 +17,37 @@ type IndexJob struct {
 	Content   string `json:"content"`
 }
 
-type MessageStore struct {
-	db  *pgxpool.Pool
+// MessageRepo provides persistence operations for the messages table.
+// rdb is used for the async embedding queue; it is not part of any DB transaction.
+type MessageRepo struct {
+	db  *gorm.DB
 	rdb *redis.Client
 }
 
-func NewMessageStore(db *pgxpool.Pool, rdb *redis.Client) *MessageStore {
-	return &MessageStore{db: db, rdb: rdb}
+// Save persists a message and returns its generated ID.
+func (r *MessageRepo) Save(ctx context.Context, convID, role, content string) (string, error) {
+	m := Message{ID: newID("msg"), ConversationID: convID, Role: role, Content: content}
+	return m.ID, r.db.WithContext(ctx).Create(&m).Error
 }
 
-// Save persists the message and returns its generated ID.
-func (s *MessageStore) Save(ctx context.Context, convID, role, content string) (string, error) {
-	id := newID("msg")
-	_, err := s.db.Exec(ctx,
-		`INSERT INTO messages (id, conversation_id, role, content) VALUES ($1, $2, $3, $4)`,
-		id, convID, role, content,
-	)
-	return id, err
+// GetHistory returns stored messages for convID in ascending chronological order.
+// Ownership is verified via a JOIN on conversations so a client cannot read
+// another owner's history by guessing IDs.
+func (r *MessageRepo) GetHistory(ctx context.Context, convID, ownerSub string) ([]Message, error) {
+	var msgs []Message
+	err := r.db.WithContext(ctx).
+		Joins("JOIN conversations ON conversations.id = messages.conversation_id").
+		Where("messages.conversation_id = ? AND conversations.owner_sub = ?", convID, ownerSub).
+		Order("messages.created_at ASC").
+		Find(&msgs).Error
+	return msgs, err
 }
 
-// Enqueue pushes an index job onto the Redis queue for the graphe worker.
-func (s *MessageStore) Enqueue(ctx context.Context, job IndexJob) error {
+// Enqueue pushes an index job onto the Redis queue for the graphe worker (§12).
+func (r *MessageRepo) Enqueue(ctx context.Context, job IndexJob) error {
 	b, err := json.Marshal(job)
 	if err != nil {
 		return err
 	}
-	return s.rdb.LPush(ctx, IndexQueue, b).Err()
-}
-
-// GetHistory returns messages for convID in ascending order, verifying ownership via JOIN.
-func (s *MessageStore) GetHistory(ctx context.Context, convID, ownerSub string) ([]Message, error) {
-	rows, err := s.db.Query(ctx,
-		`SELECT m.id, m.role, m.content, extract(epoch from m.created_at)::bigint
-		 FROM messages m
-		 JOIN conversations c ON c.id = m.conversation_id
-		 WHERE m.conversation_id = $1 AND c.owner_sub = $2
-		 ORDER BY m.created_at ASC`,
-		convID, ownerSub,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var out []Message
-	for rows.Next() {
-		var m Message
-		m.ConversationID = convID
-		if err := rows.Scan(&m.ID, &m.Role, &m.Content, &m.CreatedAtUnix); err != nil {
-			return nil, err
-		}
-		out = append(out, m)
-	}
-	return out, rows.Err()
+	return r.rdb.LPush(ctx, IndexQueue, b).Err()
 }

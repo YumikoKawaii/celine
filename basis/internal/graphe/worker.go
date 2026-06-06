@@ -5,27 +5,32 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"strconv"
-	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 
 	"github.com/YumikoKawaii/celine/basis/internal/mneme"
 )
 
+// memoryIndexer is the subset of mneme.MemoryIndexRepo this worker needs.
+// Defined here (consumer package) per the project's interface convention.
+type memoryIndexer interface {
+	Insert(ctx context.Context, job mneme.IndexJob, embedding []float32) error
+}
+
+// Worker consumes index jobs from the Redis queue, embeds each message,
+// and writes the resulting vector into memory_index (§12).
 type Worker struct {
-	db       *pgxpool.Pool
 	rdb      *redis.Client
 	embedder Embedder
+	indexer  memoryIndexer
 }
 
-func NewWorker(db *pgxpool.Pool, rdb *redis.Client, embedder Embedder) *Worker {
-	return &Worker{db: db, rdb: rdb, embedder: embedder}
+func NewWorker(rdb *redis.Client, embedder Embedder, indexer memoryIndexer) *Worker {
+	return &Worker{rdb: rdb, embedder: embedder, indexer: indexer}
 }
 
-// Run blocks, consuming jobs from the index queue until ctx is cancelled.
+// Run blocks, consuming jobs until ctx is cancelled.
 func (w *Worker) Run(ctx context.Context) {
 	log.Println("graphe: worker started")
 	for {
@@ -39,7 +44,7 @@ func (w *Worker) Run(ctx context.Context) {
 		// BRPOP with a short timeout so we can check ctx.Done() regularly.
 		res, err := w.rdb.BRPop(ctx, 5*time.Second, mneme.IndexQueue).Result()
 		if err == redis.Nil {
-			continue // timeout, no jobs
+			continue // timeout — no jobs, loop and recheck context
 		}
 		if err != nil {
 			if ctx.Err() != nil {
@@ -67,26 +72,5 @@ func (w *Worker) process(ctx context.Context, job mneme.IndexJob) error {
 	if err != nil {
 		return fmt.Errorf("embed: %w", err)
 	}
-
-	_, err = w.db.Exec(ctx,
-		`INSERT INTO memory_index (owner_sub, message_id, role, content, embedding)
-		 VALUES ($1, $2, $3, $4, $5::vector)
-		 ON CONFLICT (message_id) DO NOTHING`,
-		job.OwnerSub, job.MessageID, job.Role, job.Content, vecLiteral(vec),
-	)
-	return err
-}
-
-// vecLiteral formats a float32 slice as a Postgres vector literal: '[x,y,...]'
-func vecLiteral(v []float32) string {
-	var b strings.Builder
-	b.WriteByte('[')
-	for i, f := range v {
-		if i > 0 {
-			b.WriteByte(',')
-		}
-		b.WriteString(strconv.FormatFloat(float64(f), 'f', -1, 32))
-	}
-	b.WriteByte(']')
-	return b.String()
+	return w.indexer.Insert(ctx, job, vec)
 }
