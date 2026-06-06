@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -14,6 +15,7 @@ type Server struct {
 	RedisAddr      string // CELINE_REDIS_ADDR, required
 	AnthropicKey   string // ANTHROPIC_API_KEY, required
 	Model          string // CELINE_MODEL, optional (defaults inside llm package)
+	MaxTokens      int64  // CELINE_MAX_TOKENS, optional (default 8192)
 	JWTSecret      string        // CELINE_JWT_SECRET, optional — empty = dev mode, no auth enforced
 	TokenTTL       time.Duration // CELINE_TOKEN_TTL, default 72h; parsed as Go duration string
 	GoogleClientID string // GOOGLE_CLIENT_ID, optional — empty = Google OAuth disabled
@@ -33,12 +35,17 @@ func LoadServer() (Server, error) {
 	if err != nil {
 		return Server{}, err
 	}
+	maxTokens, err := parseInt64("CELINE_MAX_TOKENS", 0)
+	if err != nil {
+		return Server{}, err
+	}
 	c := Server{
 		Addr:           getenv("CELINE_ADDR", ":8080"),
 		DBDsn:          os.Getenv("CELINE_DB_DSN"),
 		RedisAddr:      os.Getenv("CELINE_REDIS_ADDR"),
 		AnthropicKey:   os.Getenv("ANTHROPIC_API_KEY"),
 		Model:          os.Getenv("CELINE_MODEL"),
+		MaxTokens:      maxTokens,
 		JWTSecret:      os.Getenv("CELINE_JWT_SECRET"),
 		TokenTTL:       ttl,
 		GoogleClientID: os.Getenv("GOOGLE_CLIENT_ID"),
@@ -107,4 +114,16 @@ func parseDuration(key string, fallback time.Duration) (time.Duration, error) {
 		return 0, fmt.Errorf("invalid %s %q: %w", key, v, err)
 	}
 	return d, nil
+}
+
+func parseInt64(key string, fallback int64) (int64, error) {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback, nil
+	}
+	n, err := strconv.ParseInt(v, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("invalid %s %q: %w", key, v, err)
+	}
+	return n, nil
 }

@@ -51,15 +51,19 @@ type Client struct {
 	maxTokens int64
 }
 
-func New(apiKey, model string) *Client {
-	m := anthropic.Model(model)
+const DefaultMaxTokens int64 = 8192
+
+func New(apiKey, model string, maxTokens int64) *Client {
 	if model == "" {
-		m = anthropic.ModelClaudeOpus4_8
+		model = anthropic.ModelClaudeSonnet4_6
+	}
+	if maxTokens <= 0 {
+		maxTokens = DefaultMaxTokens
 	}
 	return &Client{
 		api:       anthropic.NewClient(option.WithAPIKey(apiKey)),
-		model:     m,
-		maxTokens: 2048,
+		model:     model,
+		maxTokens: maxTokens,
 	}
 }
 

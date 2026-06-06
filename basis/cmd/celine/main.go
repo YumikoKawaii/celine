@@ -54,7 +54,7 @@ func main() {
 	tools := ergon.NewRegistry()
 	tools.Register(ergon.NewWebSearch(cfg.BraveAPIKey))
 
-	brain := llm.New(cfg.AnthropicKey, cfg.Model)
+	brain := llm.New(cfg.AnthropicKey, cfg.Model, cfg.MaxTokens)
 	celineSvc := rpc.NewCeline(
 		agent.New(brain, agent.SystemPrompt(), store.Prosopons(), store.Conversations(), store.Messages(), tx, tools),
 	)
