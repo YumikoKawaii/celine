@@ -21,18 +21,18 @@ type prosoponStore interface {
 // in dev mode (no GOOGLE_CLIENT_ID set). Assigning a nil concrete pointer to an
 // interface produces a non-nil interface value that panics on method call — the
 // nil concrete pointer is the safe, checkable form here.
-type HermesService struct {
+type Hermes struct {
 	celinev1connect.UnimplementedHermesHandler
 	google    *hermes.GoogleAuth
 	issuer    *hermes.Issuer
 	prosopons prosoponStore
 }
 
-func NewHermesService(g *hermes.GoogleAuth, issuer *hermes.Issuer, prosopons prosoponStore) *HermesService {
-	return &HermesService{google: g, issuer: issuer, prosopons: prosopons}
+func NewHermes(g *hermes.GoogleAuth, issuer *hermes.Issuer, prosopons prosoponStore) *Hermes {
+	return &Hermes{google: g, issuer: issuer, prosopons: prosopons}
 }
 
-func (s *HermesService) Eisodos(
+func (s *Hermes) Eisodos(
 	_ context.Context,
 	_ *connect.Request[celinev1.EisodosRequest],
 ) (*connect.Response[celinev1.EisodosResponse], error) {
@@ -44,7 +44,7 @@ func (s *HermesService) Eisodos(
 	return connect.NewResponse(&celinev1.EisodosResponse{Url: url, State: state}), nil
 }
 
-func (s *HermesService) Metabole(
+func (s *Hermes) Metabole(
 	ctx context.Context,
 	req *connect.Request[celinev1.MetaboleRequest],
 ) (*connect.Response[celinev1.MetaboleResponse], error) {
@@ -78,7 +78,7 @@ func (s *HermesService) Metabole(
 	}), nil
 }
 
-func (s *HermesService) Gnorizo(
+func (s *Hermes) Gnorizo(
 	ctx context.Context,
 	_ *connect.Request[celinev1.GnorizoRequest],
 ) (*connect.Response[celinev1.GnorizoResponse], error) {
@@ -106,7 +106,7 @@ func (s *HermesService) Gnorizo(
 	}), nil
 }
 
-func (s *HermesService) Exodos(
+func (s *Hermes) Exodos(
 	_ context.Context,
 	_ *connect.Request[celinev1.ExodosRequest],
 ) (*connect.Response[celinev1.ExodosResponse], error) {

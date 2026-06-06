@@ -55,7 +55,7 @@ func main() {
 	tools.Register(ergon.NewWebSearch(cfg.BraveAPIKey))
 
 	brain := llm.New(cfg.AnthropicKey, cfg.Model)
-	celineSvc := rpc.NewCelineService(
+	celineSvc := rpc.NewCeline(
 		agent.New(brain, agent.SystemPrompt(), store.Prosopons(), store.Conversations(), store.Messages(), tx, tools),
 	)
 
@@ -65,7 +65,7 @@ func main() {
 		googleAuth = hermes.NewGoogleAuth(cfg.GoogleClientID, cfg.GoogleSecret)
 		issuer = hermes.NewIssuer(cfg.JWTSecret)
 	}
-	hermesSvc := rpc.NewHermesService(googleAuth, issuer, store.Prosopons())
+	hermesSvc := rpc.NewHermes(googleAuth, issuer, store.Prosopons())
 
 	mux := http.NewServeMux()
 	celinePath, celineHandler := celinev1connect.NewCelineHandler(celineSvc, opts)
@@ -75,7 +75,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    cfg.Addr,
-		Handler: h2c.NewHandler(devCORS(mux), &http2.Server{}),
+		Handler: h2c.NewHandler(mux, &http2.Server{}),
 	}
 
 	// Shut down gracefully when the signal context is cancelled.
@@ -88,24 +88,4 @@ func main() {
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatal(err)
 	}
-}
-
-func devCORS(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if origin := r.Header.Get("Origin"); origin != "" {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Vary", "Origin")
-		}
-		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers",
-			"Content-Type, Connect-Protocol-Version, Connect-Timeout-Ms, X-User-Agent, X-Grpc-Web, Authorization")
-		w.Header().Set("Access-Control-Expose-Headers",
-			"Grpc-Status, Grpc-Message, Grpc-Status-Details-Bin")
-		w.Header().Set("Access-Control-Max-Age", "7200")
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-		h.ServeHTTP(w, r)
-	})
 }

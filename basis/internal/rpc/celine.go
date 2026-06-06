@@ -16,16 +16,16 @@ type chatAgent interface {
 	Chat(ctx context.Context, ownerSub string, userText string, sink agent.EventSink) (int64, error)
 }
 
-type CelineService struct {
+type Celine struct {
 	celinev1connect.UnimplementedCelineHandler
 	agent chatAgent
 }
 
-func NewCelineService(a chatAgent) *CelineService {
-	return &CelineService{agent: a}
+func NewCeline(a chatAgent) *Celine {
+	return &Celine{agent: a}
 }
 
-func (s *CelineService) Laleo(
+func (s *Celine) Laleo(
 	ctx context.Context,
 	req *connect.Request[celinev1.LaleoRequest],
 	stream *connect.ServerStream[celinev1.LaleoEvent],
