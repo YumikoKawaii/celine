@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 const braveSearchURL = "https://api.search.brave.com/res/v1/web/search"
@@ -15,11 +16,14 @@ const braveSearchURL = "https://api.search.brave.com/res/v1/web/search"
 // as a numbered plaintext list for Claude to reason over.
 type WebSearch struct {
 	apiKey string
-	http   *http.Client
+	client *http.Client
 }
 
 func NewWebSearch(apiKey string) *WebSearch {
-	return &WebSearch{apiKey: apiKey, http: &http.Client{}}
+	return &WebSearch{
+		apiKey: apiKey,
+		client: &http.Client{Timeout: 10 * time.Second},
+	}
 }
 
 func (w *WebSearch) Name() string { return "web_search" }
@@ -63,7 +67,7 @@ func (w *WebSearch) Execute(ctx context.Context, input json.RawMessage) (string,
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("X-Subscription-Token", w.apiKey)
 
-	resp, err := w.http.Do(req)
+	resp, err := w.client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("web_search: request: %w", err)
 	}
