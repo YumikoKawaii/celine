@@ -7,9 +7,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// Store is the top-level persistence entry point.
-// For single-repo operations call the accessor methods directly.
-// For multi-repo atomic operations use Tx.
 type Store struct {
 	db  *gorm.DB
 	rdb *redis.Client
@@ -24,9 +21,8 @@ func (s *Store) Conversations() *ConversationRepo { return &ConversationRepo{db:
 func (s *Store) Messages() *MessageRepo        { return &MessageRepo{db: s.db, rdb: s.rdb} }
 func (s *Store) MemoryIndex() *MemoryIndexRepo { return &MemoryIndexRepo{db: s.db} }
 
-// Tx runs fn inside a DB transaction, passing a tx-scoped *Store.
-// Commits on nil return, rolls back on error or panic.
-// Nested Tx calls use savepoints automatically (GORM behaviour).
+// Tx runs fn inside a DB transaction. Commits on nil, rolls back on error or panic.
+// Nested calls use savepoints automatically.
 func (s *Store) Tx(ctx context.Context, fn func(*Store) error) error {
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		return fn(&Store{db: tx, rdb: s.rdb})
