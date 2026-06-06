@@ -10,9 +10,9 @@ type Client struct {
 	Sub         string    `gorm:"primaryKey"`
 	Email       string    `gorm:"not null"`
 	DisplayName string    `gorm:"not null;default:''"`
-	AvatarURL   *string   // nullable
-	MemoryMD    *string   // nullable — curated profile injected into the cached system prefix (§13)
-	PersonaNote *string   // nullable — admin annotation, never shown to the client
+	AvatarURL   *string `gorm:"column:avatar_url"`   // nullable
+	MemoryMD    *string `gorm:"column:memory_md"`    // nullable — curated profile injected into the cached system prefix (§13)
+	PersonaNote *string `gorm:"column:persona_note"` // nullable — admin annotation, never shown to the client
 	CreatedAt   time.Time `gorm:"autoCreateTime"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
 }
