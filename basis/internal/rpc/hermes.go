@@ -62,7 +62,7 @@ func (s *Hermes) Metabole(
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	token, err := s.issuer.Issue(claims.Sub)
+	token, err := s.issuer.Issue(claims.Sub, p.Id)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}

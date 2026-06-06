@@ -63,7 +63,7 @@ func main() {
 	var issuer *hermes.Issuer
 	if cfg.GoogleClientID != "" {
 		googleAuth = hermes.NewGoogleAuth(cfg.GoogleClientID, cfg.GoogleSecret)
-		issuer = hermes.NewIssuer(cfg.JWTSecret)
+		issuer = hermes.NewIssuer(cfg.JWTSecret, cfg.TokenTTL)
 	}
 	hermesSvc := rpc.NewHermes(googleAuth, issuer, store.Prosopons())
 

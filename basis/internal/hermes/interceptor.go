@@ -11,17 +11,35 @@ import (
 
 type contextKey string
 
-const subKey contextKey = "sub"
+const (
+	subKey        contextKey = "sub"
+	prosoponIdKey contextKey = "prosopon_id"
+)
 
-// ContextWithSub stores the authenticated sub on the context.
+// ContextWithSub stores only the sub — used for the dev-mode anon path where
+// no prosopon ID is available.
 func ContextWithSub(ctx context.Context, sub string) context.Context {
 	return context.WithValue(ctx, subKey, sub)
+}
+
+// contextWithClaims stores both sub and prosopon ID from a verified token.
+func contextWithClaims(ctx context.Context, c Claims) context.Context {
+	ctx = context.WithValue(ctx, subKey, c.Subject)
+	ctx = context.WithValue(ctx, prosoponIdKey, c.ProsoponId)
+	return ctx
 }
 
 // SubFromContext retrieves the authenticated sub set by the interceptor.
 func SubFromContext(ctx context.Context) (string, bool) {
 	sub, ok := ctx.Value(subKey).(string)
 	return sub, ok && sub != ""
+}
+
+// ProsoponIdFromContext retrieves the prosopon ID set by the interceptor.
+// Returns (0, false) in dev-mode (anon) or when the token predates this field.
+func ProsoponIdFromContext(ctx context.Context) (int64, bool) {
+	id, ok := ctx.Value(prosoponIdKey).(int64)
+	return id, ok && id != 0
 }
 
 // AuthInterceptor verifies the server-issued JWT on every RPC except those
@@ -77,9 +95,9 @@ func (a *AuthInterceptor) authenticate(ctx context.Context, procedure string, he
 		return ctx, connect.NewError(connect.CodeUnauthenticated, errors.New("missing bearer token"))
 	}
 
-	sub, err := a.verifier.Verify(token)
+	claims, err := a.verifier.Verify(token)
 	if err != nil {
 		return ctx, connect.NewError(connect.CodeUnauthenticated, err)
 	}
-	return ContextWithSub(ctx, sub), nil
+	return contextWithClaims(ctx, claims), nil
 }

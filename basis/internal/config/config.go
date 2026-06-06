@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 // Server holds all configuration for the celine RPC server binary.
@@ -13,7 +14,8 @@ type Server struct {
 	RedisAddr      string // CELINE_REDIS_ADDR, required
 	AnthropicKey   string // ANTHROPIC_API_KEY, required
 	Model          string // CELINE_MODEL, optional (defaults inside llm package)
-	JWTSecret      string // CELINE_JWT_SECRET, optional — empty = dev mode, no auth enforced
+	JWTSecret      string        // CELINE_JWT_SECRET, optional — empty = dev mode, no auth enforced
+	TokenTTL       time.Duration // CELINE_TOKEN_TTL, default 72h; parsed as Go duration string
 	GoogleClientID string // GOOGLE_CLIENT_ID, optional — empty = Google OAuth disabled
 	GoogleSecret   string // GOOGLE_CLIENT_SECRET, required when GoogleClientID is set
 	BraveAPIKey    string // BRAVE_API_KEY, optional — empty = web_search returns error
@@ -27,6 +29,10 @@ type Worker struct {
 }
 
 func LoadServer() (Server, error) {
+	ttl, err := parseDuration("CELINE_TOKEN_TTL", 72*time.Hour)
+	if err != nil {
+		return Server{}, err
+	}
 	c := Server{
 		Addr:           getenv("CELINE_ADDR", ":8080"),
 		DBDsn:          os.Getenv("CELINE_DB_DSN"),
@@ -34,6 +40,7 @@ func LoadServer() (Server, error) {
 		AnthropicKey:   os.Getenv("ANTHROPIC_API_KEY"),
 		Model:          os.Getenv("CELINE_MODEL"),
 		JWTSecret:      os.Getenv("CELINE_JWT_SECRET"),
+		TokenTTL:       ttl,
 		GoogleClientID: os.Getenv("GOOGLE_CLIENT_ID"),
 		GoogleSecret:   os.Getenv("GOOGLE_CLIENT_SECRET"),
 		BraveAPIKey:    os.Getenv("BRAVE_API_KEY"),
@@ -88,4 +95,16 @@ func getenv(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+func parseDuration(key string, fallback time.Duration) (time.Duration, error) {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback, nil
+	}
+	d, err := time.ParseDuration(v)
+	if err != nil {
+		return 0, fmt.Errorf("invalid %s %q: %w", key, v, err)
+	}
+	return d, nil
 }
