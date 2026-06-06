@@ -10,16 +10,17 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"github.com/YumikoKawaii/celine/basis/internal/mneme"
+	"github.com/YumikoKawaii/celine/basis/internal/taxis"
 )
 
-// memoryIndexer is the subset of mneme.MemoryIndexRepo this worker needs.
+// memoryIndexer is the subset of mneme.Memories this worker needs.
 // Defined here (consumer package) per the project's interface convention.
 type memoryIndexer interface {
-	Insert(ctx context.Context, job mneme.IndexJob, embedding []float32) error
+	Insert(ctx context.Context, memory mneme.Memory, embedding []float32) error
 }
 
 // Worker consumes index jobs from the Redis queue, embeds each message,
-// and writes the resulting vector into memory_index (§12).
+// and writes the resulting vector into memories (§12).
 type Worker struct {
 	rdb      *redis.Client
 	embedder Embedder
@@ -42,7 +43,7 @@ func (w *Worker) Run(ctx context.Context) {
 		}
 
 		// BRPOP with a short timeout so we can check ctx.Done() regularly.
-		res, err := w.rdb.BRPop(ctx, 5*time.Second, mneme.IndexQueue).Result()
+		res, err := w.rdb.BRPop(ctx, 5*time.Second, taxis.IndexQueue).Result()
 		if err == redis.Nil {
 			continue // timeout — no jobs, loop and recheck context
 		}
@@ -55,22 +56,22 @@ func (w *Worker) Run(ctx context.Context) {
 		}
 
 		// res[0] = key, res[1] = payload
-		var job mneme.IndexJob
+		var job taxis.IndexJob
 		if err := json.Unmarshal([]byte(res[1]), &job); err != nil {
 			log.Printf("graphe: malformed job: %v", err)
 			continue
 		}
 
 		if err := w.process(ctx, job); err != nil {
-			log.Printf("graphe: failed %s: %v", job.MessageID, err)
+			log.Printf("graphe: failed %d: %v", job.MessageID, err)
 		}
 	}
 }
 
-func (w *Worker) process(ctx context.Context, job mneme.IndexJob) error {
+func (w *Worker) process(ctx context.Context, job taxis.IndexJob) error {
 	vec, err := w.embedder.Embed(ctx, job.Content)
 	if err != nil {
 		return fmt.Errorf("embed: %w", err)
 	}
-	return w.indexer.Insert(ctx, job, vec)
+	return w.indexer.Insert(ctx, mneme.Memory{MessageID: job.MessageID}, vec)
 }

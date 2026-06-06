@@ -1,44 +1,50 @@
-CREATE EXTENSION IF NOT EXISTS vector;
+CREATE
+EXTENSION IF NOT EXISTS vector;
 
-CREATE TABLE clients (
-    sub          TEXT PRIMARY KEY,
-    email        TEXT NOT NULL,
-    display_name TEXT NOT NULL DEFAULT '',
+CREATE TABLE prosopons
+(
+    id           BIGSERIAL PRIMARY KEY,
+    sub          TEXT        NOT NULL UNIQUE,
+    email        TEXT        NOT NULL,
+    display_name TEXT        NOT NULL DEFAULT '',
     avatar_url   TEXT,
-    memory_md    TEXT,
-    preferences  JSONB        NOT NULL DEFAULT '{}',
-    persona_note TEXT,
-    created_at   TIMESTAMPTZ  NOT NULL DEFAULT now(),
-    updated_at   TIMESTAMPTZ  NOT NULL DEFAULT now()
+    preferences  JSONB       NOT NULL DEFAULT '{}',
+    persona      TEXT,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE conversations (
-    id         TEXT        PRIMARY KEY,
-    owner_sub  TEXT        NOT NULL REFERENCES clients(sub) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+-- Celine's own identity record; sub is synthetic (not an OIDC token).
+INSERT INTO prosopons (id, sub, email, display_name)
+VALUES (1, 'celine', 'celine@internal', 'Celine');
+
+CREATE TABLE conversations
+(
+    id          BIGSERIAL PRIMARY KEY,
+    prosopon_id BIGINT      NOT NULL REFERENCES prosopons (id) ON DELETE CASCADE,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX ON conversations (owner_sub, created_at DESC);
+CREATE INDEX ON conversations (prosopon_id, created_at DESC);
 
-CREATE TABLE messages (
-    id              TEXT        PRIMARY KEY,
-    conversation_id TEXT        NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
-    role            TEXT        NOT NULL CHECK (role IN ('user', 'assistant')),
+CREATE TABLE messages
+(
+    id              BIGSERIAL PRIMARY KEY,
+    conversation_id BIGINT      NOT NULL REFERENCES conversations (id) ON DELETE CASCADE,
+    prosopon_id     BIGINT      NOT NULL,
     content         TEXT        NOT NULL,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX ON messages (conversation_id, created_at ASC);
 
-CREATE TABLE memory_index (
-    id         BIGSERIAL   PRIMARY KEY,
-    owner_sub  TEXT        NOT NULL REFERENCES clients(sub)  ON DELETE CASCADE,
-    message_id TEXT        NOT NULL REFERENCES messages(id)  ON DELETE CASCADE,
-    role       TEXT        NOT NULL CHECK (role IN ('user', 'assistant')),
-    content    TEXT        NOT NULL,
+CREATE TABLE memories
+(
+    id         BIGSERIAL PRIMARY KEY,
+    message_id BIGINT      NOT NULL REFERENCES messages (id) ON DELETE CASCADE,
     embedding  vector(384) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (message_id)
 );
 
-CREATE INDEX ON memory_index (owner_sub);
+CREATE INDEX ON memories (message_id);

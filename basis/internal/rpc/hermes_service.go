@@ -12,10 +12,9 @@ import (
 	"github.com/YumikoKawaii/celine/basis/internal/mneme"
 )
 
-// clientStore is the subset of mneme.ClientRepo this handler needs.
-type clientStore interface {
-	Upsert(ctx context.Context, c mneme.Client) error
-	Get(ctx context.Context, sub string) (mneme.Client, error)
+type prosoponStore interface {
+	Upsert(ctx context.Context, p *mneme.Prosopon) error
+	Get(ctx context.Context, filter mneme.ProsoponFilter) (mneme.Prosopon, error)
 }
 
 // google and issuer are kept as concrete types because they are optionally nil
@@ -24,13 +23,13 @@ type clientStore interface {
 // nil concrete pointer is the safe, checkable form here.
 type HermesService struct {
 	celinev1connect.UnimplementedHermesHandler
-	google  *hermes.GoogleAuth
-	issuer  *hermes.Issuer
-	clients clientStore
+	google    *hermes.GoogleAuth
+	issuer    *hermes.Issuer
+	prosopons prosoponStore
 }
 
-func NewHermesService(g *hermes.GoogleAuth, issuer *hermes.Issuer, clients clientStore) *HermesService {
-	return &HermesService{google: g, issuer: issuer, clients: clients}
+func NewHermesService(g *hermes.GoogleAuth, issuer *hermes.Issuer, prosopons prosoponStore) *HermesService {
+	return &HermesService{google: g, issuer: issuer, prosopons: prosopons}
 }
 
 func (s *HermesService) Eisodos(
@@ -58,9 +57,8 @@ func (s *HermesService) Metabole(
 		return nil, connect.NewError(connect.CodeUnauthenticated, err)
 	}
 
-	if err := s.clients.Upsert(ctx, mneme.NewClient(
-		claims.Sub, claims.Email, claims.Name, claims.Picture,
-	)); err != nil {
+	p := &mneme.Prosopon{Sub: claims.Sub, Email: claims.Email, DisplayName: claims.Name, AvatarURL: &claims.Picture}
+	if err := s.prosopons.Upsert(ctx, p); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
@@ -89,20 +87,20 @@ func (s *HermesService) Gnorizo(
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("not authenticated"))
 	}
 
-	client, err := s.clients.Get(ctx, sub)
+	p, err := s.prosopons.Get(ctx, mneme.ProsoponFilter{Sub: sub})
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	avatarURL := ""
-	if client.AvatarURL != nil {
-		avatarURL = *client.AvatarURL
+	if p.AvatarURL != nil {
+		avatarURL = *p.AvatarURL
 	}
 	return connect.NewResponse(&celinev1.GnorizoResponse{
 		User: &celinev1.User{
-			Sub:         client.Sub,
-			Email:       client.Email,
-			DisplayName: client.DisplayName,
+			Sub:         p.Sub,
+			Email:       p.Email,
+			DisplayName: p.DisplayName,
 			AvatarUrl:   avatarURL,
 		},
 	}), nil

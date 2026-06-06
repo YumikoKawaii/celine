@@ -7,7 +7,12 @@ import (
 
 	"github.com/YumikoKawaii/celine/basis/internal/llm"
 	"github.com/YumikoKawaii/celine/basis/internal/mneme"
+	"github.com/YumikoKawaii/celine/basis/internal/taxis"
 )
+
+// celineProsoponID is the fixed DB id of Celine's own prosopon record (seeded in 001_init.sql).
+// Used to map message.ProsoponID back to "assistant" role when reconstructing history.
+const celineProsoponID int64 = 1
 
 // EventSink receives all events produced during a single Chat turn.
 type EventSink interface {
@@ -21,14 +26,21 @@ type brain interface {
 	StreamChat(ctx context.Context, system string, history []llm.Message, tools []llm.ToolDef, deltas chan<- string) (llm.Turn, error)
 }
 
-type convStore interface {
-	GetOrCreate(ctx context.Context, ownerSub, convID string) (string, error)
+type prosopons interface {
+	Get(ctx context.Context, filter mneme.ProsoponFilter) (mneme.Prosopon, error)
 }
 
-type msgStore interface {
-	Save(ctx context.Context, convID, role, content string) (string, error)
-	GetHistory(ctx context.Context, convID, ownerSub string) ([]mneme.Message, error)
-	Enqueue(ctx context.Context, job mneme.IndexJob) error
+type conversations interface {
+	GetOrCreate(ctx context.Context, prosoponId int64) (*mneme.Conversation, error)
+}
+
+type messages interface {
+	Create(ctx context.Context, message *mneme.Message) error
+	List(ctx context.Context, parameters mneme.MessageParameters) ([]mneme.Message, error)
+}
+
+type queue interface {
+	Enqueue(ctx context.Context, topic string, message interface{}) error
 }
 
 type toolRunner interface {
@@ -37,38 +49,66 @@ type toolRunner interface {
 }
 
 type Agent struct {
-	brain  brain
-	system string
-	convs  convStore
-	msgs   msgStore
-	tools  toolRunner
+	brain         brain
+	system        string
+	prosopons     prosopons
+	conversations conversations
+	messages      messages
+	queue         queue
+	tools         toolRunner
 }
 
-func New(b brain, systemPrompt string, convs convStore, msgs msgStore, tools toolRunner) *Agent {
-	return &Agent{brain: b, system: systemPrompt, convs: convs, msgs: msgs, tools: tools}
+func New(
+	b brain,
+	systemPrompt string,
+	prosopons prosopons,
+	conversations conversations,
+	messages messages,
+	q queue,
+	tools toolRunner,
+) *Agent {
+	return &Agent{
+		brain:         b,
+		system:        systemPrompt,
+		prosopons:     prosopons,
+		conversations: conversations,
+		messages:      messages,
+		queue:         q,
+		tools:         tools,
+	}
 }
 
-func (a *Agent) Chat(ctx context.Context, ownerSub, convID, userText string, sink EventSink) (string, error) {
-	convID, err := a.convs.GetOrCreate(ctx, ownerSub, convID)
+func (a *Agent) Chat(ctx context.Context, ownerSub string, userText string, sink EventSink) (int64, error) {
+	p, err := a.prosopons.Get(ctx, mneme.ProsoponFilter{Sub: ownerSub})
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 
-	stored, err := a.msgs.GetHistory(ctx, convID, ownerSub)
+	conv, err := a.conversations.GetOrCreate(ctx, p.ID)
 	if err != nil {
-		return "", err
+		return 0, err
+	}
+	convID := conv.ID
+
+	stored, err := a.messages.List(ctx, mneme.MessageParameters{ConversationID: convID})
+	if err != nil {
+		return 0, err
 	}
 	hist := make([]llm.Message, 0, len(stored)+1)
 	for _, m := range stored {
-		hist = append(hist, llm.Message{Role: m.Role, Text: m.Content})
+		role := "user"
+		if m.ProsoponID == celineProsoponID {
+			role = "assistant"
+		}
+		hist = append(hist, llm.Message{Role: role, Text: m.Content})
 	}
 	hist = append(hist, llm.Message{Role: "user", Text: userText})
 
-	userMsgID, err := a.msgs.Save(ctx, convID, "user", userText)
-	if err != nil {
+	userMsg := &mneme.Message{ConversationID: convID, ProsoponID: p.ID, Content: userText}
+	if err := a.messages.Create(ctx, userMsg); err != nil {
 		return convID, err
 	}
-	a.enqueue(ctx, userMsgID, ownerSub, "user", userText)
+	a.enqueue(ctx, userMsg.ID, userText)
 
 	// countingSink remaps each per-segment bubble seq to a global turn-level
 	// seq so indices stay unique across multiple StreamChat iterations.
@@ -101,14 +141,12 @@ func (a *Agent) Chat(ctx context.Context, ownerSub, convID, userText string, sin
 			break
 		}
 
-		// Append assistant turn (text + tool_use blocks) to in-memory history.
 		hist = append(hist, llm.Message{
 			Role:     "assistant",
 			Text:     res.turn.Text,
 			ToolUses: res.turn.Uses,
 		})
 
-		// Execute tools and feed results back.
 		toolResults := make([]llm.ToolResult, 0, len(res.turn.Uses))
 		for _, use := range res.turn.Uses {
 			_ = sink.ToolCall(use.ID, use.Name, string(use.Input))
@@ -130,23 +168,21 @@ func (a *Agent) Chat(ctx context.Context, ownerSub, convID, userText string, sin
 		hist = append(hist, llm.Message{Role: "user", ToolResults: toolResults})
 	}
 
-	asstMsgID, err := a.msgs.Save(ctx, convID, "assistant", finalText)
-	if err != nil {
+	asstMsg := &mneme.Message{ConversationID: convID, ProsoponID: celineProsoponID, Content: finalText}
+	if err := a.messages.Create(ctx, asstMsg); err != nil {
 		return convID, err
 	}
-	a.enqueue(ctx, asstMsgID, ownerSub, "assistant", finalText)
+	a.enqueue(ctx, asstMsg.ID, finalText)
 
 	return convID, nil
 }
 
-func (a *Agent) enqueue(ctx context.Context, msgID, ownerSub, role, content string) {
-	if err := a.msgs.Enqueue(ctx, mneme.IndexJob{
+func (a *Agent) enqueue(ctx context.Context, msgID int64, content string) {
+	if err := a.queue.Enqueue(ctx, taxis.IndexQueue, taxis.IndexJob{
 		MessageID: msgID,
-		OwnerSub:  ownerSub,
-		Role:      role,
 		Content:   content,
 	}); err != nil {
-		log.Printf("agent: enqueue %s: %v", msgID, err)
+		log.Printf("agent: enqueue %d: %v", msgID, err)
 	}
 }
 

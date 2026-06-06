@@ -9,19 +9,15 @@ import (
 )
 
 // vector(384) is not a native GORM type — writes use raw SQL with a ::vector cast.
-type MemoryIndexRepo struct {
+type Memories struct {
 	db *gorm.DB
 }
 
-func NewMemoryIndexRepo(db *gorm.DB) *MemoryIndexRepo {
-	return &MemoryIndexRepo{db: db}
-}
-
-func (r *MemoryIndexRepo) Insert(ctx context.Context, job IndexJob, embedding []float32) error {
+func (r *Memories) Insert(ctx context.Context, memory Memory, embedding []float32) error {
 	return r.db.WithContext(ctx).Exec(
-		"INSERT INTO memory_index (owner_sub, message_id, role, content, embedding) "+
-			"VALUES (?, ?, ?, ?, ?::vector) ON CONFLICT (message_id) DO NOTHING",
-		job.OwnerSub, job.MessageID, job.Role, job.Content, vecLiteral(embedding),
+		"insert into memories (message_id, embedding) "+
+			"VALUES (?, ?::vector) ON CONFLICT (message_id) DO NOTHING",
+		memory.MessageID, vecLiteral(embedding),
 	).Error
 }
 

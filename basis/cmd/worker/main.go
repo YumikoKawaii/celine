@@ -6,6 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/redis/go-redis/v9"
+
 	"github.com/YumikoKawaii/celine/basis/internal/config"
 	"github.com/YumikoKawaii/celine/basis/internal/graphe"
 	"github.com/YumikoKawaii/celine/basis/internal/mneme"
@@ -26,12 +28,12 @@ func main() {
 	}
 	defer func() { _ = mneme.CloseDB(db) }()
 
-	rdb := mneme.NewRedis(cfg.RedisAddr)
+	rdb := redis.NewClient(&redis.Options{Addr: cfg.RedisAddr})
 	defer rdb.Close()
 
-	store := mneme.NewStore(db, rdb)
+	store := mneme.NewMneme(db)
 	embedder := graphe.NewOllamaClient(cfg.OllamaURL)
-	w := graphe.NewWorker(rdb, embedder, store.MemoryIndex())
+	w := graphe.NewWorker(rdb, embedder, store.Memories())
 
 	// §12.3: 1–2 concurrent workers caps concurrent embed calls and in-flight memory.
 	const numWorkers = 2

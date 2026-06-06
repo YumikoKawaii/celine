@@ -1,58 +1,56 @@
 package mneme
 
 import (
-	"crypto/rand"
-	"encoding/hex"
+	"encoding/json"
 	"time"
 )
 
-type Client struct {
-	Sub         string    `gorm:"primaryKey"`
-	Email       string    `gorm:"not null"`
-	DisplayName string    `gorm:"not null;default:''"`
-	AvatarURL   *string `gorm:"column:avatar_url"`   // nullable
-	MemoryMD    *string `gorm:"column:memory_md"`    // nullable — curated profile injected into the cached system prefix (§13)
-	PersonaNote *string `gorm:"column:persona_note"` // nullable — admin annotation, never shown to the client
-	CreatedAt   time.Time `gorm:"autoCreateTime"`
-	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
-}
-
-// NewClient promotes avatarURL to *string so callers don't manage the pointer themselves.
-func NewClient(sub, email, displayName, avatarURL string) Client {
-	url := avatarURL
-	return Client{Sub: sub, Email: email, DisplayName: displayName, AvatarURL: &url}
+type Prosopon struct {
+	ID          int64           `gorm:"primaryKey;column:id"`
+	Sub         string          `gorm:"uniqueIndex;column:sub"`
+	Email       string          `gorm:"column:email"`
+	DisplayName string          `gorm:"column:display_name"`
+	AvatarURL   *string         `gorm:"column:avatar_url"`
+	Preferences json.RawMessage `gorm:"column:preferences"`
+	Persona     *string         `gorm:"column:persona"`
+	CreatedAt   time.Time       `gorm:"column:created_at"`
+	UpdatedAt   time.Time       `gorm:"column:updated_at"`
 }
 
 type Conversation struct {
-	ID        string    `gorm:"primaryKey"`
-	OwnerSub  string    `gorm:"not null;index:idx_conv_owner_created,priority:1"`
-	CreatedAt time.Time `gorm:"autoCreateTime;index:idx_conv_owner_created,priority:2,sort:desc"`
+	ID         int64     `gorm:"primaryKey;column:id"`
+	ProsoponID int64     `gorm:"column:prosopon_id"`
+	CreatedAt  time.Time `gorm:"column:created_at"`
 }
 
 type Message struct {
-	ID             string    `gorm:"primaryKey"`
-	ConversationID string    `gorm:"not null;index:idx_msg_conv_created,priority:1"`
-	Role           string    `gorm:"not null"` // "user" | "assistant"
-	Content        string    `gorm:"not null"`
-	CreatedAt      time.Time `gorm:"autoCreateTime;index:idx_msg_conv_created,priority:2"`
+	ID             int64     `gorm:"primaryKey;column:id"`
+	ConversationID int64     `gorm:"column:conversation_id"`
+	ProsoponID     int64     `gorm:"column:prosopon_id"`
+	Content        string    `gorm:"column:content"`
+	CreatedAt      time.Time `gorm:"column:created_at"`
 }
 
-// MemoryIndex — embedding column is vector(384), not mapped to a Go type because
-// GORM has no native pgvector support; all writes go through raw SQL in MemoryIndexRepo.
-type MemoryIndex struct {
-	ID        int64     `gorm:"primaryKey;autoIncrement"`
-	OwnerSub  string    `gorm:"not null;index"`
-	MessageID string    `gorm:"not null;uniqueIndex"`
-	Role      string    `gorm:"not null"` // "user" | "assistant"
-	Content   string    `gorm:"not null"`
-	CreatedAt time.Time `gorm:"autoCreateTime"`
+// Memory — embedding column is vector(384), not mapped to a Go type.
+// All writes go through raw SQL in MemoryRepo.
+type Memory struct {
+	ID        int64     `gorm:"primaryKey;column:id"`
+	MessageID int64     `gorm:"column:message_id"`
+	CreatedAt time.Time `gorm:"column:created_at"`
 }
 
-// TableName prevents GORM from pluralising to "memory_indices".
-func (MemoryIndex) TableName() string { return "memory_index" }
+func (Memory) TableName() string { return "memories" }
 
-func newID(prefix string) string {
-	var b [12]byte
-	_, _ = rand.Read(b[:])
-	return prefix + "-" + hex.EncodeToString(b[:])
+type Pagination struct {
+	Page     int
+	PageSize int
+}
+
+// Offset extract offset from page and page size
+func (p Pagination) Offset() int {
+	offset := 0
+	if p.Page > 0 {
+		offset = (p.Page - 1) * p.PageSize
+	}
+	return offset
 }

@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"connectrpc.com/connect"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/YumikoKawaii/celine/basis/internal/llm"
 	"github.com/YumikoKawaii/celine/basis/internal/mneme"
 	"github.com/YumikoKawaii/celine/basis/internal/rpc"
+	"github.com/YumikoKawaii/celine/basis/internal/taxis"
 )
 
 func main() {
@@ -36,10 +38,11 @@ func main() {
 	}
 	defer func() { _ = mneme.CloseDB(db) }()
 
-	rdb := mneme.NewRedis(cfg.RedisAddr)
+	rdb := redis.NewClient(&redis.Options{Addr: cfg.RedisAddr})
 	defer rdb.Close()
 
-	store := mneme.NewStore(db, rdb)
+	store := mneme.NewMneme(db)
+	tx := taxis.New(rdb)
 
 	var verifier *hermes.Verifier
 	if cfg.JWTSecret != "" {
@@ -53,7 +56,7 @@ func main() {
 
 	brain := llm.New(cfg.AnthropicKey, cfg.Model)
 	celineSvc := rpc.NewCelineService(
-		agent.New(brain, agent.SystemPrompt(), store.Conversations(), store.Messages(), tools),
+		agent.New(brain, agent.SystemPrompt(), store.Prosopons(), store.Conversations(), store.Messages(), tx, tools),
 	)
 
 	var googleAuth *hermes.GoogleAuth
@@ -62,7 +65,7 @@ func main() {
 		googleAuth = hermes.NewGoogleAuth(cfg.GoogleClientID, cfg.GoogleSecret)
 		issuer = hermes.NewIssuer(cfg.JWTSecret)
 	}
-	hermesSvc := rpc.NewHermesService(googleAuth, issuer, store.Clients())
+	hermesSvc := rpc.NewHermesService(googleAuth, issuer, store.Prosopons())
 
 	mux := http.NewServeMux()
 	celinePath, celineHandler := celinev1connect.NewCelineHandler(celineSvc, opts)

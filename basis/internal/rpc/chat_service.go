@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"strconv"
 
 	"connectrpc.com/connect"
 
@@ -12,7 +13,7 @@ import (
 )
 
 type chatAgent interface {
-	Chat(ctx context.Context, ownerSub, convID, userText string, sink agent.EventSink) (string, error)
+	Chat(ctx context.Context, ownerSub string, userText string, sink agent.EventSink) (int64, error)
 }
 
 type CelineService struct {
@@ -31,14 +32,16 @@ func (s *CelineService) Laleo(
 ) error {
 	sink := &streamSink{stream: stream}
 	sub, _ := hermes.SubFromContext(ctx)
-	convID, err := s.agent.Chat(ctx, sub, req.Msg.GetConversationId(), req.Msg.GetText(), sink)
+	id, err := s.agent.Chat(ctx, sub, req.Msg.GetText(), sink)
 	if err != nil {
 		return stream.Send(&celinev1.LaleoEvent{
 			Event: &celinev1.LaleoEvent_Error{Error: err.Error()},
 		})
 	}
 	return stream.Send(&celinev1.LaleoEvent{
-		Event: &celinev1.LaleoEvent_Done{Done: &celinev1.Done{ConversationId: convID}},
+		Event: &celinev1.LaleoEvent_Done{Done: &celinev1.Done{
+			ConversationId: strconv.FormatInt(id, 10),
+		}},
 	})
 }
 
