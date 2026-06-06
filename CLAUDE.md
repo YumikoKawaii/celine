@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-**Scaffolded — first vertical slice live (Step 1, plumbing).** The design docs in **`docs/architecture/`** (the **source of truth** — read [`docs/architecture/README.md`](docs/architecture/README.md) first, keep it in sync) are one-file-per-section; the `§N` references throughout this file and the code map to the numbered files there (e.g. `§3.2` → `03-the-four-pieces.md`). They're now backed by a working repo: a typed Connect stream runs end to end (proto → Go server → React UI) with a **hardcoded, paced, multi-bubble reply**. No brain, no DB yet. The next steps wire in Claude (the agent loop) and Postgres/Redis.
+**Steps 1–5 live.** The design docs in **`docs/architecture/`** (the **source of truth** — read [`docs/architecture/README.md`](docs/architecture/README.md) first, keep it in sync) are one-file-per-section; the `§N` references throughout this file and the code map to the numbered files there (e.g. `§3.2` → `03-the-four-pieces.md`).
+
+What's running: typed Connect stream end-to-end (proto → Go server → React UI), real Claude brain with tool loop (`web_search` via Brave API), Postgres+pgvector store, async memory indexing pipeline (Redis queue → Ollama embedder → pgvector), Google OIDC auth (JWT). The next steps wire in memory recall (RAG at turn-start) and grow the tool set.
 
 ## What Celine is
 
@@ -17,10 +19,25 @@ Three sibling modules, each named for its role (the names are deliberate — `ba
 | Dir | What it is | Stack |
 |---|---|---|
 | `proto/` | **The contract.** `celine/v1/celine.proto` → Go + TS via Buf. | Protobuf, Buf v2 |
-| `basis/` | **Go backend**, single binary. Module `github.com/YumikoKawaii/celine/basis`, entrypoint `cmd/celine/main.go`. Generated code in `gen/`, hand-written in `internal/`. | Go 1.25, Connect RPC, h2c |
+| `basis/` | **Go backend**, two binaries. `cmd/celine` = RPC server, `cmd/worker` = graphe embedding worker. Generated code in `gen/`, hand-written in `internal/`. | Go 1.25, Connect RPC, h2c |
 | `eidos/` | **React web UI.** Consumes the generated TS client. Generated code in `src/gen/`. | React 19 + Vite 7 + TS, bun, Connect-ES v2 |
 
 **The `.proto` is the contract.** Both the Go handlers (`basis/gen/`) and the TS client (`eidos/src/gen/`) are generated from it — change the proto, regenerate, **never hand-edit generated code**.
+
+### Internal packages (`basis/internal/`)
+
+| Package | Role |
+|---|---|
+| `arche` | Global constants (queue topics, shared keys) |
+| `agent` | Core agent loop: history → Claude → tool rounds → persist + enqueue |
+| `llm` | Thin `anthropic-sdk-go` wrapper — `StreamChat` → delta channel + `Turn` |
+| `ergon` | Tool registry + implementations (`web_search` via Brave API) |
+| `mneme` | Postgres layer (GORM): `Prosopons`, `Conversations`, `Messages`, `Memories`; defines `Scope` interface + primordial filters (`KataSub`, `KataProsopon`, `KataConversation`, `KataMessage`) |
+| `graphe` | Async embedding pipeline: Ollama client + `Worker` (BRPOPs `arche.GrapheQueue`, embeds, writes pgvector) |
+| `taxis` | Redis queue thin wrapper — generic `Enqueue`/`Dequeue`; consumers own their data shape |
+| `hermes` | Google OAuth exchange, JWT issue/verify, auth interceptor |
+| `rpc` | Connect handlers: `CelineService` (`Laleo` stream) + `HermesService` (auth flow) |
+| `config` | Env-var loading for both binaries |
 
 ## Build & codegen
 
@@ -28,8 +45,11 @@ Three sibling modules, each named for its role (the names are deliberate — `ba
 # Regenerate Go + TS from the proto (run from proto/; out paths climb to siblings)
 cd proto && buf generate
 
-# Backend
+# Backend — RPC server
 cd basis && go build ./... && go run ./cmd/celine   # serves on :8080 (CELINE_ADDR to override)
+
+# Backend — embedding worker (separate process)
+cd basis && go run ./cmd/worker
 
 # Frontend
 cd eidos && bun install && bun dev                   # Vite dev server
@@ -37,38 +57,38 @@ cd eidos && bun run typecheck                         # tsc --noEmit
 cd eidos && bun run build                             # tsc -b && vite build
 ```
 
-`buf.yaml` lints `STANDARD` but excepts `RPC_RESPONSE_STANDARD_NAME` — `Chat` streams a typed `ChatEvent` oneof, not a `ChatResponse` (intentional, §7).
+`buf.yaml` lints `STANDARD` but excepts `RPC_RESPONSE_STANDARD_NAME` — `Laleo` streams a typed `LaleoEvent` oneof, not a `LaleoResponse` (intentional, §7).
 
 ## Intended toolchain (per docs/architecture/)
 
 | Concern | Choice | Status |
 |---|---|---|
-| Backend | Go, single binary | ✅ `basis/cmd/celine/main.go` |
-| Transport | **Connect RPC** (`connectrpc.com/connect`), server-streaming `Chat` | ✅ wired (h2c + dev-CORS) |
+| Backend | Go, two binaries (server + worker) | ✅ `basis/cmd/celine`, `basis/cmd/worker` |
+| Transport | **Connect RPC** (`connectrpc.com/connect`), server-streaming `Laleo` | ✅ wired (h2c + dev-CORS) |
 | Schema/codegen | **Protobuf + Buf** | ✅ `proto/`, codegen working |
 | Frontend | React + Vite + TypeScript, in `eidos/` | ✅ consumes generated client |
-| Brain SDK | `anthropic-sdk-go` (Messages API, tool use, streaming, prompt caching) | ⏳ not yet |
-| Durable store | **Postgres** (`pgx`) + **pgvector** | ⏳ not yet |
-| Hot state | **Redis** (indexing job queue, caching, rate limiting; no session TTL) | ⏳ not yet |
-| Auth | **Google OIDC, client-side redirect** — browser holds the ID token; a server interceptor verifies the `Bearer` token per RPC and keys data on the `sub` claim. No server `/callback`. `GetCurrentUser` is the one auth-flow RPC | ⏳ proto only |
+| Brain SDK | `anthropic-sdk-go` (Messages API, tool use, streaming, prompt caching) | ✅ `internal/llm/claude.go` |
+| Durable store | **Postgres** (GORM + `pgx`) + **pgvector** | ✅ `internal/mneme/` |
+| Hot state | **Redis** (indexing job queue via `taxis`) | ✅ `internal/taxis/`, `internal/graphe/` |
+| Auth | **Google OIDC** — browser holds the ID token; server interceptor verifies `Bearer` token per RPC, keys data on `sub`. Auth RPCs: `Eisodos` (get URL), `Metabole` (exchange code), `Gnorizo` (current user), `Exodos` (logout) | ✅ `internal/hermes/`, `internal/rpc/hermes_service.go` |
 
 ## Architecture you must understand before editing
 
-These span multiple files (some still future) and are non-obvious:
+These span multiple files and are non-obvious:
 
-- **Agent loop** (`basis/internal/agent/`, not yet built) — the heart we own. Recall context → call Claude with the cached system prefix + tools + history → if `tool_use` blocks, run tools and loop; else finalize. See `docs/architecture/03-the-four-pieces.md` §3.2.
-- **Response shape — segmentation + pacing (§14, decided):** Celine replies as a **sequence of short bubbles**, not one wall of text. **Model side** segments by writing a blank line (`\n\n`) between thoughts (a §13 response-contract rule); **backend side** (`basis/internal/agent/stream.go`, future) is a code-fence-aware splitter + pacer: *typing beat → delay → whole bubble → pause*, firing the first bubble at the first `\n\n`. One generation, no extra token cost. The current `internal/rpc/chat_service.go` is this pacer in miniature over hardcoded bubbles. (The earlier "forced structured output `messages: string[]`" idea was **rejected** in favor of the blank-line delimiter.)
+- **Agent loop** (`basis/internal/agent/`) — the heart we own. Load history → call Claude with cached system prefix + tools → if `tool_use` blocks, run tools and loop; else finalize. After each turn, enqueue both messages (user + assistant) for embedding. See `docs/architecture/03-the-four-pieces.md` §3.2.
+- **Response shape — segmentation + pacing (§14):** Celine replies as a **sequence of short bubbles**. **Model side** segments by writing a blank line (`\n\n`) between thoughts; **backend side** (`basis/internal/agent/stream.go`) is a code-fence-aware splitter + pacer: *typing beat → delay → whole bubble → pause*, firing the first bubble at the first `\n\n`. One generation, no extra token cost.
 - **Layered system prompt (cached prefix), most-stable → least-stable:** base persona → response contract → tool defs → project prompt → project KB → curated profile (`memory.md`) → **cache breakpoint** → per-turn RAG recall → history. **Never put per-turn-dynamic content (RAG recall) above the breakpoint** — it would break caching every turn. (§13)
-- **Memory is RAG, not sessions.** Every message (user *and* assistant — twice per turn) is embedded and indexed into `memory_index`, scoped by `owner_sub`; recall is a filtered vector search at the next turn's start. There is **no idle-timeout session** and no end-of-session distill job. Indexing is async via a **bounded Redis-list queue** to protect the tiny server. (§12)
-- **Per-tenant isolation = a `WHERE owner_sub = $1` filter, not a separate store.** Use **pgvector**, not a dedicated vector DB (Qdrant etc.). At this scale: **brute-force exact scan, no HNSW**; add IVFFlat only past ~20–50K vectors. `owner_sub`/`project_id` are denormalized onto vector tables for join-free filtering. (§11)
-- **Personality is three composable layers:** immutable base-persona prose (repo file, code-reviewed) + tunable knobs (config struct) + a **global scheduled mood** (deterministic `moodForClock(now)`, optional `celine:mood` Redis override). Mood is global to Celine, never per-client, and shapes pacing too (§14.4). (§13)
-- **Projects** = custom system prompt + a knowledge base. Build **Strategy A** (concatenate all docs into the cached prefix) first; add **Strategy B** (pgvector RAG) only when a KB outgrows the context window. (§11)
+- **Memory is RAG, not sessions.** Every message (user *and* assistant — twice per turn) is embedded and indexed into `memories`, scoped by `owner_sub`; recall is a filtered vector search at the next turn's start. Indexing is async via the Redis list at `arche.GrapheQueue` — agent pushes message IDs, graphe worker fetches content, embeds via Ollama, writes to pgvector. (§12)
+- **`mneme.Scope` interface** — all repo `Get`/`List` methods accept `Scope` for composable query filtering. Primordial implementations (`KataSub`, `KataProsopon`, `KataConversation`, `KataMessage`) cover common patterns; consumers implement `Scope` for custom logic.
+- **Per-tenant isolation = a `WHERE prosopon_id = $1` filter, not a separate store.** Use **pgvector**, not a dedicated vector DB. At this scale: **brute-force exact scan, no HNSW**; add IVFFlat only past ~20–50K vectors. (§11)
+- **Personality is three composable layers:** immutable base-persona prose (`internal/agent/prompts/celine.md`) + tunable knobs (config struct) + a **global scheduled mood** (deterministic `moodForClock(now)`, optional `celine:mood` Redis override). Mood is global to Celine, never per-client. (§13)
 
 ## Hard constraints
 
-- **Tiny server: ~300–400 MB RAM for the Go binary + RAG** (Postgres and Redis are already deployed separately). Set `GOMEMLIMIT`, cap the `pgx` pool, keep each tenant's vector table small. Default embedder is **`voyage-3-lite`** (512-dim) to keep vectors cheap. (§ resource discussion)
-- Embeddings use a **local Ollama model** (`snowflake-arctic-embed:xs`, 384-dim) via `internal/graphe/ollama.go`. No external embedding API.
-- Secrets (`ANTHROPIC_API_KEY`, OAuth creds, Voyage key) live in env / `.env`, never committed.
+- **Tiny server: ~300–400 MB RAM for the Go binary + RAG** (Postgres and Redis are already deployed separately). Set `GOMEMLIMIT`, cap the GORM/pgx pool, keep each tenant's vector table small.
+- **Embeddings use Ollama** (`snowflake-arctic-embed:xs`, 384-dim) via `internal/graphe/ollama.go`. No external embedding API. The DB `memories.embedding` column is `vector(384)`.
+- Secrets (`ANTHROPIC_API_KEY`, OAuth creds) live in env / `.env`, never committed.
 
 ## Conventions
 
