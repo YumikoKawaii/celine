@@ -9,11 +9,13 @@ import (
 
 // Store exposes every repository bound to one GORM session — either the base
 // connection (returned by UnitOfWork.Store) or a transaction (passed into Do).
+// Fields are concrete types; consumers define their own narrow interfaces and
+// receive these by value, satisfied implicitly by Go's structural typing.
 type Store struct {
-	Clients       ClientRepository
-	Conversations ConversationRepository
-	Messages      MessageRepository
-	MemoryIndex   MemoryIndexRepository
+	Clients       *ClientRepo
+	Conversations *ConversationRepo
+	Messages      *MessageRepo
+	MemoryIndex   *MemoryIndexRepo
 }
 
 func newStore(db *gorm.DB, rdb *redis.Client) *Store {
