@@ -29,9 +29,9 @@ func main() {
 	rdb := mneme.NewRedis(cfg.RedisAddr)
 	defer rdb.Close()
 
-	store := mneme.NewStore(db, rdb)
+	uow := mneme.New(db, rdb)
 	embedder := graphe.NewOllamaClient(cfg.OllamaURL)
-	w := graphe.NewWorker(rdb, embedder, store.MemoryIndex())
+	w := graphe.NewWorker(rdb, embedder, uow.Store().MemoryIndex)
 
 	// §12.3: 1–2 concurrent workers caps concurrent embed calls and in-flight memory.
 	const numWorkers = 2

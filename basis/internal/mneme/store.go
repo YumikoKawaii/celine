@@ -7,65 +7,52 @@ import (
 	"gorm.io/gorm"
 )
 
-// Store is the top-level persistence factory.
-//
-// For single-repo operations use the accessor methods (Clients, Conversations,
-// Messages, MemoryIndex). For operations that must be atomic across multiple
-// repos, acquire a UnitOfWork via Begin.
+// Store exposes every repository bound to one GORM session — either the base
+// connection (returned by UnitOfWork.Store) or a transaction (passed into Do).
 type Store struct {
-	db  *gorm.DB
-	rdb *redis.Client
+	Clients       ClientRepository
+	Conversations ConversationRepository
+	Messages      MessageRepository
+	MemoryIndex   MemoryIndexRepository
 }
 
-// NewStore wires the GORM DB and Redis client into a single root Store.
-func NewStore(db *gorm.DB, rdb *redis.Client) *Store {
-	return &Store{db: db, rdb: rdb}
-}
-
-func (s *Store) Clients() *ClientRepo          { return &ClientRepo{db: s.db} }
-func (s *Store) Conversations() *ConversationRepo { return &ConversationRepo{db: s.db} }
-func (s *Store) Messages() *MessageRepo        { return &MessageRepo{db: s.db, rdb: s.rdb} }
-func (s *Store) MemoryIndex() *MemoryIndexRepo { return &MemoryIndexRepo{db: s.db} }
-
-// UnitOfWork groups all repos under a single DB transaction.
-//
-// Redis operations (Messages.Enqueue) bypass the transaction — they are
-// fire-and-forget and cannot be rolled back.
-//
-// Usage:
-//
-//	uow, err := store.Begin(ctx)
-//	if err != nil { ... }
-//	defer uow.Rollback() // no-op after Commit
-//	// ... use uow.Clients / uow.Conversations / uow.Messages ...
-//	return uow.Commit()
-type UnitOfWork struct {
-	tx            *gorm.DB
-	Clients       *ClientRepo
-	Conversations *ConversationRepo
-	Messages      *MessageRepo
-}
-
-// Begin opens a DB transaction and returns a UnitOfWork.
-func (s *Store) Begin(ctx context.Context) (*UnitOfWork, error) {
-	tx := s.db.WithContext(ctx).Begin()
-	if tx.Error != nil {
-		return nil, tx.Error
+func newStore(db *gorm.DB, rdb *redis.Client) *Store {
+	return &Store{
+		Clients:       &ClientRepo{db: db},
+		Conversations: &ConversationRepo{db: db},
+		Messages:      &MessageRepo{db: db, rdb: rdb},
+		MemoryIndex:   &MemoryIndexRepo{db: db},
 	}
-	return &UnitOfWork{
-		tx:            tx,
-		Clients:       &ClientRepo{db: tx},
-		Conversations: &ConversationRepo{db: tx},
-		Messages:      &MessageRepo{db: tx, rdb: s.rdb},
-	}, nil
 }
 
-// Commit commits the transaction. Call only on success.
-func (u *UnitOfWork) Commit() error {
-	return u.tx.Commit().Error
+// UnitOfWork hands out repositories either directly (Store, base connection)
+// or atomically within a transaction (Do).
+type UnitOfWork interface {
+	// Store returns repositories bound to the base connection — no transaction.
+	// Use for reads and single-table writes that don't need atomicity.
+	Store() *Store
+	// Do runs fn inside a transaction, committing on nil and rolling back on
+	// error or panic. Nested Do calls use savepoints automatically.
+	// Keep side-effects that must not be undone (Redis writes, post-commit reads)
+	// AFTER Do returns nil.
+	Do(ctx context.Context, fn func(s *Store) error) error
 }
 
-// Rollback aborts the transaction. Safe to call after Commit (becomes a no-op).
-func (u *UnitOfWork) Rollback() {
-	_ = u.tx.Rollback().Error
+type unitOfWork struct {
+	db    *gorm.DB
+	rdb   *redis.Client
+	store *Store
+}
+
+// New returns a UnitOfWork backed by db and rdb.
+func New(db *gorm.DB, rdb *redis.Client) UnitOfWork {
+	return &unitOfWork{db: db, rdb: rdb, store: newStore(db, rdb)}
+}
+
+func (u *unitOfWork) Store() *Store { return u.store }
+
+func (u *unitOfWork) Do(ctx context.Context, fn func(s *Store) error) error {
+	return u.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		return fn(newStore(tx, u.rdb))
+	})
 }
