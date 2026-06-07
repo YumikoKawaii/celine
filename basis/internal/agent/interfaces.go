@@ -10,14 +10,13 @@ import (
 
 // EventSink receives all events produced during a single Chat turn.
 type EventSink interface {
-	Typing(msHint int32) error
 	Bubble(seq int32, text string) error
 	ToolCall(id, name, inputJSON string) error
 	ToolResult(id, output string, isError bool) error
 }
 
 type brain interface {
-	StreamChat(ctx context.Context, system string, history []llm.Message, tools []llm.ToolDef, deltas chan<- string) (llm.Turn, error)
+	Chat(ctx context.Context, system string, history []llm.Message, tools []llm.ToolDef) (llm.Turn, error)
 }
 
 type prosopons interface {

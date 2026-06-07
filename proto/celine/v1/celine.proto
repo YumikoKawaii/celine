@@ -22,7 +22,6 @@ message ParousiaRequest {}
 
 message ParousiaEvent {
   oneof event {
-    Typing     typing      = 1;
     Message    message     = 2;
     ToolCall   tool_call   = 3;
     ToolResult tool_result = 4;
@@ -36,10 +35,6 @@ message PempoRequest {
 }
 
 message PempoResponse {}
-
-message Typing {
-  int32 ms_hint = 1;
-}
 
 message Message {
   int32  seq  = 1;

@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"log"
+	"strings"
 
 	"github.com/YumikoKawaii/celine/basis/internal/arche"
 	"github.com/YumikoKawaii/celine/basis/internal/llm"
@@ -74,45 +75,37 @@ func (a *Agent) Chat(ctx context.Context, ownerSub string, userText string, sink
 	}
 	a.enqueue(ctx, userMsg.Id)
 
-	// countingSink remaps each per-segment bubble seq to a global turn-level
-	// seq so indices stay unique across multiple StreamChat iterations.
-	var seqOffset int32
-	cs := &countingSink{inner: sink, seq: &seqOffset}
+	// seq tracks the global bubble index across all tool-loop iterations.
+	var seq int32
+	// allBubbles accumulates every bubble across iterations for DB persistence.
+	var allBubbles []string
 
-	var finalText string
 	for {
-		deltas := make(chan string, 64)
-		type result struct {
-			turn llm.Turn
-			err  error
-		}
-		done := make(chan result, 1)
-		go func() {
-			turn, err := a.brain.StreamChat(ctx, a.system, hist, a.tools.Defs(), deltas)
-			done <- result{turn, err}
-		}()
-
-		if err := paceBubbles(ctx, deltas, cs); err != nil {
+		turn, err := a.brain.Chat(ctx, a.system, hist, a.tools.Defs())
+		if err != nil {
 			return convID, err
 		}
-		res := <-done
-		if res.err != nil {
-			return convID, res.err
-		}
 
-		if len(res.turn.Uses) == 0 {
-			finalText = res.turn.Text
+		for _, bubble := range turn.Bubbles {
+			if err := sink.Bubble(seq, bubble); err != nil {
+				return convID, err
+			}
+			seq++
+		}
+		allBubbles = append(allBubbles, turn.Bubbles...)
+
+		if len(turn.Uses) == 0 {
 			break
 		}
 
 		hist = append(hist, llm.Message{
 			Role:     "assistant",
-			Text:     res.turn.Text,
-			ToolUses: res.turn.Uses,
+			Text:     strings.Join(turn.Bubbles, "\n\n"),
+			ToolUses: turn.Uses,
 		})
 
-		toolResults := make([]llm.ToolResult, 0, len(res.turn.Uses))
-		for _, use := range res.turn.Uses {
+		toolResults := make([]llm.ToolResult, 0, len(turn.Uses))
+		for _, use := range turn.Uses {
 			_ = sink.ToolCall(use.Id, use.Name, string(use.Input))
 
 			output, execErr := a.tools.Execute(ctx, use.Name, use.Input)
@@ -132,7 +125,11 @@ func (a *Agent) Chat(ctx context.Context, ownerSub string, userText string, sink
 		hist = append(hist, llm.Message{Role: "user", ToolResults: toolResults})
 	}
 
-	asstMsg := &mneme.Message{ConversationId: convID, ProsoponId: celineProsoponId, Content: finalText}
+	asstMsg := &mneme.Message{
+		ConversationId: convID,
+		ProsoponId:     celineProsoponId,
+		Content:        strings.Join(allBubbles, "\n\n"),
+	}
 	if err := a.messages.Create(ctx, asstMsg); err != nil {
 		return convID, err
 	}
@@ -145,24 +142,4 @@ func (a *Agent) enqueue(ctx context.Context, msgID int64) {
 	if err := a.queue.Enqueue(ctx, arche.GrapheQueue, msgID); err != nil {
 		log.Printf("agent: enqueue %d: %v", msgID, err)
 	}
-}
-
-// countingSink remaps each bubble's local seq (reset per StreamChat call) to a
-// monotonically increasing global seq across the whole turn.
-type countingSink struct {
-	inner EventSink
-	seq   *int32
-}
-
-func (c *countingSink) Typing(ms int32) error { return c.inner.Typing(ms) }
-func (c *countingSink) Bubble(_ int32, text string) error {
-	s := *c.seq
-	*c.seq++
-	return c.inner.Bubble(s, text)
-}
-func (c *countingSink) ToolCall(id, name, input string) error {
-	return c.inner.ToolCall(id, name, input)
-}
-func (c *countingSink) ToolResult(id, output string, isError bool) error {
-	return c.inner.ToolResult(id, output, isError)
 }

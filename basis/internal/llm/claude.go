@@ -39,10 +39,12 @@ type ToolResult struct {
 	IsError bool
 }
 
-// Turn is the completed result of one StreamChat call.
+// Turn is the completed result of one Chat call. Bubbles contains the assistant
+// text split on \n\n boundaries (code-fence-aware), ready to send to the client.
+// Uses is non-empty when stop_reason = tool_use.
 type Turn struct {
-	Text string    // accumulated assistant text
-	Uses []ToolUse // non-empty when stop_reason = tool_use
+	Bubbles []string
+	Uses    []ToolUse
 }
 
 type Client struct {
@@ -67,18 +69,16 @@ func New(apiKey, model string, maxTokens int64) *Client {
 	}
 }
 
-// StreamChat streams an assistant response. Text deltas are sent on deltas
-// (closed when streaming ends). The returned Turn contains the full text and
-// any tool_use blocks if stop_reason = tool_use.
-func (c *Client) StreamChat(
+// Chat streams an assistant response and returns the completed turn. Text is
+// accumulated from the stream and split into bubbles at \n\n boundaries
+// (code-fence-aware), so callers can send each bubble directly without any
+// further buffering or pacing logic.
+func (c *Client) Chat(
 	ctx context.Context,
 	system string,
 	history []Message,
 	tools []ToolDef,
-	deltas chan<- string,
 ) (Turn, error) {
-	defer close(deltas)
-
 	msgs := make([]anthropic.MessageParam, 0, len(history))
 	for _, m := range history {
 		msgs = append(msgs, toParam(m))
@@ -117,22 +117,39 @@ func (c *Client) StreamChat(
 
 	stream := c.api.Messages.NewStreaming(ctx, params)
 	var acc anthropic.Message
+	var buf strings.Builder
+	var bubbles []string
+
 	for stream.Next() {
 		ev := stream.Current()
 		_ = acc.Accumulate(ev)
-		if ev.Type == "content_block_delta" && ev.Delta.Text != "" {
-			select {
-			case deltas <- ev.Delta.Text:
-			case <-ctx.Done():
-				return Turn{Text: textFrom(acc)}, ctx.Err()
+		if ev.Type != "content_block_delta" || ev.Delta.Text == "" {
+			continue
+		}
+		buf.WriteString(ev.Delta.Text)
+		// flush all complete bubbles from the buffer
+		for {
+			s := buf.String()
+			idx := bubbleBoundary(s)
+			if idx < 0 {
+				break
 			}
+			if b := strings.TrimSpace(s[:idx]); b != "" {
+				bubbles = append(bubbles, b)
+			}
+			buf.Reset()
+			buf.WriteString(s[idx+2:])
 		}
 	}
 	if err := stream.Err(); err != nil {
 		return Turn{}, err
 	}
+	// flush whatever remains after the stream closes
+	if b := strings.TrimSpace(buf.String()); b != "" {
+		bubbles = append(bubbles, b)
+	}
 
-	turn := Turn{Text: textFrom(acc)}
+	turn := Turn{Bubbles: bubbles}
 	if acc.StopReason == anthropic.StopReasonToolUse {
 		for _, block := range acc.Content {
 			if block.Type == "tool_use" {
@@ -145,6 +162,23 @@ func (c *Client) StreamChat(
 		}
 	}
 	return turn, nil
+}
+
+// bubbleBoundary returns the index of the first \n\n in s that is not inside
+// a code fence. Returns -1 if no such boundary exists.
+func bubbleBoundary(s string) int {
+	inFence := false
+	for i := 0; i+1 < len(s); i++ {
+		if strings.HasPrefix(s[i:], "```") {
+			inFence = !inFence
+			i += 2
+			continue
+		}
+		if !inFence && s[i] == '\n' && s[i+1] == '\n' {
+			return i
+		}
+	}
+	return -1
 }
 
 // toParam converts a llm.Message to the anthropic SDK's MessageParam.
@@ -176,15 +210,4 @@ func toParam(m Message) anthropic.MessageParam {
 		return anthropic.NewAssistantMessage(block)
 	}
 	return anthropic.NewUserMessage(block)
-}
-
-// textFrom extracts concatenated text from all text content blocks.
-func textFrom(msg anthropic.Message) string {
-	var sb strings.Builder
-	for _, block := range msg.Content {
-		if block.Type == "text" {
-			sb.WriteString(block.Text)
-		}
-	}
-	return sb.String()
 }

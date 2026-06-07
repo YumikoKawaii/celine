@@ -138,13 +138,6 @@ func (s *chanSink) send(ev *celinev1.ParousiaEvent) {
 	}
 }
 
-func (s *chanSink) Typing(msHint int32) error {
-	s.send(&celinev1.ParousiaEvent{
-		Event: &celinev1.ParousiaEvent_Typing{Typing: &celinev1.Typing{MsHint: msHint}},
-	})
-	return nil
-}
-
 func (s *chanSink) Bubble(seq int32, text string) error {
 	s.send(&celinev1.ParousiaEvent{
 		Event: &celinev1.ParousiaEvent_Message{Message: &celinev1.Message{Seq: seq, Text: text}},

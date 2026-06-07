@@ -12,7 +12,7 @@ import type { Message as Message$1 } from "@bufbuild/protobuf";
  * Describes the file celine/v1/celine.proto.
  */
 export const file_celine_v1_celine: GenFile = /*@__PURE__*/
-  fileDesc("ChZjZWxpbmUvdjEvY2VsaW5lLnByb3RvEgljZWxpbmUudjEiEQoPUGFyb3VzaWFSZXF1ZXN0Iu4BCg1QYXJvdXNpYUV2ZW50EiMKBnR5cGluZxgBIAEoCzIRLmNlbGluZS52MS5UeXBpbmdIABIlCgdtZXNzYWdlGAIgASgLMhIuY2VsaW5lLnYxLk1lc3NhZ2VIABIoCgl0b29sX2NhbGwYAyABKAsyEy5jZWxpbmUudjEuVG9vbENhbGxIABIsCgt0b29sX3Jlc3VsdBgEIAEoCzIVLmNlbGluZS52MS5Ub29sUmVzdWx0SAASHwoEZG9uZRgFIAEoCzIPLmNlbGluZS52MS5Eb25lSAASDwoFZXJyb3IYBiABKAlIAEIHCgVldmVudCIcCgxQZW1wb1JlcXVlc3QSDAoEdGV4dBgBIAEoCSIPCg1QZW1wb1Jlc3BvbnNlIhkKBlR5cGluZxIPCgdtc19oaW50GAEgASgFIiQKB01lc3NhZ2USCwoDc2VxGAEgASgFEgwKBHRleHQYAiABKAkiOAoIVG9vbENhbGwSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRISCgppbnB1dF9qc29uGAMgASgJIjoKClRvb2xSZXN1bHQSCgoCaWQYASABKAkSDgoGb3V0cHV0GAIgASgJEhAKCGlzX2Vycm9yGAMgASgIIh8KBERvbmUSFwoPY29udmVyc2F0aW9uX2lkGAEgASgDIhIKEEFuYW1uZXNpc1JlcXVlc3QiPQoRQW5hbW5lc2lzUmVzcG9uc2USKAoIbWVzc2FnZXMYASADKAsyFi5jZWxpbmUudjEuQ2hhdE1lc3NhZ2UibAoLQ2hhdE1lc3NhZ2USCgoCaWQYASABKAMSEwoLcHJvc29wb25faWQYAiABKAMSDAoEdGV4dBgDIAEoCRIuCgpjcmVhdGVkX2F0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcDLQAQoGQ2VsaW5lEkIKCFBhcm91c2lhEhouY2VsaW5lLnYxLlBhcm91c2lhUmVxdWVzdBoYLmNlbGluZS52MS5QYXJvdXNpYUV2ZW50MAESOgoFUGVtcG8SFy5jZWxpbmUudjEuUGVtcG9SZXF1ZXN0GhguY2VsaW5lLnYxLlBlbXBvUmVzcG9uc2USRgoJQW5hbW5lc2lzEhsuY2VsaW5lLnYxLkFuYW1uZXNpc1JlcXVlc3QaHC5jZWxpbmUudjEuQW5hbW5lc2lzUmVzcG9uc2VCPVo7Z2l0aHViLmNvbS9ZdW1pa29LYXdhaWkvY2VsaW5lL2Jhc2lzL2dlbi9jZWxpbmUvdjE7Y2VsaW5ldjFiBnByb3RvMw", [file_google_protobuf_timestamp]);
+  fileDesc("ChZjZWxpbmUvdjEvY2VsaW5lLnByb3RvEgljZWxpbmUudjEiEQoPUGFyb3VzaWFSZXF1ZXN0IskBCg1QYXJvdXNpYUV2ZW50EiUKB21lc3NhZ2UYAiABKAsyEi5jZWxpbmUudjEuTWVzc2FnZUgAEigKCXRvb2xfY2FsbBgDIAEoCzITLmNlbGluZS52MS5Ub29sQ2FsbEgAEiwKC3Rvb2xfcmVzdWx0GAQgASgLMhUuY2VsaW5lLnYxLlRvb2xSZXN1bHRIABIfCgRkb25lGAUgASgLMg8uY2VsaW5lLnYxLkRvbmVIABIPCgVlcnJvchgGIAEoCUgAQgcKBWV2ZW50IhwKDFBlbXBvUmVxdWVzdBIMCgR0ZXh0GAEgASgJIg8KDVBlbXBvUmVzcG9uc2UiJAoHTWVzc2FnZRILCgNzZXEYASABKAUSDAoEdGV4dBgCIAEoCSI4CghUb29sQ2FsbBIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhIKCmlucHV0X2pzb24YAyABKAkiOgoKVG9vbFJlc3VsdBIKCgJpZBgBIAEoCRIOCgZvdXRwdXQYAiABKAkSEAoIaXNfZXJyb3IYAyABKAgiHwoERG9uZRIXCg9jb252ZXJzYXRpb25faWQYASABKAMiEgoQQW5hbW5lc2lzUmVxdWVzdCI9ChFBbmFtbmVzaXNSZXNwb25zZRIoCghtZXNzYWdlcxgBIAMoCzIWLmNlbGluZS52MS5DaGF0TWVzc2FnZSJsCgtDaGF0TWVzc2FnZRIKCgJpZBgBIAEoAxITCgtwcm9zb3Bvbl9pZBgCIAEoAxIMCgR0ZXh0GAMgASgJEi4KCmNyZWF0ZWRfYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wMtABCgZDZWxpbmUSQgoIUGFyb3VzaWESGi5jZWxpbmUudjEuUGFyb3VzaWFSZXF1ZXN0GhguY2VsaW5lLnYxLlBhcm91c2lhRXZlbnQwARI6CgVQZW1wbxIXLmNlbGluZS52MS5QZW1wb1JlcXVlc3QaGC5jZWxpbmUudjEuUGVtcG9SZXNwb25zZRJGCglBbmFtbmVzaXMSGy5jZWxpbmUudjEuQW5hbW5lc2lzUmVxdWVzdBocLmNlbGluZS52MS5BbmFtbmVzaXNSZXNwb25zZUI9WjtnaXRodWIuY29tL1l1bWlrb0thd2FpaS9jZWxpbmUvYmFzaXMvZ2VuL2NlbGluZS92MTtjZWxpbmV2MWIGcHJvdG8z", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message celine.v1.ParousiaRequest
@@ -35,12 +35,6 @@ export type ParousiaEvent = Message$1<"celine.v1.ParousiaEvent"> & {
    * @generated from oneof celine.v1.ParousiaEvent.event
    */
   event: {
-    /**
-     * @generated from field: celine.v1.Typing typing = 1;
-     */
-    value: Typing;
-    case: "typing";
-  } | {
     /**
      * @generated from field: celine.v1.Message message = 2;
      */
@@ -111,23 +105,6 @@ export const PempoResponseSchema: GenMessage<PempoResponse> = /*@__PURE__*/
   messageDesc(file_celine_v1_celine, 3);
 
 /**
- * @generated from message celine.v1.Typing
- */
-export type Typing = Message$1<"celine.v1.Typing"> & {
-  /**
-   * @generated from field: int32 ms_hint = 1;
-   */
-  msHint: number;
-};
-
-/**
- * Describes the message celine.v1.Typing.
- * Use `create(TypingSchema)` to create a new message.
- */
-export const TypingSchema: GenMessage<Typing> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 4);
-
-/**
  * @generated from message celine.v1.Message
  */
 export type Message = Message$1<"celine.v1.Message"> & {
@@ -147,7 +124,7 @@ export type Message = Message$1<"celine.v1.Message"> & {
  * Use `create(MessageSchema)` to create a new message.
  */
 export const MessageSchema: GenMessage<Message> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 5);
+  messageDesc(file_celine_v1_celine, 4);
 
 /**
  * @generated from message celine.v1.ToolCall
@@ -174,7 +151,7 @@ export type ToolCall = Message$1<"celine.v1.ToolCall"> & {
  * Use `create(ToolCallSchema)` to create a new message.
  */
 export const ToolCallSchema: GenMessage<ToolCall> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 6);
+  messageDesc(file_celine_v1_celine, 5);
 
 /**
  * @generated from message celine.v1.ToolResult
@@ -201,7 +178,7 @@ export type ToolResult = Message$1<"celine.v1.ToolResult"> & {
  * Use `create(ToolResultSchema)` to create a new message.
  */
 export const ToolResultSchema: GenMessage<ToolResult> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 7);
+  messageDesc(file_celine_v1_celine, 6);
 
 /**
  * @generated from message celine.v1.Done
@@ -218,7 +195,7 @@ export type Done = Message$1<"celine.v1.Done"> & {
  * Use `create(DoneSchema)` to create a new message.
  */
 export const DoneSchema: GenMessage<Done> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 8);
+  messageDesc(file_celine_v1_celine, 7);
 
 /**
  * @generated from message celine.v1.AnamnesisRequest
@@ -231,7 +208,7 @@ export type AnamnesisRequest = Message$1<"celine.v1.AnamnesisRequest"> & {
  * Use `create(AnamnesisRequestSchema)` to create a new message.
  */
 export const AnamnesisRequestSchema: GenMessage<AnamnesisRequest> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 9);
+  messageDesc(file_celine_v1_celine, 8);
 
 /**
  * @generated from message celine.v1.AnamnesisResponse
@@ -248,7 +225,7 @@ export type AnamnesisResponse = Message$1<"celine.v1.AnamnesisResponse"> & {
  * Use `create(AnamnesisResponseSchema)` to create a new message.
  */
 export const AnamnesisResponseSchema: GenMessage<AnamnesisResponse> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 10);
+  messageDesc(file_celine_v1_celine, 9);
 
 /**
  * @generated from message celine.v1.ChatMessage
@@ -280,7 +257,7 @@ export type ChatMessage = Message$1<"celine.v1.ChatMessage"> & {
  * Use `create(ChatMessageSchema)` to create a new message.
  */
 export const ChatMessageSchema: GenMessage<ChatMessage> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 11);
+  messageDesc(file_celine_v1_celine, 10);
 
 /**
  * @generated from service celine.v1.Celine

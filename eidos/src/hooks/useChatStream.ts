@@ -27,9 +27,6 @@ export function useChatStream() {
         )) {
           const e = ev.event;
           switch (e.case) {
-            case "typing":
-              setTyping(true);
-              break;
             case "message":
               setTyping(false);
               setBubbles((b) => [
@@ -38,6 +35,7 @@ export function useChatStream() {
               ]);
               break;
             case "done":
+              setTyping(false);
               setBusy(false);
               break;
             case "error":
@@ -66,11 +64,13 @@ export function useChatStream() {
       const trimmed = text.trim();
       if (!trimmed) return;
 
+      setTyping(true);
       setBubbles((b) => [...b, { id: nextId++, from: "user", text: trimmed }]);
 
       try {
         await celine.pempo(create(PempoRequestSchema, { text: trimmed }));
       } catch (err) {
+        setTyping(false);
         setBubbles((b) => [
           ...b,
           { id: nextId++, from: "celine", text: `⚠ ${String(err)}` },
