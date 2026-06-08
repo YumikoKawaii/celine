@@ -10,36 +10,27 @@ import type { Message as Message$1 } from "@bufbuild/protobuf";
  * Describes the file celine/v1/celine.proto.
  */
 export const file_celine_v1_celine: GenFile = /*@__PURE__*/
-  fileDesc("ChZjZWxpbmUvdjEvY2VsaW5lLnByb3RvEgljZWxpbmUudjEiNQoMTGFsZW9SZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCRIMCgR0ZXh0GAIgASgJIusBCgpMYWxlb0V2ZW50EiMKBnR5cGluZxgBIAEoCzIRLmNlbGluZS52MS5UeXBpbmdIABIlCgdtZXNzYWdlGAIgASgLMhIuY2VsaW5lLnYxLk1lc3NhZ2VIABIoCgl0b29sX2NhbGwYAyABKAsyEy5jZWxpbmUudjEuVG9vbENhbGxIABIsCgt0b29sX3Jlc3VsdBgEIAEoCzIVLmNlbGluZS52MS5Ub29sUmVzdWx0SAASHwoEZG9uZRgFIAEoCzIPLmNlbGluZS52MS5Eb25lSAASDwoFZXJyb3IYBiABKAlIAEIHCgVldmVudCIZCgZUeXBpbmcSDwoHbXNfaGludBgBIAEoBSIkCgdNZXNzYWdlEgsKA3NlcRgBIAEoBRIMCgR0ZXh0GAIgASgJIjgKCFRvb2xDYWxsEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEgoKaW5wdXRfanNvbhgDIAEoCSI6CgpUb29sUmVzdWx0EgoKAmlkGAEgASgJEg4KBm91dHB1dBgCIAEoCRIQCghpc19lcnJvchgDIAEoCCIfCgREb25lEhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCSIrChBBbmFtbmVzaXNSZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCSI9ChFBbmFtbmVzaXNSZXNwb25zZRIoCghtZXNzYWdlcxgBIAMoCzIWLmNlbGluZS52MS5DaGF0TWVzc2FnZSJOCgtDaGF0TWVzc2FnZRIKCgJpZBgBIAEoCRIMCgRyb2xlGAIgASgJEgwKBHRleHQYAyABKAkSFwoPY3JlYXRlZF9hdF91bml4GAQgASgDIhIKEEthdGFsb2dvc1JlcXVlc3QiQwoRS2F0YWxvZ29zUmVzcG9uc2USLgoNY29udmVyc2F0aW9ucxgBIAMoCzIXLmNlbGluZS52MS5Db252ZXJzYXRpb24iMwoMQ29udmVyc2F0aW9uEgoKAmlkGAEgASgJEhcKD2NyZWF0ZWRfYXRfdW5peBgCIAEoAzLTAQoGQ2VsaW5lEjkKBUxhbGVvEhcuY2VsaW5lLnYxLkxhbGVvUmVxdWVzdBoVLmNlbGluZS52MS5MYWxlb0V2ZW50MAESRgoJQW5hbW5lc2lzEhsuY2VsaW5lLnYxLkFuYW1uZXNpc1JlcXVlc3QaHC5jZWxpbmUudjEuQW5hbW5lc2lzUmVzcG9uc2USRgoJS2F0YWxvZ29zEhsuY2VsaW5lLnYxLkthdGFsb2dvc1JlcXVlc3QaHC5jZWxpbmUudjEuS2F0YWxvZ29zUmVzcG9uc2VCPVo7Z2l0aHViLmNvbS9ZdW1pa29LYXdhaWkvY2VsaW5lL2Jhc2lzL2dlbi9jZWxpbmUvdjE7Y2VsaW5ldjFiBnByb3RvMw");
+  fileDesc("ChZjZWxpbmUvdjEvY2VsaW5lLnByb3RvEgljZWxpbmUudjEiEQoPUGFyb3VzaWFSZXF1ZXN0Iu4BCg1QYXJvdXNpYUV2ZW50EiMKBnR5cGluZxgBIAEoCzIRLmNlbGluZS52MS5UeXBpbmdIABIlCgdtZXNzYWdlGAIgASgLMhIuY2VsaW5lLnYxLk1lc3NhZ2VIABIoCgl0b29sX2NhbGwYAyABKAsyEy5jZWxpbmUudjEuVG9vbENhbGxIABIsCgt0b29sX3Jlc3VsdBgEIAEoCzIVLmNlbGluZS52MS5Ub29sUmVzdWx0SAASHwoEZG9uZRgFIAEoCzIPLmNlbGluZS52MS5Eb25lSAASDwoFZXJyb3IYBiABKAlIAEIHCgVldmVudCI1CgxQZW1wb1JlcXVlc3QSFwoPY29udmVyc2F0aW9uX2lkGAEgASgJEgwKBHRleHQYAiABKAkiDwoNUGVtcG9SZXNwb25zZSIZCgZUeXBpbmcSDwoHbXNfaGludBgBIAEoBSIkCgdNZXNzYWdlEgsKA3NlcRgBIAEoBRIMCgR0ZXh0GAIgASgJIjgKCFRvb2xDYWxsEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEgoKaW5wdXRfanNvbhgDIAEoCSI6CgpUb29sUmVzdWx0EgoKAmlkGAEgASgJEg4KBm91dHB1dBgCIAEoCRIQCghpc19lcnJvchgDIAEoCCIfCgREb25lEhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCSIrChBBbmFtbmVzaXNSZXF1ZXN0EhcKD2NvbnZlcnNhdGlvbl9pZBgBIAEoCSI9ChFBbmFtbmVzaXNSZXNwb25zZRIoCghtZXNzYWdlcxgBIAMoCzIWLmNlbGluZS52MS5DaGF0TWVzc2FnZSJOCgtDaGF0TWVzc2FnZRIKCgJpZBgBIAEoCRIMCgRyb2xlGAIgASgJEgwKBHRleHQYAyABKAkSFwoPY3JlYXRlZF9hdF91bml4GAQgASgDIhIKEEthdGFsb2dvc1JlcXVlc3QiQwoRS2F0YWxvZ29zUmVzcG9uc2USLgoNY29udmVyc2F0aW9ucxgBIAMoCzIXLmNlbGluZS52MS5Db252ZXJzYXRpb24iMwoMQ29udmVyc2F0aW9uEgoKAmlkGAEgASgJEhcKD2NyZWF0ZWRfYXRfdW5peBgCIAEoAzKYAgoGQ2VsaW5lEkIKCFBhcm91c2lhEhouY2VsaW5lLnYxLlBhcm91c2lhUmVxdWVzdBoYLmNlbGluZS52MS5QYXJvdXNpYUV2ZW50MAESOgoFUGVtcG8SFy5jZWxpbmUudjEuUGVtcG9SZXF1ZXN0GhguY2VsaW5lLnYxLlBlbXBvUmVzcG9uc2USRgoJQW5hbW5lc2lzEhsuY2VsaW5lLnYxLkFuYW1uZXNpc1JlcXVlc3QaHC5jZWxpbmUudjEuQW5hbW5lc2lzUmVzcG9uc2USRgoJS2F0YWxvZ29zEhsuY2VsaW5lLnYxLkthdGFsb2dvc1JlcXVlc3QaHC5jZWxpbmUudjEuS2F0YWxvZ29zUmVzcG9uc2VCPVo7Z2l0aHViLmNvbS9ZdW1pa29LYXdhaWkvY2VsaW5lL2Jhc2lzL2dlbi9jZWxpbmUvdjE7Y2VsaW5ldjFiBnByb3RvMw");
 
 /**
- * @generated from message celine.v1.LaleoRequest
+ * @generated from message celine.v1.ParousiaRequest
  */
-export type LaleoRequest = Message$1<"celine.v1.LaleoRequest"> & {
-  /**
-   * @generated from field: string conversation_id = 1;
-   */
-  conversationId: string;
-
-  /**
-   * @generated from field: string text = 2;
-   */
-  text: string;
+export type ParousiaRequest = Message$1<"celine.v1.ParousiaRequest"> & {
 };
 
 /**
- * Describes the message celine.v1.LaleoRequest.
- * Use `create(LaleoRequestSchema)` to create a new message.
+ * Describes the message celine.v1.ParousiaRequest.
+ * Use `create(ParousiaRequestSchema)` to create a new message.
  */
-export const LaleoRequestSchema: GenMessage<LaleoRequest> = /*@__PURE__*/
+export const ParousiaRequestSchema: GenMessage<ParousiaRequest> = /*@__PURE__*/
   messageDesc(file_celine_v1_celine, 0);
 
 /**
- * @generated from message celine.v1.LaleoEvent
+ * @generated from message celine.v1.ParousiaEvent
  */
-export type LaleoEvent = Message$1<"celine.v1.LaleoEvent"> & {
+export type ParousiaEvent = Message$1<"celine.v1.ParousiaEvent"> & {
   /**
-   * @generated from oneof celine.v1.LaleoEvent.event
+   * @generated from oneof celine.v1.ParousiaEvent.event
    */
   event: {
     /**
@@ -81,11 +72,46 @@ export type LaleoEvent = Message$1<"celine.v1.LaleoEvent"> & {
 };
 
 /**
- * Describes the message celine.v1.LaleoEvent.
- * Use `create(LaleoEventSchema)` to create a new message.
+ * Describes the message celine.v1.ParousiaEvent.
+ * Use `create(ParousiaEventSchema)` to create a new message.
  */
-export const LaleoEventSchema: GenMessage<LaleoEvent> = /*@__PURE__*/
+export const ParousiaEventSchema: GenMessage<ParousiaEvent> = /*@__PURE__*/
   messageDesc(file_celine_v1_celine, 1);
+
+/**
+ * @generated from message celine.v1.PempoRequest
+ */
+export type PempoRequest = Message$1<"celine.v1.PempoRequest"> & {
+  /**
+   * @generated from field: string conversation_id = 1;
+   */
+  conversationId: string;
+
+  /**
+   * @generated from field: string text = 2;
+   */
+  text: string;
+};
+
+/**
+ * Describes the message celine.v1.PempoRequest.
+ * Use `create(PempoRequestSchema)` to create a new message.
+ */
+export const PempoRequestSchema: GenMessage<PempoRequest> = /*@__PURE__*/
+  messageDesc(file_celine_v1_celine, 2);
+
+/**
+ * @generated from message celine.v1.PempoResponse
+ */
+export type PempoResponse = Message$1<"celine.v1.PempoResponse"> & {
+};
+
+/**
+ * Describes the message celine.v1.PempoResponse.
+ * Use `create(PempoResponseSchema)` to create a new message.
+ */
+export const PempoResponseSchema: GenMessage<PempoResponse> = /*@__PURE__*/
+  messageDesc(file_celine_v1_celine, 3);
 
 /**
  * @generated from message celine.v1.Typing
@@ -102,7 +128,7 @@ export type Typing = Message$1<"celine.v1.Typing"> & {
  * Use `create(TypingSchema)` to create a new message.
  */
 export const TypingSchema: GenMessage<Typing> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 2);
+  messageDesc(file_celine_v1_celine, 4);
 
 /**
  * @generated from message celine.v1.Message
@@ -124,7 +150,7 @@ export type Message = Message$1<"celine.v1.Message"> & {
  * Use `create(MessageSchema)` to create a new message.
  */
 export const MessageSchema: GenMessage<Message> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 3);
+  messageDesc(file_celine_v1_celine, 5);
 
 /**
  * @generated from message celine.v1.ToolCall
@@ -151,7 +177,7 @@ export type ToolCall = Message$1<"celine.v1.ToolCall"> & {
  * Use `create(ToolCallSchema)` to create a new message.
  */
 export const ToolCallSchema: GenMessage<ToolCall> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 4);
+  messageDesc(file_celine_v1_celine, 6);
 
 /**
  * @generated from message celine.v1.ToolResult
@@ -178,7 +204,7 @@ export type ToolResult = Message$1<"celine.v1.ToolResult"> & {
  * Use `create(ToolResultSchema)` to create a new message.
  */
 export const ToolResultSchema: GenMessage<ToolResult> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 5);
+  messageDesc(file_celine_v1_celine, 7);
 
 /**
  * @generated from message celine.v1.Done
@@ -195,7 +221,7 @@ export type Done = Message$1<"celine.v1.Done"> & {
  * Use `create(DoneSchema)` to create a new message.
  */
 export const DoneSchema: GenMessage<Done> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 6);
+  messageDesc(file_celine_v1_celine, 8);
 
 /**
  * @generated from message celine.v1.AnamnesisRequest
@@ -212,7 +238,7 @@ export type AnamnesisRequest = Message$1<"celine.v1.AnamnesisRequest"> & {
  * Use `create(AnamnesisRequestSchema)` to create a new message.
  */
 export const AnamnesisRequestSchema: GenMessage<AnamnesisRequest> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 7);
+  messageDesc(file_celine_v1_celine, 9);
 
 /**
  * @generated from message celine.v1.AnamnesisResponse
@@ -229,7 +255,7 @@ export type AnamnesisResponse = Message$1<"celine.v1.AnamnesisResponse"> & {
  * Use `create(AnamnesisResponseSchema)` to create a new message.
  */
 export const AnamnesisResponseSchema: GenMessage<AnamnesisResponse> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 8);
+  messageDesc(file_celine_v1_celine, 10);
 
 /**
  * @generated from message celine.v1.ChatMessage
@@ -261,7 +287,7 @@ export type ChatMessage = Message$1<"celine.v1.ChatMessage"> & {
  * Use `create(ChatMessageSchema)` to create a new message.
  */
 export const ChatMessageSchema: GenMessage<ChatMessage> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 9);
+  messageDesc(file_celine_v1_celine, 11);
 
 /**
  * @generated from message celine.v1.KatalogosRequest
@@ -274,7 +300,7 @@ export type KatalogosRequest = Message$1<"celine.v1.KatalogosRequest"> & {
  * Use `create(KatalogosRequestSchema)` to create a new message.
  */
 export const KatalogosRequestSchema: GenMessage<KatalogosRequest> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 10);
+  messageDesc(file_celine_v1_celine, 12);
 
 /**
  * @generated from message celine.v1.KatalogosResponse
@@ -291,7 +317,7 @@ export type KatalogosResponse = Message$1<"celine.v1.KatalogosResponse"> & {
  * Use `create(KatalogosResponseSchema)` to create a new message.
  */
 export const KatalogosResponseSchema: GenMessage<KatalogosResponse> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 11);
+  messageDesc(file_celine_v1_celine, 13);
 
 /**
  * @generated from message celine.v1.Conversation
@@ -313,19 +339,33 @@ export type Conversation = Message$1<"celine.v1.Conversation"> & {
  * Use `create(ConversationSchema)` to create a new message.
  */
 export const ConversationSchema: GenMessage<Conversation> = /*@__PURE__*/
-  messageDesc(file_celine_v1_celine, 12);
+  messageDesc(file_celine_v1_celine, 14);
 
 /**
  * @generated from service celine.v1.Celine
  */
 export const Celine: GenService<{
   /**
-   * @generated from rpc celine.v1.Celine.Laleo
+   * Persistent server-streaming connection opened on login.
+   * Server pushes all agent events (typing, bubbles, tool activity) through here.
+   *
+   * @generated from rpc celine.v1.Celine.Parousia
    */
-  laleo: {
+  parousia: {
     methodKind: "server_streaming";
-    input: typeof LaleoRequestSchema;
-    output: typeof LaleoEventSchema;
+    input: typeof ParousiaRequestSchema;
+    output: typeof ParousiaEventSchema;
+  },
+  /**
+   * Unary — client sends a message. Response is immediate (just an ack);
+   * the actual reply arrives through the open Parousia stream.
+   *
+   * @generated from rpc celine.v1.Celine.Pempo
+   */
+  pempo: {
+    methodKind: "unary";
+    input: typeof PempoRequestSchema;
+    output: typeof PempoResponseSchema;
   },
   /**
    * @generated from rpc celine.v1.Celine.Anamnesis

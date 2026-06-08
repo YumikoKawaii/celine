@@ -33,8 +33,10 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// CelineLaleoProcedure is the fully-qualified name of the Celine's Laleo RPC.
-	CelineLaleoProcedure = "/celine.v1.Celine/Laleo"
+	// CelineParousiaProcedure is the fully-qualified name of the Celine's Parousia RPC.
+	CelineParousiaProcedure = "/celine.v1.Celine/Parousia"
+	// CelinePempoProcedure is the fully-qualified name of the Celine's Pempo RPC.
+	CelinePempoProcedure = "/celine.v1.Celine/Pempo"
 	// CelineAnamnesisProcedure is the fully-qualified name of the Celine's Anamnesis RPC.
 	CelineAnamnesisProcedure = "/celine.v1.Celine/Anamnesis"
 	// CelineKatalogosProcedure is the fully-qualified name of the Celine's Katalogos RPC.
@@ -43,7 +45,12 @@ const (
 
 // CelineClient is a client for the celine.v1.Celine service.
 type CelineClient interface {
-	Laleo(context.Context, *connect.Request[v1.LaleoRequest]) (*connect.ServerStreamForClient[v1.LaleoEvent], error)
+	// Persistent server-streaming connection opened on login.
+	// Server pushes all agent events (typing, bubbles, tool activity) through here.
+	Parousia(context.Context, *connect.Request[v1.ParousiaRequest]) (*connect.ServerStreamForClient[v1.ParousiaEvent], error)
+	// Unary — client sends a message. Response is immediate (just an ack);
+	// the actual reply arrives through the open Parousia stream.
+	Pempo(context.Context, *connect.Request[v1.PempoRequest]) (*connect.Response[v1.PempoResponse], error)
 	Anamnesis(context.Context, *connect.Request[v1.AnamnesisRequest]) (*connect.Response[v1.AnamnesisResponse], error)
 	Katalogos(context.Context, *connect.Request[v1.KatalogosRequest]) (*connect.Response[v1.KatalogosResponse], error)
 }
@@ -59,10 +66,16 @@ func NewCelineClient(httpClient connect.HTTPClient, baseURL string, opts ...conn
 	baseURL = strings.TrimRight(baseURL, "/")
 	celineMethods := v1.File_celine_v1_celine_proto.Services().ByName("Celine").Methods()
 	return &celineClient{
-		laleo: connect.NewClient[v1.LaleoRequest, v1.LaleoEvent](
+		parousia: connect.NewClient[v1.ParousiaRequest, v1.ParousiaEvent](
 			httpClient,
-			baseURL+CelineLaleoProcedure,
-			connect.WithSchema(celineMethods.ByName("Laleo")),
+			baseURL+CelineParousiaProcedure,
+			connect.WithSchema(celineMethods.ByName("Parousia")),
+			connect.WithClientOptions(opts...),
+		),
+		pempo: connect.NewClient[v1.PempoRequest, v1.PempoResponse](
+			httpClient,
+			baseURL+CelinePempoProcedure,
+			connect.WithSchema(celineMethods.ByName("Pempo")),
 			connect.WithClientOptions(opts...),
 		),
 		anamnesis: connect.NewClient[v1.AnamnesisRequest, v1.AnamnesisResponse](
@@ -82,14 +95,20 @@ func NewCelineClient(httpClient connect.HTTPClient, baseURL string, opts ...conn
 
 // celineClient implements CelineClient.
 type celineClient struct {
-	laleo     *connect.Client[v1.LaleoRequest, v1.LaleoEvent]
+	parousia  *connect.Client[v1.ParousiaRequest, v1.ParousiaEvent]
+	pempo     *connect.Client[v1.PempoRequest, v1.PempoResponse]
 	anamnesis *connect.Client[v1.AnamnesisRequest, v1.AnamnesisResponse]
 	katalogos *connect.Client[v1.KatalogosRequest, v1.KatalogosResponse]
 }
 
-// Laleo calls celine.v1.Celine.Laleo.
-func (c *celineClient) Laleo(ctx context.Context, req *connect.Request[v1.LaleoRequest]) (*connect.ServerStreamForClient[v1.LaleoEvent], error) {
-	return c.laleo.CallServerStream(ctx, req)
+// Parousia calls celine.v1.Celine.Parousia.
+func (c *celineClient) Parousia(ctx context.Context, req *connect.Request[v1.ParousiaRequest]) (*connect.ServerStreamForClient[v1.ParousiaEvent], error) {
+	return c.parousia.CallServerStream(ctx, req)
+}
+
+// Pempo calls celine.v1.Celine.Pempo.
+func (c *celineClient) Pempo(ctx context.Context, req *connect.Request[v1.PempoRequest]) (*connect.Response[v1.PempoResponse], error) {
+	return c.pempo.CallUnary(ctx, req)
 }
 
 // Anamnesis calls celine.v1.Celine.Anamnesis.
@@ -104,7 +123,12 @@ func (c *celineClient) Katalogos(ctx context.Context, req *connect.Request[v1.Ka
 
 // CelineHandler is an implementation of the celine.v1.Celine service.
 type CelineHandler interface {
-	Laleo(context.Context, *connect.Request[v1.LaleoRequest], *connect.ServerStream[v1.LaleoEvent]) error
+	// Persistent server-streaming connection opened on login.
+	// Server pushes all agent events (typing, bubbles, tool activity) through here.
+	Parousia(context.Context, *connect.Request[v1.ParousiaRequest], *connect.ServerStream[v1.ParousiaEvent]) error
+	// Unary — client sends a message. Response is immediate (just an ack);
+	// the actual reply arrives through the open Parousia stream.
+	Pempo(context.Context, *connect.Request[v1.PempoRequest]) (*connect.Response[v1.PempoResponse], error)
 	Anamnesis(context.Context, *connect.Request[v1.AnamnesisRequest]) (*connect.Response[v1.AnamnesisResponse], error)
 	Katalogos(context.Context, *connect.Request[v1.KatalogosRequest]) (*connect.Response[v1.KatalogosResponse], error)
 }
@@ -116,10 +140,16 @@ type CelineHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewCelineHandler(svc CelineHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	celineMethods := v1.File_celine_v1_celine_proto.Services().ByName("Celine").Methods()
-	celineLaleoHandler := connect.NewServerStreamHandler(
-		CelineLaleoProcedure,
-		svc.Laleo,
-		connect.WithSchema(celineMethods.ByName("Laleo")),
+	celineParousiaHandler := connect.NewServerStreamHandler(
+		CelineParousiaProcedure,
+		svc.Parousia,
+		connect.WithSchema(celineMethods.ByName("Parousia")),
+		connect.WithHandlerOptions(opts...),
+	)
+	celinePempoHandler := connect.NewUnaryHandler(
+		CelinePempoProcedure,
+		svc.Pempo,
+		connect.WithSchema(celineMethods.ByName("Pempo")),
 		connect.WithHandlerOptions(opts...),
 	)
 	celineAnamnesisHandler := connect.NewUnaryHandler(
@@ -136,8 +166,10 @@ func NewCelineHandler(svc CelineHandler, opts ...connect.HandlerOption) (string,
 	)
 	return "/celine.v1.Celine/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case CelineLaleoProcedure:
-			celineLaleoHandler.ServeHTTP(w, r)
+		case CelineParousiaProcedure:
+			celineParousiaHandler.ServeHTTP(w, r)
+		case CelinePempoProcedure:
+			celinePempoHandler.ServeHTTP(w, r)
 		case CelineAnamnesisProcedure:
 			celineAnamnesisHandler.ServeHTTP(w, r)
 		case CelineKatalogosProcedure:
@@ -151,8 +183,12 @@ func NewCelineHandler(svc CelineHandler, opts ...connect.HandlerOption) (string,
 // UnimplementedCelineHandler returns CodeUnimplemented from all methods.
 type UnimplementedCelineHandler struct{}
 
-func (UnimplementedCelineHandler) Laleo(context.Context, *connect.Request[v1.LaleoRequest], *connect.ServerStream[v1.LaleoEvent]) error {
-	return connect.NewError(connect.CodeUnimplemented, errors.New("celine.v1.Celine.Laleo is not implemented"))
+func (UnimplementedCelineHandler) Parousia(context.Context, *connect.Request[v1.ParousiaRequest], *connect.ServerStream[v1.ParousiaEvent]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("celine.v1.Celine.Parousia is not implemented"))
+}
+
+func (UnimplementedCelineHandler) Pempo(context.Context, *connect.Request[v1.PempoRequest]) (*connect.Response[v1.PempoResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("celine.v1.Celine.Pempo is not implemented"))
 }
 
 func (UnimplementedCelineHandler) Anamnesis(context.Context, *connect.Request[v1.AnamnesisRequest]) (*connect.Response[v1.AnamnesisResponse], error) {

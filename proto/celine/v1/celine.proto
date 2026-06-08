@@ -5,17 +5,21 @@ package celine.v1;
 option go_package = "github.com/YumikoKawaii/celine/basis/gen/celine/v1;celinev1";
 
 service Celine {
-  rpc Laleo     (LaleoRequest)     returns (stream LaleoEvent);
+  // Persistent server-streaming connection opened on login.
+  // Server pushes all agent events (typing, bubbles, tool activity) through here.
+  rpc Parousia  (ParousiaRequest)  returns (stream ParousiaEvent);
+
+  // Unary — client sends a message. Response is immediate (just an ack);
+  // the actual reply arrives through the open Parousia stream.
+  rpc Pempo     (PempoRequest)     returns (PempoResponse);
+
   rpc Anamnesis (AnamnesisRequest) returns (AnamnesisResponse);
   rpc Katalogos (KatalogosRequest) returns (KatalogosResponse);
 }
 
-message LaleoRequest {
-  string conversation_id = 1;
-  string text            = 2;
-}
+message ParousiaRequest {}
 
-message LaleoEvent {
+message ParousiaEvent {
   oneof event {
     Typing     typing      = 1;
     Message    message     = 2;
@@ -25,6 +29,13 @@ message LaleoEvent {
     string     error       = 6;
   }
 }
+
+message PempoRequest {
+  string conversation_id = 1;
+  string text            = 2;
+}
+
+message PempoResponse {}
 
 message Typing {
   int32 ms_hint = 1;

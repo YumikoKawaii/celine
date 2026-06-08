@@ -21,7 +21,189 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type LaleoRequest struct {
+type ParousiaRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ParousiaRequest) Reset() {
+	*x = ParousiaRequest{}
+	mi := &file_celine_v1_celine_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ParousiaRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ParousiaRequest) ProtoMessage() {}
+
+func (x *ParousiaRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_celine_v1_celine_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ParousiaRequest.ProtoReflect.Descriptor instead.
+func (*ParousiaRequest) Descriptor() ([]byte, []int) {
+	return file_celine_v1_celine_proto_rawDescGZIP(), []int{0}
+}
+
+type ParousiaEvent struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Event:
+	//
+	//	*ParousiaEvent_Typing
+	//	*ParousiaEvent_Message
+	//	*ParousiaEvent_ToolCall
+	//	*ParousiaEvent_ToolResult
+	//	*ParousiaEvent_Done
+	//	*ParousiaEvent_Error
+	Event         isParousiaEvent_Event `protobuf_oneof:"event"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ParousiaEvent) Reset() {
+	*x = ParousiaEvent{}
+	mi := &file_celine_v1_celine_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ParousiaEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ParousiaEvent) ProtoMessage() {}
+
+func (x *ParousiaEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_celine_v1_celine_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ParousiaEvent.ProtoReflect.Descriptor instead.
+func (*ParousiaEvent) Descriptor() ([]byte, []int) {
+	return file_celine_v1_celine_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ParousiaEvent) GetEvent() isParousiaEvent_Event {
+	if x != nil {
+		return x.Event
+	}
+	return nil
+}
+
+func (x *ParousiaEvent) GetTyping() *Typing {
+	if x != nil {
+		if x, ok := x.Event.(*ParousiaEvent_Typing); ok {
+			return x.Typing
+		}
+	}
+	return nil
+}
+
+func (x *ParousiaEvent) GetMessage() *Message {
+	if x != nil {
+		if x, ok := x.Event.(*ParousiaEvent_Message); ok {
+			return x.Message
+		}
+	}
+	return nil
+}
+
+func (x *ParousiaEvent) GetToolCall() *ToolCall {
+	if x != nil {
+		if x, ok := x.Event.(*ParousiaEvent_ToolCall); ok {
+			return x.ToolCall
+		}
+	}
+	return nil
+}
+
+func (x *ParousiaEvent) GetToolResult() *ToolResult {
+	if x != nil {
+		if x, ok := x.Event.(*ParousiaEvent_ToolResult); ok {
+			return x.ToolResult
+		}
+	}
+	return nil
+}
+
+func (x *ParousiaEvent) GetDone() *Done {
+	if x != nil {
+		if x, ok := x.Event.(*ParousiaEvent_Done); ok {
+			return x.Done
+		}
+	}
+	return nil
+}
+
+func (x *ParousiaEvent) GetError() string {
+	if x != nil {
+		if x, ok := x.Event.(*ParousiaEvent_Error); ok {
+			return x.Error
+		}
+	}
+	return ""
+}
+
+type isParousiaEvent_Event interface {
+	isParousiaEvent_Event()
+}
+
+type ParousiaEvent_Typing struct {
+	Typing *Typing `protobuf:"bytes,1,opt,name=typing,proto3,oneof"`
+}
+
+type ParousiaEvent_Message struct {
+	Message *Message `protobuf:"bytes,2,opt,name=message,proto3,oneof"`
+}
+
+type ParousiaEvent_ToolCall struct {
+	ToolCall *ToolCall `protobuf:"bytes,3,opt,name=tool_call,json=toolCall,proto3,oneof"`
+}
+
+type ParousiaEvent_ToolResult struct {
+	ToolResult *ToolResult `protobuf:"bytes,4,opt,name=tool_result,json=toolResult,proto3,oneof"`
+}
+
+type ParousiaEvent_Done struct {
+	Done *Done `protobuf:"bytes,5,opt,name=done,proto3,oneof"`
+}
+
+type ParousiaEvent_Error struct {
+	Error string `protobuf:"bytes,6,opt,name=error,proto3,oneof"`
+}
+
+func (*ParousiaEvent_Typing) isParousiaEvent_Event() {}
+
+func (*ParousiaEvent_Message) isParousiaEvent_Event() {}
+
+func (*ParousiaEvent_ToolCall) isParousiaEvent_Event() {}
+
+func (*ParousiaEvent_ToolResult) isParousiaEvent_Event() {}
+
+func (*ParousiaEvent_Done) isParousiaEvent_Event() {}
+
+func (*ParousiaEvent_Error) isParousiaEvent_Event() {}
+
+type PempoRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	ConversationId string                 `protobuf:"bytes,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
 	Text           string                 `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
@@ -29,21 +211,21 @@ type LaleoRequest struct {
 	sizeCache      protoimpl.SizeCache
 }
 
-func (x *LaleoRequest) Reset() {
-	*x = LaleoRequest{}
-	mi := &file_celine_v1_celine_proto_msgTypes[0]
+func (x *PempoRequest) Reset() {
+	*x = PempoRequest{}
+	mi := &file_celine_v1_celine_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *LaleoRequest) String() string {
+func (x *PempoRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*LaleoRequest) ProtoMessage() {}
+func (*PempoRequest) ProtoMessage() {}
 
-func (x *LaleoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_celine_v1_celine_proto_msgTypes[0]
+func (x *PempoRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_celine_v1_celine_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -54,55 +236,46 @@ func (x *LaleoRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use LaleoRequest.ProtoReflect.Descriptor instead.
-func (*LaleoRequest) Descriptor() ([]byte, []int) {
-	return file_celine_v1_celine_proto_rawDescGZIP(), []int{0}
+// Deprecated: Use PempoRequest.ProtoReflect.Descriptor instead.
+func (*PempoRequest) Descriptor() ([]byte, []int) {
+	return file_celine_v1_celine_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *LaleoRequest) GetConversationId() string {
+func (x *PempoRequest) GetConversationId() string {
 	if x != nil {
 		return x.ConversationId
 	}
 	return ""
 }
 
-func (x *LaleoRequest) GetText() string {
+func (x *PempoRequest) GetText() string {
 	if x != nil {
 		return x.Text
 	}
 	return ""
 }
 
-type LaleoEvent struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Types that are valid to be assigned to Event:
-	//
-	//	*LaleoEvent_Typing
-	//	*LaleoEvent_Message
-	//	*LaleoEvent_ToolCall
-	//	*LaleoEvent_ToolResult
-	//	*LaleoEvent_Done
-	//	*LaleoEvent_Error
-	Event         isLaleoEvent_Event `protobuf_oneof:"event"`
+type PempoResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *LaleoEvent) Reset() {
-	*x = LaleoEvent{}
-	mi := &file_celine_v1_celine_proto_msgTypes[1]
+func (x *PempoResponse) Reset() {
+	*x = PempoResponse{}
+	mi := &file_celine_v1_celine_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *LaleoEvent) String() string {
+func (x *PempoResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*LaleoEvent) ProtoMessage() {}
+func (*PempoResponse) ProtoMessage() {}
 
-func (x *LaleoEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_celine_v1_celine_proto_msgTypes[1]
+func (x *PempoResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_celine_v1_celine_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -113,111 +286,10 @@ func (x *LaleoEvent) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use LaleoEvent.ProtoReflect.Descriptor instead.
-func (*LaleoEvent) Descriptor() ([]byte, []int) {
-	return file_celine_v1_celine_proto_rawDescGZIP(), []int{1}
+// Deprecated: Use PempoResponse.ProtoReflect.Descriptor instead.
+func (*PempoResponse) Descriptor() ([]byte, []int) {
+	return file_celine_v1_celine_proto_rawDescGZIP(), []int{3}
 }
-
-func (x *LaleoEvent) GetEvent() isLaleoEvent_Event {
-	if x != nil {
-		return x.Event
-	}
-	return nil
-}
-
-func (x *LaleoEvent) GetTyping() *Typing {
-	if x != nil {
-		if x, ok := x.Event.(*LaleoEvent_Typing); ok {
-			return x.Typing
-		}
-	}
-	return nil
-}
-
-func (x *LaleoEvent) GetMessage() *Message {
-	if x != nil {
-		if x, ok := x.Event.(*LaleoEvent_Message); ok {
-			return x.Message
-		}
-	}
-	return nil
-}
-
-func (x *LaleoEvent) GetToolCall() *ToolCall {
-	if x != nil {
-		if x, ok := x.Event.(*LaleoEvent_ToolCall); ok {
-			return x.ToolCall
-		}
-	}
-	return nil
-}
-
-func (x *LaleoEvent) GetToolResult() *ToolResult {
-	if x != nil {
-		if x, ok := x.Event.(*LaleoEvent_ToolResult); ok {
-			return x.ToolResult
-		}
-	}
-	return nil
-}
-
-func (x *LaleoEvent) GetDone() *Done {
-	if x != nil {
-		if x, ok := x.Event.(*LaleoEvent_Done); ok {
-			return x.Done
-		}
-	}
-	return nil
-}
-
-func (x *LaleoEvent) GetError() string {
-	if x != nil {
-		if x, ok := x.Event.(*LaleoEvent_Error); ok {
-			return x.Error
-		}
-	}
-	return ""
-}
-
-type isLaleoEvent_Event interface {
-	isLaleoEvent_Event()
-}
-
-type LaleoEvent_Typing struct {
-	Typing *Typing `protobuf:"bytes,1,opt,name=typing,proto3,oneof"`
-}
-
-type LaleoEvent_Message struct {
-	Message *Message `protobuf:"bytes,2,opt,name=message,proto3,oneof"`
-}
-
-type LaleoEvent_ToolCall struct {
-	ToolCall *ToolCall `protobuf:"bytes,3,opt,name=tool_call,json=toolCall,proto3,oneof"`
-}
-
-type LaleoEvent_ToolResult struct {
-	ToolResult *ToolResult `protobuf:"bytes,4,opt,name=tool_result,json=toolResult,proto3,oneof"`
-}
-
-type LaleoEvent_Done struct {
-	Done *Done `protobuf:"bytes,5,opt,name=done,proto3,oneof"`
-}
-
-type LaleoEvent_Error struct {
-	Error string `protobuf:"bytes,6,opt,name=error,proto3,oneof"`
-}
-
-func (*LaleoEvent_Typing) isLaleoEvent_Event() {}
-
-func (*LaleoEvent_Message) isLaleoEvent_Event() {}
-
-func (*LaleoEvent_ToolCall) isLaleoEvent_Event() {}
-
-func (*LaleoEvent_ToolResult) isLaleoEvent_Event() {}
-
-func (*LaleoEvent_Done) isLaleoEvent_Event() {}
-
-func (*LaleoEvent_Error) isLaleoEvent_Event() {}
 
 type Typing struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -228,7 +300,7 @@ type Typing struct {
 
 func (x *Typing) Reset() {
 	*x = Typing{}
-	mi := &file_celine_v1_celine_proto_msgTypes[2]
+	mi := &file_celine_v1_celine_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -240,7 +312,7 @@ func (x *Typing) String() string {
 func (*Typing) ProtoMessage() {}
 
 func (x *Typing) ProtoReflect() protoreflect.Message {
-	mi := &file_celine_v1_celine_proto_msgTypes[2]
+	mi := &file_celine_v1_celine_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -253,7 +325,7 @@ func (x *Typing) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Typing.ProtoReflect.Descriptor instead.
 func (*Typing) Descriptor() ([]byte, []int) {
-	return file_celine_v1_celine_proto_rawDescGZIP(), []int{2}
+	return file_celine_v1_celine_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Typing) GetMsHint() int32 {
@@ -273,7 +345,7 @@ type Message struct {
 
 func (x *Message) Reset() {
 	*x = Message{}
-	mi := &file_celine_v1_celine_proto_msgTypes[3]
+	mi := &file_celine_v1_celine_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -285,7 +357,7 @@ func (x *Message) String() string {
 func (*Message) ProtoMessage() {}
 
 func (x *Message) ProtoReflect() protoreflect.Message {
-	mi := &file_celine_v1_celine_proto_msgTypes[3]
+	mi := &file_celine_v1_celine_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -298,7 +370,7 @@ func (x *Message) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Message.ProtoReflect.Descriptor instead.
 func (*Message) Descriptor() ([]byte, []int) {
-	return file_celine_v1_celine_proto_rawDescGZIP(), []int{3}
+	return file_celine_v1_celine_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Message) GetSeq() int32 {
@@ -326,7 +398,7 @@ type ToolCall struct {
 
 func (x *ToolCall) Reset() {
 	*x = ToolCall{}
-	mi := &file_celine_v1_celine_proto_msgTypes[4]
+	mi := &file_celine_v1_celine_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -338,7 +410,7 @@ func (x *ToolCall) String() string {
 func (*ToolCall) ProtoMessage() {}
 
 func (x *ToolCall) ProtoReflect() protoreflect.Message {
-	mi := &file_celine_v1_celine_proto_msgTypes[4]
+	mi := &file_celine_v1_celine_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -351,7 +423,7 @@ func (x *ToolCall) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToolCall.ProtoReflect.Descriptor instead.
 func (*ToolCall) Descriptor() ([]byte, []int) {
-	return file_celine_v1_celine_proto_rawDescGZIP(), []int{4}
+	return file_celine_v1_celine_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ToolCall) GetId() string {
@@ -386,7 +458,7 @@ type ToolResult struct {
 
 func (x *ToolResult) Reset() {
 	*x = ToolResult{}
-	mi := &file_celine_v1_celine_proto_msgTypes[5]
+	mi := &file_celine_v1_celine_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -398,7 +470,7 @@ func (x *ToolResult) String() string {
 func (*ToolResult) ProtoMessage() {}
 
 func (x *ToolResult) ProtoReflect() protoreflect.Message {
-	mi := &file_celine_v1_celine_proto_msgTypes[5]
+	mi := &file_celine_v1_celine_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -411,7 +483,7 @@ func (x *ToolResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToolResult.ProtoReflect.Descriptor instead.
 func (*ToolResult) Descriptor() ([]byte, []int) {
-	return file_celine_v1_celine_proto_rawDescGZIP(), []int{5}
+	return file_celine_v1_celine_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ToolResult) GetId() string {
@@ -444,7 +516,7 @@ type Done struct {
 
 func (x *Done) Reset() {
 	*x = Done{}
-	mi := &file_celine_v1_celine_proto_msgTypes[6]
+	mi := &file_celine_v1_celine_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -456,7 +528,7 @@ func (x *Done) String() string {
 func (*Done) ProtoMessage() {}
 
 func (x *Done) ProtoReflect() protoreflect.Message {
-	mi := &file_celine_v1_celine_proto_msgTypes[6]
+	mi := &file_celine_v1_celine_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -469,7 +541,7 @@ func (x *Done) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Done.ProtoReflect.Descriptor instead.
 func (*Done) Descriptor() ([]byte, []int) {
-	return file_celine_v1_celine_proto_rawDescGZIP(), []int{6}
+	return file_celine_v1_celine_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Done) GetConversationId() string {
@@ -488,7 +560,7 @@ type AnamnesisRequest struct {
 
 func (x *AnamnesisRequest) Reset() {
 	*x = AnamnesisRequest{}
-	mi := &file_celine_v1_celine_proto_msgTypes[7]
+	mi := &file_celine_v1_celine_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -500,7 +572,7 @@ func (x *AnamnesisRequest) String() string {
 func (*AnamnesisRequest) ProtoMessage() {}
 
 func (x *AnamnesisRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_celine_v1_celine_proto_msgTypes[7]
+	mi := &file_celine_v1_celine_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -513,7 +585,7 @@ func (x *AnamnesisRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AnamnesisRequest.ProtoReflect.Descriptor instead.
 func (*AnamnesisRequest) Descriptor() ([]byte, []int) {
-	return file_celine_v1_celine_proto_rawDescGZIP(), []int{7}
+	return file_celine_v1_celine_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *AnamnesisRequest) GetConversationId() string {
@@ -532,7 +604,7 @@ type AnamnesisResponse struct {
 
 func (x *AnamnesisResponse) Reset() {
 	*x = AnamnesisResponse{}
-	mi := &file_celine_v1_celine_proto_msgTypes[8]
+	mi := &file_celine_v1_celine_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -544,7 +616,7 @@ func (x *AnamnesisResponse) String() string {
 func (*AnamnesisResponse) ProtoMessage() {}
 
 func (x *AnamnesisResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_celine_v1_celine_proto_msgTypes[8]
+	mi := &file_celine_v1_celine_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -557,7 +629,7 @@ func (x *AnamnesisResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AnamnesisResponse.ProtoReflect.Descriptor instead.
 func (*AnamnesisResponse) Descriptor() ([]byte, []int) {
-	return file_celine_v1_celine_proto_rawDescGZIP(), []int{8}
+	return file_celine_v1_celine_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *AnamnesisResponse) GetMessages() []*ChatMessage {
@@ -579,7 +651,7 @@ type ChatMessage struct {
 
 func (x *ChatMessage) Reset() {
 	*x = ChatMessage{}
-	mi := &file_celine_v1_celine_proto_msgTypes[9]
+	mi := &file_celine_v1_celine_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -591,7 +663,7 @@ func (x *ChatMessage) String() string {
 func (*ChatMessage) ProtoMessage() {}
 
 func (x *ChatMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_celine_v1_celine_proto_msgTypes[9]
+	mi := &file_celine_v1_celine_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -604,7 +676,7 @@ func (x *ChatMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChatMessage.ProtoReflect.Descriptor instead.
 func (*ChatMessage) Descriptor() ([]byte, []int) {
-	return file_celine_v1_celine_proto_rawDescGZIP(), []int{9}
+	return file_celine_v1_celine_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ChatMessage) GetId() string {
@@ -643,7 +715,7 @@ type KatalogosRequest struct {
 
 func (x *KatalogosRequest) Reset() {
 	*x = KatalogosRequest{}
-	mi := &file_celine_v1_celine_proto_msgTypes[10]
+	mi := &file_celine_v1_celine_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -655,7 +727,7 @@ func (x *KatalogosRequest) String() string {
 func (*KatalogosRequest) ProtoMessage() {}
 
 func (x *KatalogosRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_celine_v1_celine_proto_msgTypes[10]
+	mi := &file_celine_v1_celine_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -668,7 +740,7 @@ func (x *KatalogosRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KatalogosRequest.ProtoReflect.Descriptor instead.
 func (*KatalogosRequest) Descriptor() ([]byte, []int) {
-	return file_celine_v1_celine_proto_rawDescGZIP(), []int{10}
+	return file_celine_v1_celine_proto_rawDescGZIP(), []int{12}
 }
 
 type KatalogosResponse struct {
@@ -680,7 +752,7 @@ type KatalogosResponse struct {
 
 func (x *KatalogosResponse) Reset() {
 	*x = KatalogosResponse{}
-	mi := &file_celine_v1_celine_proto_msgTypes[11]
+	mi := &file_celine_v1_celine_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -692,7 +764,7 @@ func (x *KatalogosResponse) String() string {
 func (*KatalogosResponse) ProtoMessage() {}
 
 func (x *KatalogosResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_celine_v1_celine_proto_msgTypes[11]
+	mi := &file_celine_v1_celine_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -705,7 +777,7 @@ func (x *KatalogosResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KatalogosResponse.ProtoReflect.Descriptor instead.
 func (*KatalogosResponse) Descriptor() ([]byte, []int) {
-	return file_celine_v1_celine_proto_rawDescGZIP(), []int{11}
+	return file_celine_v1_celine_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *KatalogosResponse) GetConversations() []*Conversation {
@@ -725,7 +797,7 @@ type Conversation struct {
 
 func (x *Conversation) Reset() {
 	*x = Conversation{}
-	mi := &file_celine_v1_celine_proto_msgTypes[12]
+	mi := &file_celine_v1_celine_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -737,7 +809,7 @@ func (x *Conversation) String() string {
 func (*Conversation) ProtoMessage() {}
 
 func (x *Conversation) ProtoReflect() protoreflect.Message {
-	mi := &file_celine_v1_celine_proto_msgTypes[12]
+	mi := &file_celine_v1_celine_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -750,7 +822,7 @@ func (x *Conversation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Conversation.ProtoReflect.Descriptor instead.
 func (*Conversation) Descriptor() ([]byte, []int) {
-	return file_celine_v1_celine_proto_rawDescGZIP(), []int{12}
+	return file_celine_v1_celine_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *Conversation) GetId() string {
@@ -771,12 +843,9 @@ var File_celine_v1_celine_proto protoreflect.FileDescriptor
 
 const file_celine_v1_celine_proto_rawDesc = "" +
 	"\n" +
-	"\x16celine/v1/celine.proto\x12\tceline.v1\"K\n" +
-	"\fLaleoRequest\x12'\n" +
-	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\x12\x12\n" +
-	"\x04text\x18\x02 \x01(\tR\x04text\"\x9f\x02\n" +
-	"\n" +
-	"LaleoEvent\x12+\n" +
+	"\x16celine/v1/celine.proto\x12\tceline.v1\"\x11\n" +
+	"\x0fParousiaRequest\"\xa2\x02\n" +
+	"\rParousiaEvent\x12+\n" +
 	"\x06typing\x18\x01 \x01(\v2\x11.celine.v1.TypingH\x00R\x06typing\x12.\n" +
 	"\amessage\x18\x02 \x01(\v2\x12.celine.v1.MessageH\x00R\amessage\x122\n" +
 	"\ttool_call\x18\x03 \x01(\v2\x13.celine.v1.ToolCallH\x00R\btoolCall\x128\n" +
@@ -784,7 +853,11 @@ const file_celine_v1_celine_proto_rawDesc = "" +
 	"toolResult\x12%\n" +
 	"\x04done\x18\x05 \x01(\v2\x0f.celine.v1.DoneH\x00R\x04done\x12\x16\n" +
 	"\x05error\x18\x06 \x01(\tH\x00R\x05errorB\a\n" +
-	"\x05event\"!\n" +
+	"\x05event\"K\n" +
+	"\fPempoRequest\x12'\n" +
+	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\x12\x12\n" +
+	"\x04text\x18\x02 \x01(\tR\x04text\"\x0f\n" +
+	"\rPempoResponse\"!\n" +
 	"\x06Typing\x12\x17\n" +
 	"\ams_hint\x18\x01 \x01(\x05R\x06msHint\"/\n" +
 	"\aMessage\x12\x10\n" +
@@ -816,9 +889,10 @@ const file_celine_v1_celine_proto_rawDesc = "" +
 	"\rconversations\x18\x01 \x03(\v2\x17.celine.v1.ConversationR\rconversations\"F\n" +
 	"\fConversation\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12&\n" +
-	"\x0fcreated_at_unix\x18\x02 \x01(\x03R\rcreatedAtUnix2\xd3\x01\n" +
-	"\x06Celine\x129\n" +
-	"\x05Laleo\x12\x17.celine.v1.LaleoRequest\x1a\x15.celine.v1.LaleoEvent0\x01\x12F\n" +
+	"\x0fcreated_at_unix\x18\x02 \x01(\x03R\rcreatedAtUnix2\x98\x02\n" +
+	"\x06Celine\x12B\n" +
+	"\bParousia\x12\x1a.celine.v1.ParousiaRequest\x1a\x18.celine.v1.ParousiaEvent0\x01\x12:\n" +
+	"\x05Pempo\x12\x17.celine.v1.PempoRequest\x1a\x18.celine.v1.PempoResponse\x12F\n" +
 	"\tAnamnesis\x12\x1b.celine.v1.AnamnesisRequest\x1a\x1c.celine.v1.AnamnesisResponse\x12F\n" +
 	"\tKatalogos\x12\x1b.celine.v1.KatalogosRequest\x1a\x1c.celine.v1.KatalogosResponseB=Z;github.com/YumikoKawaii/celine/basis/gen/celine/v1;celinev1b\x06proto3"
 
@@ -834,38 +908,42 @@ func file_celine_v1_celine_proto_rawDescGZIP() []byte {
 	return file_celine_v1_celine_proto_rawDescData
 }
 
-var file_celine_v1_celine_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_celine_v1_celine_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_celine_v1_celine_proto_goTypes = []any{
-	(*LaleoRequest)(nil),      // 0: celine.v1.LaleoRequest
-	(*LaleoEvent)(nil),        // 1: celine.v1.LaleoEvent
-	(*Typing)(nil),            // 2: celine.v1.Typing
-	(*Message)(nil),           // 3: celine.v1.Message
-	(*ToolCall)(nil),          // 4: celine.v1.ToolCall
-	(*ToolResult)(nil),        // 5: celine.v1.ToolResult
-	(*Done)(nil),              // 6: celine.v1.Done
-	(*AnamnesisRequest)(nil),  // 7: celine.v1.AnamnesisRequest
-	(*AnamnesisResponse)(nil), // 8: celine.v1.AnamnesisResponse
-	(*ChatMessage)(nil),       // 9: celine.v1.ChatMessage
-	(*KatalogosRequest)(nil),  // 10: celine.v1.KatalogosRequest
-	(*KatalogosResponse)(nil), // 11: celine.v1.KatalogosResponse
-	(*Conversation)(nil),      // 12: celine.v1.Conversation
+	(*ParousiaRequest)(nil),   // 0: celine.v1.ParousiaRequest
+	(*ParousiaEvent)(nil),     // 1: celine.v1.ParousiaEvent
+	(*PempoRequest)(nil),      // 2: celine.v1.PempoRequest
+	(*PempoResponse)(nil),     // 3: celine.v1.PempoResponse
+	(*Typing)(nil),            // 4: celine.v1.Typing
+	(*Message)(nil),           // 5: celine.v1.Message
+	(*ToolCall)(nil),          // 6: celine.v1.ToolCall
+	(*ToolResult)(nil),        // 7: celine.v1.ToolResult
+	(*Done)(nil),              // 8: celine.v1.Done
+	(*AnamnesisRequest)(nil),  // 9: celine.v1.AnamnesisRequest
+	(*AnamnesisResponse)(nil), // 10: celine.v1.AnamnesisResponse
+	(*ChatMessage)(nil),       // 11: celine.v1.ChatMessage
+	(*KatalogosRequest)(nil),  // 12: celine.v1.KatalogosRequest
+	(*KatalogosResponse)(nil), // 13: celine.v1.KatalogosResponse
+	(*Conversation)(nil),      // 14: celine.v1.Conversation
 }
 var file_celine_v1_celine_proto_depIdxs = []int32{
-	2,  // 0: celine.v1.LaleoEvent.typing:type_name -> celine.v1.Typing
-	3,  // 1: celine.v1.LaleoEvent.message:type_name -> celine.v1.Message
-	4,  // 2: celine.v1.LaleoEvent.tool_call:type_name -> celine.v1.ToolCall
-	5,  // 3: celine.v1.LaleoEvent.tool_result:type_name -> celine.v1.ToolResult
-	6,  // 4: celine.v1.LaleoEvent.done:type_name -> celine.v1.Done
-	9,  // 5: celine.v1.AnamnesisResponse.messages:type_name -> celine.v1.ChatMessage
-	12, // 6: celine.v1.KatalogosResponse.conversations:type_name -> celine.v1.Conversation
-	0,  // 7: celine.v1.Celine.Laleo:input_type -> celine.v1.LaleoRequest
-	7,  // 8: celine.v1.Celine.Anamnesis:input_type -> celine.v1.AnamnesisRequest
-	10, // 9: celine.v1.Celine.Katalogos:input_type -> celine.v1.KatalogosRequest
-	1,  // 10: celine.v1.Celine.Laleo:output_type -> celine.v1.LaleoEvent
-	8,  // 11: celine.v1.Celine.Anamnesis:output_type -> celine.v1.AnamnesisResponse
-	11, // 12: celine.v1.Celine.Katalogos:output_type -> celine.v1.KatalogosResponse
-	10, // [10:13] is the sub-list for method output_type
-	7,  // [7:10] is the sub-list for method input_type
+	4,  // 0: celine.v1.ParousiaEvent.typing:type_name -> celine.v1.Typing
+	5,  // 1: celine.v1.ParousiaEvent.message:type_name -> celine.v1.Message
+	6,  // 2: celine.v1.ParousiaEvent.tool_call:type_name -> celine.v1.ToolCall
+	7,  // 3: celine.v1.ParousiaEvent.tool_result:type_name -> celine.v1.ToolResult
+	8,  // 4: celine.v1.ParousiaEvent.done:type_name -> celine.v1.Done
+	11, // 5: celine.v1.AnamnesisResponse.messages:type_name -> celine.v1.ChatMessage
+	14, // 6: celine.v1.KatalogosResponse.conversations:type_name -> celine.v1.Conversation
+	0,  // 7: celine.v1.Celine.Parousia:input_type -> celine.v1.ParousiaRequest
+	2,  // 8: celine.v1.Celine.Pempo:input_type -> celine.v1.PempoRequest
+	9,  // 9: celine.v1.Celine.Anamnesis:input_type -> celine.v1.AnamnesisRequest
+	12, // 10: celine.v1.Celine.Katalogos:input_type -> celine.v1.KatalogosRequest
+	1,  // 11: celine.v1.Celine.Parousia:output_type -> celine.v1.ParousiaEvent
+	3,  // 12: celine.v1.Celine.Pempo:output_type -> celine.v1.PempoResponse
+	10, // 13: celine.v1.Celine.Anamnesis:output_type -> celine.v1.AnamnesisResponse
+	13, // 14: celine.v1.Celine.Katalogos:output_type -> celine.v1.KatalogosResponse
+	11, // [11:15] is the sub-list for method output_type
+	7,  // [7:11] is the sub-list for method input_type
 	7,  // [7:7] is the sub-list for extension type_name
 	7,  // [7:7] is the sub-list for extension extendee
 	0,  // [0:7] is the sub-list for field type_name
@@ -877,12 +955,12 @@ func file_celine_v1_celine_proto_init() {
 		return
 	}
 	file_celine_v1_celine_proto_msgTypes[1].OneofWrappers = []any{
-		(*LaleoEvent_Typing)(nil),
-		(*LaleoEvent_Message)(nil),
-		(*LaleoEvent_ToolCall)(nil),
-		(*LaleoEvent_ToolResult)(nil),
-		(*LaleoEvent_Done)(nil),
-		(*LaleoEvent_Error)(nil),
+		(*ParousiaEvent_Typing)(nil),
+		(*ParousiaEvent_Message)(nil),
+		(*ParousiaEvent_ToolCall)(nil),
+		(*ParousiaEvent_ToolResult)(nil),
+		(*ParousiaEvent_Done)(nil),
+		(*ParousiaEvent_Error)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -890,7 +968,7 @@ func file_celine_v1_celine_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_celine_v1_celine_proto_rawDesc), len(file_celine_v1_celine_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
