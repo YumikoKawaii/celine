@@ -28,9 +28,12 @@ files below (e.g. `§3.2` → [`03-the-four-pieces.md`](03-the-four-pieces.md), 
 
 ## Where the build is
 
-Step 2 ("brain") is done — see [§5.1](05-repo-layout.md) for the as-built backend
-diagram and [§8](08-build-order.md) for the full roadmap. `CLAUDE.md` tracks the
-per-step status.
+**Steps 1–5 are live** — typed `Laleo` stream, real Claude brain with the tool
+loop (`web_search`), Postgres+pgvector store, async indexing write path, and
+Google OIDC + JWT auth. The memory recall **read path** (§12.5) and the persona
+knobs + scheduled mood (§13) are designed but not yet wired. See
+[§5.1](05-repo-layout.md) for the as-built backend diagram and
+[§8](08-build-order.md) for the full roadmap; `CLAUDE.md` tracks per-step status.
 
 > **Editing convention:** keep each section self-contained in its own file. When a
 > decision changes, update its section file *and* any cross-referencing sections.

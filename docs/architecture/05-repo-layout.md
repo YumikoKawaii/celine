@@ -15,7 +15,7 @@ celine/
 │   ├── cmd/celine/main.go        # entrypoint, wires everything
 │   └── internal/
 │       ├── rpc/                  # Connect service impl (handlers)
-│       │   └── chat_service.go   # implements CelineService
+│       │   └── celine.go         # implements the Celine service (Laleo, Anamnesis)
 │       ├── agent/                # the loop: Claude ↔ tools
 │       │   ├── loop.go
 │       │   └── stream.go
@@ -45,50 +45,52 @@ celine/
 └── README.md
 ```
 
-### 5.1 Current implementation (as built — Step 2 + store + auth)
+### 5.1 Current implementation (as built — Steps 1–5: brain + tool loop + store + auth)
 
 ```
                           BROWSER (eidos/)
                   generated TS client · useChatStream
                                 │  ▲
               LaleoRequest      │  │   stream of LaleoEvent
-              {conv_id, text}   │  │   (Typing · Message · ToolCall
+              {text}            │  │   (Message · ToolCall
                                 ▼  │    ToolResult · Done · Error)
 ══════════════════════════════════════════════════════════ basis/  (two binaries)
 
   cmd/celine/main.go  ── config.LoadServer() ──────────────────────────────┐
-   ├─ mneme.NewPool(DBDsn)          Postgres                               │
-   ├─ mneme.NewRedis(RedisAddr)     Redis                                  │
-   ├─ hermes.NewAuthInterceptor     JWT verify, sub → ctx                  │
-   ├─ llm.New(AnthropicKey, Model)                                         │
-   └─ agent.New(brain, prompt, convs, msgs)                                │
+   ├─ mneme.NewDB(DBDsn)            Postgres                               │
+   ├─ redis.NewClient(RedisAddr)    Redis  → taxis.New                     │
+   ├─ hermes.NewAuthInterceptor     JWT verify, claims → ctx               │
+   ├─ ergon.NewRegistry + Register(NewWebSearch)                           │
+   ├─ llm.New(AnthropicKey, Model, MaxTokens)                              │
+   └─ agent.New(brain, prompt, prosopons, convs, msgs, queue, tools)       │
                                 │  │                                       │
-  internal/rpc/chat_service.go  │  │  h2c + devCORS                       │
-  (Celine.Laleo)                │  │  sub ← hermes.SubFromContext          │
+  internal/rpc/celine.go        │  │  h2c + devCORS                       │
+  (Celine.Laleo · Anamnesis)    │  │  sub ← hermes.SubFromContext          │
         │                       ▼  │                                       │
-        │  agent.Chat(ctx, sub, convID, text, sink)                        │
+        │  agent.Chat(ctx, sub, text, sink)                                │
         ▼                          ▲                                       │
   internal/agent/agent.go          │  streamSink → stream.Send(LaleoEvent) │
+   ├─ prosopons.Get(sub)           │   (Bubble · ToolCall · ToolResult)    │
    ├─ convs.GetOrCreate            │                                       │
-   ├─ msgs.GetHistory              │  internal/agent/stream.go             │
-   ├─ msgs.Save(user)              │   paceBubbles (§14.3)                 │
-   ├─ ── goroutine ──────────────┐ │   · split on \n\n                    │
-   │   llm.StreamChat            │ │   · typing → sleep → bubble           │
-   ▼                             │ │              ▲                        │
-  internal/llm/claude.go         │ │   chan string┘                        │
-   (anthropic-sdk-go)            │─┘                                       │
-   System = celine.md (cached)   │                                         │
-   Messages  = history           │                                         │
-        │                        │                                         │
-        ▼                        │                                         │
-   ┌──────────┐  text deltas ────┘                                         │
-   │ Claude   │  (stream.Next() — tool_use not yet handled)                │
+   ├─ msgs.List (history)          │  ── tool loop ──                      │
+   ├─ msgs.Create(user) + enqueue  │   tool_use? → ergon.Execute → append  │
+   │       ▼                       │   result to hist[], loop; else break  │
+   │   llm.Chat ───────────────────┘   then msgs.Create(asst) + enqueue    │
+   ▼                                                                       │
+  internal/llm/claude.go                                                   │
+   (anthropic-sdk-go) — NewStreaming, accumulate, split bubbles on \n\n    │
+   System = celine.md (cached) · Messages = history · Tools = registry     │
+        │                                                                  │
+        ▼                                                                  │
+   ┌──────────┐  Turn{Bubbles, Uses}                                       │
+   │ Claude   │  (stop_reason=tool_use → Uses; else end_turn)              │
    └──────────┘                                                            │
                                                                            │
   internal/mneme/          Postgres store                                  │
-   ├─ ConversationStore     GetOrCreate · List                             │
-   ├─ MessageStore          Save · GetHistory · Enqueue → Redis queue      │
-   └─ ClientStore           Upsert · Get                                   │
+   ├─ Prosopons             Get · Upsert                                   │
+   ├─ Conversations         GetOrCreate · List                             │
+   ├─ Messages              Create · List · Get                            │
+   └─ Memories              Insert (pgvector)                              │
                                                                            │
   internal/hermes/          auth                                           │
    ├─ GoogleAuth             AuthURL · Exchange (server-side code swap)    │
@@ -101,6 +103,8 @@ celine/
    └─ Worker                 BRPOP → embed → INSERT memory_index ON CONFLICT DO NOTHING
 ```
 
-**Not wired yet:** `ergon/` tool registry (§6, Step 3) · memory recall read path (§12.5, Step 4) · persona knobs + mood (§13, Step 5) · eidos frontend catch-up (Greek method names, auth flow).
+**Wired:** typed `Laleo` stream · real Claude brain with the `ergon` tool loop (`web_search`) · Postgres+pgvector store · async indexing **write path** (agent enqueues → `cmd/worker` embeds via Ollama → pgvector) · Google OIDC + JWT auth (`Hermes`).
+
+**Not wired yet:** memory recall **read path** — the §12.5 tiers (curated `memory_md` in the prefix, the thresholded auto-hint, and the agentic `recall` tool) are absent; `agent.Chat` calls Claude with history only · persona knobs + scheduled mood (§13) — `SystemPrompt()` returns the raw `celine.md` blob, no `Persona` struct / archetypes / `moodForClock` · eidos frontend catch-up (dead `typing` state in `useChatStream.ts`, full Hermes auth flow).
 
 

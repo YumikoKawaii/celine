@@ -10,15 +10,15 @@
 ### 3.2 The agent loop — our code (the heart we own)
 
 ```
-  LaleoRequest {conv_id, text}          sub ← AuthInterceptor (Hermes JWT)
+  LaleoRequest {text}                   sub ← AuthInterceptor (Hermes JWT)
        │                                      │
        └──────────────┬───────────────────────┘
                       ▼
          ┌────────────────────────────────────────────────┐
          │               agent.Chat()                     │
          │                                                │
-         │  ① convs.GetOrCreate(ownerSub, convID)         │
-         │  ② msgs.GetHistory → hist[]                    │
+         │  ① convs.GetOrCreate(prosopon)                 │
+         │  ② msgs.List → hist[]                          │
          │  ③ tier-1 recall: clients.memory_md            │
          │     always in cached system prefix             │
          │  ④ tier-2 recall: embed query → vector search  │
@@ -46,8 +46,8 @@
              │                    append to hist[], loop ───┘
              │
              ▼
-  text deltas → paceBubbles → LaleoEvent{Typing, Message}
-  msgs.Save(assistant) + Enqueue index job
+  Turn.Bubbles → LaleoEvent{Message} (each sent whole, §14)
+  msgs.Create(assistant) + Enqueue index job
   send LaleoEvent{Done}
 ```
 

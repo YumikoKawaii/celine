@@ -1,11 +1,22 @@
 ## 14. Response shape — chat-bubble delivery
 
-Real conversation isn't one wall of text; it's a burst of short messages with little typing pauses between them. Celine replies the same way: a **sequence of short bubbles**, each preceded by a typing indicator and a human-feeling delay. The bubble is the unit — they pop in *whole* after a typing beat, not token-by-token.
+Real conversation isn't one wall of text; it's a burst of short messages. Celine
+replies the same way: a **sequence of short bubbles**. The bubble is the unit —
+each is sent *whole* as soon as it is complete, not token-by-token.
+
+> **Design note (applied):** an earlier version simulated a "typing beat" — a
+> `Typing` event plus backend `sleep()` before/between bubbles. That fake
+> latency was removed (see `docs/plan-simplify-llm-turn.md`). There is **no
+> `Typing` event** and **no artificial delay**: humans type a complete thought
+> and send it; we do the same.
 
 ### 14.1 Two halves
 
-- **Segmentation (model side)** — Celine writes several short messages, separated by a blank line.
-- **Pacing (backend side)** — a delivery pacer turns each completed bubble into *typing indicator → delay → whole bubble → pause*.
+- **Segmentation (model side)** — Celine writes several short messages,
+  separated by a blank line.
+- **Splitting (backend side)** — the `llm` layer cuts the response into bubbles
+  on `\n\n` boundaries and the agent sends each one as it completes. No pacer,
+  no timing, no goroutine.
 
 ### 14.2 Model side — how she segments
 
@@ -16,35 +27,41 @@ A response-contract instruction (a §13 layer-2 rule) tells her:
 - Keep each bubble short; don't over-fragment; group tightly-related clauses.
 - Keep block content (code fences, lists) **inside a single bubble**.
 
-The blank line (`\n\n`) is the delimiter — natural for the model, unambiguous against single-line wrapping, and it survives streaming. No blank lines → one bubble (graceful fallback).
+The blank line (`\n\n`) is the delimiter — natural for the model, unambiguous
+against single-line wrapping, and it survives streaming. No blank lines → one
+bubble (graceful fallback).
 
-### 14.3 Backend — segment + pace (`internal/agent/stream.go`)
+### 14.3 Backend — split, no pace (`internal/llm/claude.go`)
 
-Stream tokens from Claude → accumulate the current bubble → on a `\n\n` boundary the bubble is complete → hand it to the pacer:
+`llm.Chat` streams tokens from Claude only to **accumulate** them; it emits a
+bubble each time a `\n\n` boundary completes and returns
+`Turn{Bubbles []string, Uses []ToolUse}`. The agent loop iterates `turn.Bubbles`
+and sends each as a `Message` event immediately — no delay between them.
 
 ```
-for each completed bubble:
-    emit Typing{ ms_hint = typingDelay(bubble) }
-    sleep(ms_hint)
-    emit Message{ seq, text = bubble }
-    sleep(interBubblePause)
+for each completed bubble (split on \n\n, code-fence-aware):
+    sink.Bubble(seq, text)      // sent whole, in order; seq increments
 ```
 
-- `typingDelay(b) = clamp(BASE + PER_CHAR·len(b), MIN, MAX)` — e.g. 400 ms + 25 ms/char, capped ~2.5 s.
-- `interBubblePause` ≈ 300–800 ms.
-- Generation runs **ahead** of delivery (bubbles buffer); text is tiny, so RAM is a non-issue on the box.
-- First bubble fires at the **first** `\n\n`, not after full generation → stays responsive.
-- The splitter is **code-fence-aware**: never break inside a ``` block.
+- The splitter is **code-fence-aware** (`bubbleBoundary`): never break inside a
+  ``` ``` ``` block.
+- First bubble can fire at the **first** `\n\n` while the stream is still open —
+  streaming is kept inside `llm` purely so a long answer needn't fully generate
+  before its first bubble lands.
+- Bubble text is tiny, so the per-turn buffer is a RAM non-issue on the box.
 
-### 14.4 Mood & knobs drive the rhythm
+### 14.4 Mood & knobs shape the segmentation
 
-Pacing reads §13, so mood shapes not just *what* she says but *how it lands*:
+There is no pacing to tune, but §13 still shapes *what* she says and *how many*
+bubbles result (driven model-side via the response contract):
 
-- **focused** → fewer, longer bubbles; snappier delays.
-- **playful** → more, shorter bubbles; emoji; slightly longer pauses.
-- **mellow** → slower pacing.
+- **focused** → fewer, longer bubbles.
+- **playful** → more, shorter bubbles; emoji.
 - The **verbosity** knob caps bubble count.
+
+*(Forward-looking — the persona knobs/mood are designed but not yet wired, §13.)*
 
 ### 14.5 Cost / latency
 
-One model generation, segmented backend-side — **no extra token cost**. The pacing delay is *intentional* (the human feel); the `MAX` clamp guarantees it never drags. The only state added is a small per-stream bubble buffer.
+One model generation, segmented backend-side — **no extra token cost** and no
+artificial delay. The only state added is a small per-turn bubble slice.
