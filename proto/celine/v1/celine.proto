@@ -15,6 +15,11 @@ service Celine {
   // the actual reply arrives through the open Parousia stream.
   rpc Pempo     (PempoRequest)     returns (PempoResponse);
 
+  // Unary — client signals the user has gone quiet (stopped typing).
+  // Flushes the pending inbox to the agent immediately instead of
+  // waiting out the server-side debounce fallback.
+  rpc Sigao     (SigaoRequest)     returns (SigaoResponse);
+
   rpc Anamnesis (AnamnesisRequest) returns (AnamnesisResponse);
 }
 
@@ -22,6 +27,9 @@ message ParousiaRequest {}
 
 message ParousiaEvent {
   oneof event {
+    // Sent once when the agent starts working on the queued inbox —
+    // the client shows the typing indicator on this signal, not optimistically.
+    Typing     typing      = 1;
     Message    message     = 2;
     ToolCall   tool_call   = 3;
     ToolResult tool_result = 4;
@@ -35,6 +43,12 @@ message PempoRequest {
 }
 
 message PempoResponse {}
+
+message Typing {}
+
+message SigaoRequest {}
+
+message SigaoResponse {}
 
 message Message {
   int32  seq  = 1;

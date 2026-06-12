@@ -80,18 +80,21 @@ func (a *Agent) Chat(ctx context.Context, ownerSub string, userText string, sink
 	// allBubbles accumulates every bubble across iterations for DB persistence.
 	var allBubbles []string
 
+	// emit forwards each bubble to the sink the moment its boundary arrives
+	// in the token stream — the client sees it while the turn is still generating.
+	emit := func(bubble string) {
+		if err := sink.Bubble(seq, bubble); err != nil {
+			log.Printf("agent: bubble %d: %v", seq, err)
+		}
+		seq++
+	}
+
 	for {
-		turn, err := a.brain.Chat(ctx, a.system, hist, a.tools.Defs())
+		turn, err := a.brain.Chat(ctx, a.system, hist, a.tools.Defs(), emit)
 		if err != nil {
 			return convID, err
 		}
 
-		for _, bubble := range turn.Bubbles {
-			if err := sink.Bubble(seq, bubble); err != nil {
-				return convID, err
-			}
-			seq++
-		}
 		allBubbles = append(allBubbles, turn.Bubbles...)
 
 		if len(turn.Uses) == 0 {

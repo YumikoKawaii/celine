@@ -21,7 +21,7 @@ type Server struct {
 	GoogleClientID   string        // GOOGLE_CLIENT_ID, optional — empty = Google OAuth disabled
 	GoogleSecret     string        // GOOGLE_CLIENT_SECRET, required when GoogleClientID is set
 	BraveAPIKey      string        // BRAVE_API_KEY, optional — empty = web_search returns error
-	DebounceDuration time.Duration // CELINE_DEBOUNCE, default 5s; how long to wait after last Pempo before flushing to agent
+	DebounceDuration time.Duration // CELINE_DEBOUNCE, default 45s; fallback flush — the client normally triggers Sigao when the user stops typing
 }
 
 // Worker holds all configuration for the graphe worker binary.
@@ -40,7 +40,7 @@ func LoadServer() (Server, error) {
 	if err != nil {
 		return Server{}, err
 	}
-	debounce, err := parseDuration("CELINE_DEBOUNCE", 5*time.Second)
+	debounce, err := parseDuration("CELINE_DEBOUNCE", 45*time.Second)
 	if err != nil {
 		return Server{}, err
 	}

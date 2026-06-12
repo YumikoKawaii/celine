@@ -68,6 +68,24 @@ func (s *Celine) Pempo(
 	return connect.NewResponse(&celinev1.PempoResponse{}), nil
 }
 
+func (s *Celine) Sigao(
+	ctx context.Context,
+	_ *connect.Request[celinev1.SigaoRequest],
+) (*connect.Response[celinev1.SigaoResponse], error) {
+	sub, ok := hermes.SubFromContext(ctx)
+	if !ok {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("not authenticated"))
+	}
+
+	sess, ok := s.sessions.get(sub)
+	if !ok {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("no active session — open Parousia first"))
+	}
+
+	sess.sigao()
+	return connect.NewResponse(&celinev1.SigaoResponse{}), nil
+}
+
 // Anamnesis returns the messages in the user's conversation, oldest first.
 // The conversation ID comes from the JWT claim — no DB lookup or ownership check needed.
 func (s *Celine) Anamnesis(
@@ -109,6 +127,9 @@ func (s *Celine) runFlush(sub string) {
 	}
 
 	sink := newChanSink(sess.ch)
+	sink.send(&celinev1.ParousiaEvent{
+		Event: &celinev1.ParousiaEvent_Typing{Typing: &celinev1.Typing{}},
+	})
 	id, err := s.agent.Chat(sess.ctx, sub, combined, sink)
 	if err != nil {
 		sink.send(&celinev1.ParousiaEvent{

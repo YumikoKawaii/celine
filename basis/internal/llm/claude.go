@@ -70,15 +70,20 @@ func New(apiKey, model string, maxTokens int64) *Client {
 }
 
 // Chat streams an assistant response and returns the completed turn. Text is
-// accumulated from the stream and split into bubbles at \n\n boundaries
-// (code-fence-aware), so callers can send each bubble directly without any
-// further buffering or pacing logic.
+// split into bubbles at \n\n boundaries (code-fence-aware) as it streams;
+// each completed bubble is handed to emit the moment its boundary arrives,
+// so the caller can deliver it while the rest of the turn is still generating.
+// The returned Turn carries the full bubble list for persistence.
 func (c *Client) Chat(
 	ctx context.Context,
 	system string,
 	history []Message,
 	tools []ToolDef,
+	emit func(bubble string),
 ) (Turn, error) {
+	if emit == nil {
+		emit = func(string) {}
+	}
 	msgs := make([]anthropic.MessageParam, 0, len(history))
 	for _, m := range history {
 		msgs = append(msgs, toParam(m))
@@ -136,6 +141,7 @@ func (c *Client) Chat(
 			}
 			if b := strings.TrimSpace(s[:idx]); b != "" {
 				bubbles = append(bubbles, b)
+				emit(b)
 			}
 			buf.Reset()
 			buf.WriteString(s[idx+2:])
@@ -147,6 +153,7 @@ func (c *Client) Chat(
 	// flush whatever remains after the stream closes
 	if b := strings.TrimSpace(buf.String()); b != "" {
 		bubbles = append(bubbles, b)
+		emit(b)
 	}
 
 	turn := Turn{Bubbles: bubbles}

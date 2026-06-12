@@ -15,9 +15,13 @@ type session struct {
 	mu       sync.Mutex
 	inbox    []string
 	busy     bool
-	timer    *time.Timer
-	debounce time.Duration
-	flush    func()
+	// flushASAP records a Sigao that arrived while busy — the queued inbox
+	// flushes as soon as the running turn ends instead of waiting out the
+	// debounce fallback.
+	flushASAP bool
+	timer     *time.Timer
+	debounce  time.Duration
+	flush     func()
 }
 
 func (s *session) pempo(text string) {
@@ -27,6 +31,9 @@ func (s *session) pempo(text string) {
 	s.inbox = append(s.inbox, text)
 
 	if s.busy {
+		// New activity invalidates a remembered Sigao — the client will
+		// signal again once the user goes quiet.
+		s.flushASAP = false
 		return
 	}
 
@@ -34,6 +41,29 @@ func (s *session) pempo(text string) {
 		s.timer.Reset(s.debounce)
 	} else {
 		s.timer = time.AfterFunc(s.debounce, s.flush)
+	}
+}
+
+// sigao flushes the pending inbox immediately — the client has signalled the
+// user stopped typing, so there is no point waiting out the debounce fallback.
+func (s *session) sigao() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if len(s.inbox) == 0 {
+		return
+	}
+
+	if s.busy {
+		s.flushASAP = true
+		return
+	}
+
+	// Only fire if we actually cancelled the pending timer — if Stop reports
+	// false the timer already fired and a flush is on its way.
+	if s.timer != nil && s.timer.Stop() {
+		s.timer = nil
+		go s.flush()
 	}
 }
 
@@ -45,6 +75,7 @@ func (s *session) drainInbox() string {
 	s.inbox = nil
 	s.timer = nil
 	s.busy = true
+	s.flushASAP = false
 	return strings.Join(lines, "\n")
 }
 
@@ -54,9 +85,16 @@ func (s *session) clearBusy() {
 
 	s.busy = false
 
-	if len(s.inbox) > 0 {
-		s.timer = time.AfterFunc(s.debounce, s.flush)
+	if len(s.inbox) == 0 {
+		return
 	}
+
+	if s.flushASAP {
+		s.flushASAP = false
+		go s.flush()
+		return
+	}
+	s.timer = time.AfterFunc(s.debounce, s.flush)
 }
 
 type sessionStore struct {

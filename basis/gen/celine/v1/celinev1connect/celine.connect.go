@@ -37,6 +37,8 @@ const (
 	CelineParousiaProcedure = "/celine.v1.Celine/Parousia"
 	// CelinePempoProcedure is the fully-qualified name of the Celine's Pempo RPC.
 	CelinePempoProcedure = "/celine.v1.Celine/Pempo"
+	// CelineSigaoProcedure is the fully-qualified name of the Celine's Sigao RPC.
+	CelineSigaoProcedure = "/celine.v1.Celine/Sigao"
 	// CelineAnamnesisProcedure is the fully-qualified name of the Celine's Anamnesis RPC.
 	CelineAnamnesisProcedure = "/celine.v1.Celine/Anamnesis"
 )
@@ -49,6 +51,10 @@ type CelineClient interface {
 	// Unary — client sends a message. Response is immediate (just an ack);
 	// the actual reply arrives through the open Parousia stream.
 	Pempo(context.Context, *connect.Request[v1.PempoRequest]) (*connect.Response[v1.PempoResponse], error)
+	// Unary — client signals the user has gone quiet (stopped typing).
+	// Flushes the pending inbox to the agent immediately instead of
+	// waiting out the server-side debounce fallback.
+	Sigao(context.Context, *connect.Request[v1.SigaoRequest]) (*connect.Response[v1.SigaoResponse], error)
 	Anamnesis(context.Context, *connect.Request[v1.AnamnesisRequest]) (*connect.Response[v1.AnamnesisResponse], error)
 }
 
@@ -75,6 +81,12 @@ func NewCelineClient(httpClient connect.HTTPClient, baseURL string, opts ...conn
 			connect.WithSchema(celineMethods.ByName("Pempo")),
 			connect.WithClientOptions(opts...),
 		),
+		sigao: connect.NewClient[v1.SigaoRequest, v1.SigaoResponse](
+			httpClient,
+			baseURL+CelineSigaoProcedure,
+			connect.WithSchema(celineMethods.ByName("Sigao")),
+			connect.WithClientOptions(opts...),
+		),
 		anamnesis: connect.NewClient[v1.AnamnesisRequest, v1.AnamnesisResponse](
 			httpClient,
 			baseURL+CelineAnamnesisProcedure,
@@ -88,6 +100,7 @@ func NewCelineClient(httpClient connect.HTTPClient, baseURL string, opts ...conn
 type celineClient struct {
 	parousia  *connect.Client[v1.ParousiaRequest, v1.ParousiaEvent]
 	pempo     *connect.Client[v1.PempoRequest, v1.PempoResponse]
+	sigao     *connect.Client[v1.SigaoRequest, v1.SigaoResponse]
 	anamnesis *connect.Client[v1.AnamnesisRequest, v1.AnamnesisResponse]
 }
 
@@ -99,6 +112,11 @@ func (c *celineClient) Parousia(ctx context.Context, req *connect.Request[v1.Par
 // Pempo calls celine.v1.Celine.Pempo.
 func (c *celineClient) Pempo(ctx context.Context, req *connect.Request[v1.PempoRequest]) (*connect.Response[v1.PempoResponse], error) {
 	return c.pempo.CallUnary(ctx, req)
+}
+
+// Sigao calls celine.v1.Celine.Sigao.
+func (c *celineClient) Sigao(ctx context.Context, req *connect.Request[v1.SigaoRequest]) (*connect.Response[v1.SigaoResponse], error) {
+	return c.sigao.CallUnary(ctx, req)
 }
 
 // Anamnesis calls celine.v1.Celine.Anamnesis.
@@ -114,6 +132,10 @@ type CelineHandler interface {
 	// Unary — client sends a message. Response is immediate (just an ack);
 	// the actual reply arrives through the open Parousia stream.
 	Pempo(context.Context, *connect.Request[v1.PempoRequest]) (*connect.Response[v1.PempoResponse], error)
+	// Unary — client signals the user has gone quiet (stopped typing).
+	// Flushes the pending inbox to the agent immediately instead of
+	// waiting out the server-side debounce fallback.
+	Sigao(context.Context, *connect.Request[v1.SigaoRequest]) (*connect.Response[v1.SigaoResponse], error)
 	Anamnesis(context.Context, *connect.Request[v1.AnamnesisRequest]) (*connect.Response[v1.AnamnesisResponse], error)
 }
 
@@ -136,6 +158,12 @@ func NewCelineHandler(svc CelineHandler, opts ...connect.HandlerOption) (string,
 		connect.WithSchema(celineMethods.ByName("Pempo")),
 		connect.WithHandlerOptions(opts...),
 	)
+	celineSigaoHandler := connect.NewUnaryHandler(
+		CelineSigaoProcedure,
+		svc.Sigao,
+		connect.WithSchema(celineMethods.ByName("Sigao")),
+		connect.WithHandlerOptions(opts...),
+	)
 	celineAnamnesisHandler := connect.NewUnaryHandler(
 		CelineAnamnesisProcedure,
 		svc.Anamnesis,
@@ -148,6 +176,8 @@ func NewCelineHandler(svc CelineHandler, opts ...connect.HandlerOption) (string,
 			celineParousiaHandler.ServeHTTP(w, r)
 		case CelinePempoProcedure:
 			celinePempoHandler.ServeHTTP(w, r)
+		case CelineSigaoProcedure:
+			celineSigaoHandler.ServeHTTP(w, r)
 		case CelineAnamnesisProcedure:
 			celineAnamnesisHandler.ServeHTTP(w, r)
 		default:
@@ -165,6 +195,10 @@ func (UnimplementedCelineHandler) Parousia(context.Context, *connect.Request[v1.
 
 func (UnimplementedCelineHandler) Pempo(context.Context, *connect.Request[v1.PempoRequest]) (*connect.Response[v1.PempoResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("celine.v1.Celine.Pempo is not implemented"))
+}
+
+func (UnimplementedCelineHandler) Sigao(context.Context, *connect.Request[v1.SigaoRequest]) (*connect.Response[v1.SigaoResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("celine.v1.Celine.Sigao is not implemented"))
 }
 
 func (UnimplementedCelineHandler) Anamnesis(context.Context, *connect.Request[v1.AnamnesisRequest]) (*connect.Response[v1.AnamnesisResponse], error) {

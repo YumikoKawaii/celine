@@ -16,7 +16,7 @@ type EventSink interface {
 }
 
 type brain interface {
-	Chat(ctx context.Context, system string, history []llm.Message, tools []llm.ToolDef) (llm.Turn, error)
+	Chat(ctx context.Context, system string, history []llm.Message, tools []llm.ToolDef, emit func(bubble string)) (llm.Turn, error)
 }
 
 type prosopons interface {
