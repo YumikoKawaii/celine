@@ -52,11 +52,14 @@ func main() {
 	opts := connect.WithInterceptors(interceptor)
 
 	tools := ergon.NewRegistry()
-	tools.Register(ergon.NewWebSearch(cfg.BraveAPIKey))
+	if cfg.BraveAPIKey != "" {
+		tools.Register(ergon.NewWebSearch(cfg.BraveAPIKey))
+	}
 
 	brain := llm.New(cfg.AnthropicKey, cfg.Model, cfg.MaxTokens)
 	celineSvc := rpc.NewCeline(
 		agent.New(brain, agent.SystemPrompt(), store.Prosopons(), store.Conversations(), store.Messages(), tx, tools),
+		cfg.DebounceDuration,
 	)
 
 	var googleAuth *hermes.GoogleAuth

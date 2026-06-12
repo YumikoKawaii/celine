@@ -1,0 +1,101 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: celine
+      POSTGRES_PASSWORD: celine
+      POSTGRES_DB: celine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./basis/migrations/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U celine"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+
+  ollama-pull:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["ollama", "pull", "snowflake-arctic-embed:xs"]
+    restart: "no"
+
+  server:
+    build:
+      context: .
+      dockerfile: basis/Dockerfile
+      target: server
+    ports:
+      - "8080:8080"
+    env_file: .env.docker
+    environment:
+      CELINE_ADDR: ":8080"
+      CELINE_DB_DSN: "host=postgres user=celine password=celine dbname=celine port=5432 sslmode=disable"
+      CELINE_REDIS_ADDR: "redis:6379"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: on-failure
+
+  worker:
+    build:
+      context: .
+      dockerfile: basis/Dockerfile
+      target: worker
+    environment:
+      CELINE_DB_DSN: "host=postgres user=celine password=celine dbname=celine port=5432 sslmode=disable"
+      CELINE_REDIS_ADDR: "redis:6379"
+      OLLAMA_URL: "http://ollama:11434"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ollama-pull:
+        condition: service_completed_successfully
+    restart: on-failure
+
+  eidos:
+    build:
+      context: eidos
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    depends_on:
+      - server
+
+volumes:
+  postgres_data:
+  ollama_data:

@@ -14,9 +14,11 @@ CREATE TABLE prosopons
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Celine's own identity record; sub is synthetic (not an OIDC token).
 INSERT INTO prosopons (id, sub, email, display_name)
-VALUES (1, 'celine', 'celine@internal', 'Celine');
+VALUES (1, 'celine', 'celine@internal', 'Celine'),
+       (2, 'anon', 'anon@internal', 'Anon');
+
+SELECT setval('prosopons_id_seq', 2);
 
 CREATE TABLE conversations
 (

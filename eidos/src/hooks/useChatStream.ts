@@ -17,8 +17,6 @@ export function useChatStream() {
   const [busy, setBusy] = useState(false);
   const conversationId = useRef("");
 
-  // Open the Parousia stream once on mount and keep it alive for the session.
-  // All agent events (typing indicators, bubbles, tool activity, done) arrive here.
   useEffect(() => {
     const controller = new AbortController();
 
@@ -65,15 +63,11 @@ export function useChatStream() {
     return () => controller.abort();
   }, []);
 
-  // Pempo is a fire-and-forget unary call. The response is just an ack —
-  // the actual reply flows back through the persistent Parousia stream above.
-  // busy stays true until the Done event arrives through that stream.
   const send = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
-      if (!trimmed || busy) return;
+      if (!trimmed) return;
 
-      setBusy(true);
       setBubbles((b) => [...b, { id: nextId++, from: "user", text: trimmed }]);
 
       try {
@@ -88,10 +82,9 @@ export function useChatStream() {
           ...b,
           { id: nextId++, from: "celine", text: `⚠ ${String(err)}` },
         ]);
-        setBusy(false);
       }
     },
-    [busy],
+    [],
   );
 
   return { bubbles, typing, busy, send };

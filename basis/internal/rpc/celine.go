@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"time"
 
 	"connectrpc.com/connect"
 
@@ -21,15 +22,13 @@ type Celine struct {
 	celinev1connect.UnimplementedCelineHandler
 	agent    chatAgent
 	sessions *sessionStore
+	debounce time.Duration
 }
 
-func NewCeline(a chatAgent) *Celine {
-	return &Celine{agent: a, sessions: newSessionStore()}
+func NewCeline(a chatAgent, debounce time.Duration) *Celine {
+	return &Celine{agent: a, sessions: newSessionStore(), debounce: debounce}
 }
 
-// Parousia opens the persistent server-streaming session for the authenticated user.
-// It registers a channel in the session store, then sits in a write loop forwarding
-// events until the client disconnects (ctx cancelled) or the stream breaks.
 func (s *Celine) Parousia(
 	ctx context.Context,
 	req *connect.Request[celinev1.ParousiaRequest],
@@ -40,14 +39,14 @@ func (s *Celine) Parousia(
 		return connect.NewError(connect.CodeUnauthenticated, errors.New("not authenticated"))
 	}
 
-	ch := s.sessions.register(sub, ctx)
+	sess := s.sessions.register(sub, ctx, s.debounce, s.runFlush)
 	defer s.sessions.unregister(sub)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
-		case ev := <-ch:
+		case ev := <-sess.ch:
 			if err := stream.Send(ev); err != nil {
 				return err
 			}
@@ -55,9 +54,6 @@ func (s *Celine) Parousia(
 	}
 }
 
-// Pempo receives a user message and immediately returns an ack. The agent runs
-// in a background goroutine tied to the Parousia session context — if the user
-// disconnects, the ongoing agent turn is cancelled automatically.
 func (s *Celine) Pempo(
 	ctx context.Context,
 	req *connect.Request[celinev1.PempoRequest],
@@ -72,28 +68,39 @@ func (s *Celine) Pempo(
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("no active session — open Parousia first"))
 	}
 
+	sess.pempo(req.Msg.GetText())
+	return connect.NewResponse(&celinev1.PempoResponse{}), nil
+}
+
+func (s *Celine) runFlush(sub string) {
+	sess, ok := s.sessions.get(sub)
+	if !ok {
+		return
+	}
+
+	combined := sess.drainInbox()
+	if combined == "" {
+		sess.clearBusy()
+		return
+	}
+
 	sink := newChanSink(sess.ch)
-	go func() {
-		id, err := s.agent.Chat(sess.ctx, sub, req.Msg.GetText(), sink)
-		if err != nil {
-			sink.send(&celinev1.ParousiaEvent{
-				Event: &celinev1.ParousiaEvent_Error{Error: err.Error()},
-			})
-			return
-		}
+	id, err := s.agent.Chat(sess.ctx, sub, combined, sink)
+	if err != nil {
+		sink.send(&celinev1.ParousiaEvent{
+			Event: &celinev1.ParousiaEvent_Error{Error: err.Error()},
+		})
+	} else {
 		sink.send(&celinev1.ParousiaEvent{
 			Event: &celinev1.ParousiaEvent_Done{Done: &celinev1.Done{
 				ConversationId: strconv.FormatInt(id, 10),
 			}},
 		})
-	}()
+	}
 
-	return connect.NewResponse(&celinev1.PempoResponse{}), nil
+	sess.clearBusy()
 }
 
-// chanSink implements agent.EventSink by pushing events onto the Parousia session
-// channel. Sends are non-blocking: if the session has closed and nobody is draining
-// the channel, events are silently dropped rather than stalling the agent goroutine.
 type chanSink struct {
 	ch chan<- *celinev1.ParousiaEvent
 }

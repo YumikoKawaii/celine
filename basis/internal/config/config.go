@@ -10,17 +10,18 @@ import (
 
 // Server holds all configuration for the celine RPC server binary.
 type Server struct {
-	Addr           string // CELINE_ADDR, default ":8080"
-	DBDsn          string // CELINE_DB_DSN, required
-	RedisAddr      string // CELINE_REDIS_ADDR, required
-	AnthropicKey   string // ANTHROPIC_API_KEY, required
-	Model          string // CELINE_MODEL, optional (defaults inside llm package)
-	MaxTokens      int64  // CELINE_MAX_TOKENS, optional (default 8192)
-	JWTSecret      string        // CELINE_JWT_SECRET, optional — empty = dev mode, no auth enforced
-	TokenTTL       time.Duration // CELINE_TOKEN_TTL, default 72h; parsed as Go duration string
-	GoogleClientID string // GOOGLE_CLIENT_ID, optional — empty = Google OAuth disabled
-	GoogleSecret   string // GOOGLE_CLIENT_SECRET, required when GoogleClientID is set
-	BraveAPIKey    string // BRAVE_API_KEY, optional — empty = web_search returns error
+	Addr             string        // CELINE_ADDR, default ":8080"
+	DBDsn            string        // CELINE_DB_DSN, required
+	RedisAddr        string        // CELINE_REDIS_ADDR, required
+	AnthropicKey     string        // ANTHROPIC_API_KEY, required
+	Model            string        // CELINE_MODEL, optional (defaults inside llm package)
+	MaxTokens        int64         // CELINE_MAX_TOKENS, optional (default 8192)
+	JWTSecret        string        // CELINE_JWT_SECRET, optional — empty = dev mode, no auth enforced
+	TokenTTL         time.Duration // CELINE_TOKEN_TTL, default 72h; parsed as Go duration string
+	GoogleClientID   string        // GOOGLE_CLIENT_ID, optional — empty = Google OAuth disabled
+	GoogleSecret     string        // GOOGLE_CLIENT_SECRET, required when GoogleClientID is set
+	BraveAPIKey      string        // BRAVE_API_KEY, optional — empty = web_search returns error
+	DebounceDuration time.Duration // CELINE_DEBOUNCE, default 5s; how long to wait after last Pempo before flushing to agent
 }
 
 // Worker holds all configuration for the graphe worker binary.
@@ -39,18 +40,23 @@ func LoadServer() (Server, error) {
 	if err != nil {
 		return Server{}, err
 	}
+	debounce, err := parseDuration("CELINE_DEBOUNCE", 5*time.Second)
+	if err != nil {
+		return Server{}, err
+	}
 	c := Server{
-		Addr:           getenv("CELINE_ADDR", ":8080"),
-		DBDsn:          os.Getenv("CELINE_DB_DSN"),
-		RedisAddr:      os.Getenv("CELINE_REDIS_ADDR"),
-		AnthropicKey:   os.Getenv("ANTHROPIC_API_KEY"),
-		Model:          os.Getenv("CELINE_MODEL"),
-		MaxTokens:      maxTokens,
-		JWTSecret:      os.Getenv("CELINE_JWT_SECRET"),
-		TokenTTL:       ttl,
-		GoogleClientID: os.Getenv("GOOGLE_CLIENT_ID"),
-		GoogleSecret:   os.Getenv("GOOGLE_CLIENT_SECRET"),
-		BraveAPIKey:    os.Getenv("BRAVE_API_KEY"),
+		Addr:             getenv("CELINE_ADDR", ":8080"),
+		DBDsn:            os.Getenv("CELINE_DB_DSN"),
+		RedisAddr:        os.Getenv("CELINE_REDIS_ADDR"),
+		AnthropicKey:     os.Getenv("ANTHROPIC_API_KEY"),
+		Model:            os.Getenv("CELINE_MODEL"),
+		MaxTokens:        maxTokens,
+		JWTSecret:        os.Getenv("CELINE_JWT_SECRET"),
+		TokenTTL:         ttl,
+		GoogleClientID:   os.Getenv("GOOGLE_CLIENT_ID"),
+		GoogleSecret:     os.Getenv("GOOGLE_CLIENT_SECRET"),
+		BraveAPIKey:      os.Getenv("BRAVE_API_KEY"),
+		DebounceDuration: debounce,
 	}
 	return c, c.validate()
 }
