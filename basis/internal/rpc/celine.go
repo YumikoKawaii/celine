@@ -68,6 +68,10 @@ func (s *Celine) Parousia(
 			}
 		case <-sigao:
 			packet := ms.Flush()
+			if packet == "" {
+				ticker.Reset(s.debounce)
+				continue
+			}
 			if err := sink.typing(); err != nil {
 				return err
 			}
@@ -96,8 +100,12 @@ func (s *Celine) Pempo(
 	if !ok {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("no active session — open Parousia first"))
 	}
-	conn <- req.Msg.GetText()
-	return connect.NewResponse(&celinev1.PempoResponse{}), nil
+	select {
+	case conn <- req.Msg.GetText():
+		return connect.NewResponse(&celinev1.PempoResponse{}), nil
+	case <-ctx.Done():
+		return nil, connect.NewError(connect.CodeCanceled, ctx.Err())
+	}
 }
 
 func (s *Celine) Sigao(
