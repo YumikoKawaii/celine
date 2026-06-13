@@ -47,53 +47,75 @@ export function useChatStream() {
     if (queued.current > 0) armIdle();
   }, [armIdle]);
 
+  // The Parousia stream carries the whole server-side session. If it ever ends
+  // — StrictMode's effect cleanup, a hot reload, a dropped connection — the
+  // server unregisters the session and subsequent Pempo/Sigao calls fail with
+  // "no active session". So we reopen it automatically until the component
+  // unmounts, with a small backoff to avoid a tight loop on a hard failure.
   useEffect(() => {
     const controller = new AbortController();
+    let stopped = false;
 
-    (async () => {
-      try {
-        for await (const ev of celine.parousia(
-          {},
-          { signal: controller.signal },
-        )) {
-          const e = ev.event;
-          switch (e.case) {
-            case "typing":
-              // Flush started — everything sent so far is now being processed.
-              queued.current = 0;
-              setTyping(true);
-              break;
-            case "message":
-              // Keep the typing dots on — bubbles stream in while the turn
-              // is still generating; done/error clears them.
-              setBubbles((b) => [
-                ...b,
-                { id: nextId++, from: "celine", text: e.value.text },
-              ]);
-              break;
-            case "done":
-              setTyping(false);
-              setBusy(false);
-              break;
-            case "error":
-              setTyping(false);
-              setBusy(false);
-              setBubbles((b) => [
-                ...b,
-                { id: nextId++, from: "celine", text: `⚠ ${e.value}` },
-              ]);
-              break;
+    const run = async () => {
+      let backoff = 250;
+      while (!stopped) {
+        try {
+          for await (const ev of celine.parousia(
+            {},
+            { signal: controller.signal },
+          )) {
+            backoff = 250; // a delivered event means the stream is healthy
+            const e = ev.event;
+            switch (e.case) {
+              case "typing":
+                // Flush started — everything sent so far is being processed.
+                queued.current = 0;
+                setTyping(true);
+                break;
+              case "message":
+                // Keep the typing dots on — bubbles stream in while the turn
+                // is still generating; done/error clears them.
+                setBubbles((b) => [
+                  ...b,
+                  { id: nextId++, from: "celine", text: e.value.text },
+                ]);
+                break;
+              case "done":
+                setTyping(false);
+                setBusy(false);
+                break;
+              case "error":
+                setTyping(false);
+                setBusy(false);
+                setBubbles((b) => [
+                  ...b,
+                  { id: nextId++, from: "celine", text: `⚠ ${e.value}` },
+                ]);
+                break;
+            }
           }
-        }
-      } catch (err) {
-        if (!controller.signal.aborted) {
+          // Stream ended cleanly (server returned). Reopen unless unmounting.
+        } catch {
+          if (stopped || controller.signal.aborted) return;
           setBusy(false);
           setTyping(false);
         }
-      }
-    })();
 
-    return () => controller.abort();
+        if (stopped) return;
+        // The session was just lost server-side; anything we thought was
+        // queued there is gone, so reset the counter before reconnecting.
+        queued.current = 0;
+        await new Promise((r) => setTimeout(r, backoff));
+        backoff = Math.min(backoff * 2, 5000);
+      }
+    };
+
+    void run();
+
+    return () => {
+      stopped = true;
+      controller.abort();
+    };
   }, []);
 
   const send = useCallback(
