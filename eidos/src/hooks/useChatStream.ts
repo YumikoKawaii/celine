@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { create } from "@bufbuild/protobuf";
 import {
+  AnamnesisRequestSchema,
   PempoRequestSchema,
   SigaoRequestSchema,
 } from "../gen/celine/v1/celine_pb";
 import { celine } from "../client";
+
+// Celine's own prosopon id (seeded in 001_init.sql); any other id is the user.
+const CELINE_PROSOPON_ID = 1n;
 
 export interface Bubble {
   id: number;
@@ -46,6 +50,32 @@ export function useChatStream() {
   const noteTyping = useCallback(() => {
     if (queued.current > 0) armIdle();
   }, [armIdle]);
+
+  // Load the conversation transcript once on mount so a returning user (or a
+  // page reload) sees their history, not an empty pane. Runs independently of
+  // the Parousia stream — the stream only carries *new* turns, so a reconnect
+  // never re-fetches or duplicates what's already on screen.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await celine.anamnesis(create(AnamnesisRequestSchema, {}));
+        if (cancelled) return;
+        setBubbles(
+          res.messages.map((m) => ({
+            id: nextId++,
+            from: m.prosoponId === CELINE_PROSOPON_ID ? "celine" : "user",
+            text: m.text,
+          })),
+        );
+      } catch {
+        // Empty/failed history is non-fatal — start with a blank pane.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // The Parousia stream carries the whole server-side session. If it ever ends
   // — StrictMode's effect cleanup, a hot reload, a dropped connection — the

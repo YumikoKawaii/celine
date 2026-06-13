@@ -10,5 +10,5 @@ type anamnesisMessages struct {
 }
 
 func (s anamnesisMessages) Scope(q *gorm.DB) *gorm.DB {
-	return q.Where("conversation_id = ?", s.convID).Order("created_at DESC")
+	return q.Where("conversation_id = ?", s.convID).Order("created_at ASC")
 }
