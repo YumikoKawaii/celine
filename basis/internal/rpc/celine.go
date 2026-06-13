@@ -17,17 +17,25 @@ type Celine struct {
 	celinev1connect.UnimplementedCelineHandler
 	agent    chatAgent
 	msgs     msgReader
-	sessions *sessionStore
+	registry *registry
 	debounce time.Duration
 }
 
 func NewCeline(a chatAgent, msgs msgReader, debounce time.Duration) *Celine {
-	return &Celine{agent: a, msgs: msgs, sessions: newSessionStore(), debounce: debounce}
+	return &Celine{
+		agent: a,
+		msgs:  msgs,
+		registry: &registry{
+			sigao: make(map[string]chan struct{}),
+			pempo: make(map[string]chan string),
+		},
+		debounce: debounce,
+	}
 }
 
 func (s *Celine) Parousia(
 	ctx context.Context,
-	req *connect.Request[celinev1.ParousiaRequest],
+	_ *connect.Request[celinev1.ParousiaRequest],
 	stream *connect.ServerStream[celinev1.ParousiaEvent],
 ) error {
 	sub, ok := hermes.SubFromContext(ctx)
@@ -35,17 +43,42 @@ func (s *Celine) Parousia(
 		return connect.NewError(connect.CodeUnauthenticated, errors.New("not authenticated"))
 	}
 
-	sess := s.sessions.register(sub, ctx, s.debounce, s.runFlush)
-	defer s.sessions.unregister(sub)
+	s.registry.Register(sub)
+	defer s.registry.Unregister(sub)
+
+	sigao, _ := s.registry.Sigao(sub)
+	pempo, _ := s.registry.Pempo(sub)
+	ms := messages{}
+
+	sink := &streamSink{stream: stream}
+	ticker := time.NewTicker(s.debounce)
+	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
-		case ev := <-sess.ch:
-			if err := stream.Send(ev); err != nil {
+		case v := <-pempo:
+			ms.Enqueue(v)
+			ticker.Reset(s.debounce)
+		case <-ticker.C:
+			select {
+			case sigao <- struct{}{}:
+			default: // signal already pending, coalesce
+			}
+		case <-sigao:
+			packet := ms.Flush()
+			if err := sink.typing(); err != nil {
 				return err
 			}
+			id, err := s.agent.Chat(ctx, sub, packet, sink)
+			if err != nil {
+				return sink.fail(err)
+			}
+			if err := sink.done(id); err != nil {
+				return err
+			}
+			ticker.Reset(s.debounce)
 		}
 	}
 }
@@ -59,12 +92,11 @@ func (s *Celine) Pempo(
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("not authenticated"))
 	}
 
-	sess, ok := s.sessions.get(sub)
+	conn, ok := s.registry.Pempo(sub)
 	if !ok {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("no active session — open Parousia first"))
 	}
-
-	sess.pempo(req.Msg.GetText())
+	conn <- req.Msg.GetText()
 	return connect.NewResponse(&celinev1.PempoResponse{}), nil
 }
 
@@ -77,12 +109,15 @@ func (s *Celine) Sigao(
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("not authenticated"))
 	}
 
-	sess, ok := s.sessions.get(sub)
+	conn, ok := s.registry.Sigao(sub)
 	if !ok {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("no active session — open Parousia first"))
 	}
 
-	sess.sigao()
+	select {
+	case conn <- struct{}{}:
+	default: // a quiet signal is already pending — coalesce
+	}
 	return connect.NewResponse(&celinev1.SigaoResponse{}), nil
 }
 
@@ -114,72 +149,49 @@ func (s *Celine) Anamnesis(
 	return connect.NewResponse(&celinev1.AnamnesisResponse{Messages: out}), nil
 }
 
-func (s *Celine) runFlush(sub string) {
-	sess, ok := s.sessions.get(sub)
-	if !ok {
-		return
-	}
+// streamSink writes agent events directly onto the Parousia stream. The agent
+// turn runs on the Parousia goroutine, so there is exactly one writer and no
+// buffering — a slow client backpressures the turn instead of dropping events.
+type streamSink struct {
+	stream *connect.ServerStream[celinev1.ParousiaEvent]
+}
 
-	combined := sess.drainInbox()
-	if combined == "" {
-		sess.clearBusy()
-		return
-	}
-
-	sink := newChanSink(sess.ch)
-	sink.send(&celinev1.ParousiaEvent{
+func (s *streamSink) typing() error {
+	return s.stream.Send(&celinev1.ParousiaEvent{
 		Event: &celinev1.ParousiaEvent_Typing{Typing: &celinev1.Typing{}},
 	})
-	id, err := s.agent.Chat(sess.ctx, sub, combined, sink)
-	if err != nil {
-		sink.send(&celinev1.ParousiaEvent{
-			Event: &celinev1.ParousiaEvent_Error{Error: err.Error()},
-		})
-	} else {
-		sink.send(&celinev1.ParousiaEvent{
-			Event: &celinev1.ParousiaEvent_Done{Done: &celinev1.Done{ConversationId: id}},
-		})
-	}
-
-	sess.clearBusy()
 }
 
-type chanSink struct {
-	ch chan<- *celinev1.ParousiaEvent
+func (s *streamSink) done(conversationId int64) error {
+	return s.stream.Send(&celinev1.ParousiaEvent{
+		Event: &celinev1.ParousiaEvent_Done{Done: &celinev1.Done{ConversationId: conversationId}},
+	})
 }
 
-func newChanSink(ch chan *celinev1.ParousiaEvent) *chanSink {
-	return &chanSink{ch: ch}
+func (s *streamSink) fail(err error) error {
+	return s.stream.Send(&celinev1.ParousiaEvent{
+		Event: &celinev1.ParousiaEvent_Error{Error: err.Error()},
+	})
 }
 
-func (s *chanSink) send(ev *celinev1.ParousiaEvent) {
-	select {
-	case s.ch <- ev:
-	default:
-	}
-}
-
-func (s *chanSink) Bubble(seq int32, text string) error {
-	s.send(&celinev1.ParousiaEvent{
+func (s *streamSink) Bubble(seq int32, text string) error {
+	return s.stream.Send(&celinev1.ParousiaEvent{
 		Event: &celinev1.ParousiaEvent_Message{Message: &celinev1.Message{Seq: seq, Text: text}},
 	})
-	return nil
 }
 
-func (s *chanSink) ToolCall(id, name, inputJSON string) error {
-	s.send(&celinev1.ParousiaEvent{
+func (s *streamSink) ToolCall(id, name, inputJSON string) error {
+	return s.stream.Send(&celinev1.ParousiaEvent{
 		Event: &celinev1.ParousiaEvent_ToolCall{ToolCall: &celinev1.ToolCall{
 			Id: id, Name: name, InputJson: inputJSON,
 		}},
 	})
-	return nil
 }
 
-func (s *chanSink) ToolResult(id, output string, isError bool) error {
-	s.send(&celinev1.ParousiaEvent{
+func (s *streamSink) ToolResult(id, output string, isError bool) error {
+	return s.stream.Send(&celinev1.ParousiaEvent{
 		Event: &celinev1.ParousiaEvent_ToolResult{ToolResult: &celinev1.ToolResult{
 			Id: id, Output: output, IsError: isError,
 		}},
 	})
-	return nil
 }
