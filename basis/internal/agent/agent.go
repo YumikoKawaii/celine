@@ -153,10 +153,17 @@ func (a *Agent) Chat(ctx context.Context, ownerSub string, userText string, sink
 
 			output, execErr := a.tools.Execute(ctx, use.Name, use.Input)
 			isErr := execErr != nil
+
+			// On a tool failure, Claude gets the real error (so it can reason
+			// about / report the failure honestly), but the client only sees a
+			// generic notice — provider/internal details are logged, not streamed.
+			clientOutput := output
 			if isErr {
 				output = execErr.Error()
+				log.Printf("agent: tool %q failed: %v", use.Name, execErr)
+				clientOutput = "tool unavailable"
 			}
-			_ = sink.ToolResult(use.Id, output, isErr)
+			_ = sink.ToolResult(use.Id, clientOutput, isErr)
 
 			toolResults = append(toolResults, llm.ToolResult{
 				Id:      use.Id,

@@ -1,0 +1,13 @@
+# Celine access whitelist — only these emails may obtain a token.
+#
+# Point the server at this file with CELINE_WHITELIST=/path/to/whitelist.yaml
+# (copy this to whitelist.yaml and edit). Matching is case-insensitive and
+# trims surrounding whitespace.
+#
+# If CELINE_WHITELIST is unset, OR this list is empty, access is OPEN to every
+# Google account that signs in — intended only for local dev. Set at least one
+# email in production so sign-in (Metabole) refuses unlisted accounts before
+# any Anthropic usage is spent.
+emails:
+  - you@example.com
+  - someone.else@gmail.com

@@ -22,10 +22,11 @@ type Hermes struct {
 	issuer    *hermes.Issuer
 	prosopons prosoponStore
 	convs     convReader
+	whitelist *hermes.Whitelist
 }
 
-func NewHermes(g *hermes.GoogleAuth, issuer *hermes.Issuer, prosopons prosoponStore, convs convReader) *Hermes {
-	return &Hermes{google: g, issuer: issuer, prosopons: prosopons, convs: convs}
+func NewHermes(g *hermes.GoogleAuth, issuer *hermes.Issuer, prosopons prosoponStore, convs convReader, whitelist *hermes.Whitelist) *Hermes {
+	return &Hermes{google: g, issuer: issuer, prosopons: prosopons, convs: convs, whitelist: whitelist}
 }
 
 func (s *Hermes) Eisodos(
@@ -51,6 +52,14 @@ func (s *Hermes) Metabole(
 	claims, err := s.google.Exchange(ctx, req.Msg.GetCode(), req.Msg.GetRedirectUri())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeUnauthenticated, err)
+	}
+
+	// Whitelist gate: only listed emails may obtain a token (this is where the
+	// verified email is first known). Unlisted accounts never reach the agent
+	// loop, so they can't spend Anthropic usage.
+	if s.whitelist != nil && !s.whitelist.Allowed(claims.Email) {
+		return nil, connect.NewError(connect.CodePermissionDenied,
+			errors.New("this account is not authorized to use Celine"))
 	}
 
 	p := &mneme.Prosopon{Sub: claims.Sub, Email: claims.Email, DisplayName: claims.Name, AvatarURL: &claims.Picture}

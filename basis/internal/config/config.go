@@ -20,6 +20,7 @@ type Server struct {
 	TokenTTL         time.Duration // CELINE_TOKEN_TTL, default 72h; parsed as Go duration string
 	GoogleClientID   string        // GOOGLE_CLIENT_ID, optional — empty = Google OAuth disabled
 	GoogleSecret     string        // GOOGLE_CLIENT_SECRET, required when GoogleClientID is set
+	WhitelistPath    string        // CELINE_WHITELIST, optional — YAML list of allowed emails; empty = open access
 	BraveAPIKey      string        // BRAVE_API_KEY, optional — empty = web_search returns error
 	OllamaURL        string        // OLLAMA_URL, default "http://localhost:11434" — embeds the recall query (§12.5)
 	DebounceDuration time.Duration // CELINE_DEBOUNCE, default 45s; fallback flush — the client normally triggers Sigao when the user stops typing
@@ -56,6 +57,7 @@ func LoadServer() (Server, error) {
 		TokenTTL:         ttl,
 		GoogleClientID:   os.Getenv("GOOGLE_CLIENT_ID"),
 		GoogleSecret:     os.Getenv("GOOGLE_CLIENT_SECRET"),
+		WhitelistPath:    os.Getenv("CELINE_WHITELIST"),
 		BraveAPIKey:      os.Getenv("BRAVE_API_KEY"),
 		OllamaURL:        getenv("OLLAMA_URL", "http://localhost:11434"),
 		DebounceDuration: debounce,

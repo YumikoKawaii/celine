@@ -8,6 +8,11 @@
 .env.*
 !.env.example
 
+# Access whitelist — the populated list is local; only the template is tracked.
+whitelist.yaml
+**/whitelist.yaml
+!whitelist.example.yaml
+
 # Node / web
 eidos/node_modules/
 eidos/dist/

@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 	"errors"
+	"log"
 	"time"
 
 	"connectrpc.com/connect"
@@ -77,7 +78,18 @@ func (s *Celine) Parousia(
 			}
 			id, err := s.agent.Chat(ctx, sub, packet, sink)
 			if err != nil {
-				return sink.fail(err)
+				// The turn failed (LLM/embedder/DB hiccup). Log the real cause
+				// server-side, hand the client a safe generic message, and keep
+				// the session open — one bad turn must not drop the stream.
+				if ctx.Err() != nil {
+					return nil
+				}
+				log.Printf("parousia: chat turn for %s failed: %v", sub, err)
+				if sendErr := sink.fail(); sendErr != nil {
+					return sendErr
+				}
+				ticker.Reset(s.debounce)
+				continue
 			}
 			if err := sink.done(id); err != nil {
 				return err
@@ -176,9 +188,14 @@ func (s *streamSink) done(conversationId int64) error {
 	})
 }
 
-func (s *streamSink) fail(err error) error {
+// clientErrorMessage is the only error text a client ever sees for a failed
+// turn — raw errors from Claude / Ollama / Postgres are logged server-side, not
+// forwarded, so internal details and provider specifics never leak.
+const clientErrorMessage = "Something went wrong on my end. Please try again in a moment."
+
+func (s *streamSink) fail() error {
 	return s.stream.Send(&celinev1.ParousiaEvent{
-		Event: &celinev1.ParousiaEvent_Error{Error: err.Error()},
+		Event: &celinev1.ParousiaEvent_Error{Error: clientErrorMessage},
 	})
 }
 

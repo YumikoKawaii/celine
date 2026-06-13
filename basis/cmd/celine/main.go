@@ -67,13 +67,21 @@ func main() {
 		cfg.DebounceDuration,
 	)
 
+	whitelist, err := hermes.LoadWhitelist(cfg.WhitelistPath)
+	if err != nil {
+		log.Fatalf("whitelist: %v", err)
+	}
+	if whitelist.Open() {
+		log.Println("whitelist: open access (no CELINE_WHITELIST configured)")
+	}
+
 	var googleAuth *hermes.GoogleAuth
 	var issuer *hermes.Issuer
 	if cfg.GoogleClientID != "" {
 		googleAuth = hermes.NewGoogleAuth(cfg.GoogleClientID, cfg.GoogleSecret)
 		issuer = hermes.NewIssuer(cfg.JWTSecret, cfg.TokenTTL)
 	}
-	hermesSvc := rpc.NewHermes(googleAuth, issuer, store.Prosopons(), store.Conversations())
+	hermesSvc := rpc.NewHermes(googleAuth, issuer, store.Prosopons(), store.Conversations(), whitelist)
 
 	mux := http.NewServeMux()
 	celinePath, celineHandler := celinev1connect.NewCelineHandler(celineSvc, opts)
