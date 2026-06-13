@@ -36,6 +36,17 @@ type queue interface {
 	Enqueue(ctx context.Context, topic string, message interface{}) error
 }
 
+// embedder turns query text into a vector for recall search (§12.5 tier 2).
+type embedder interface {
+	Embed(ctx context.Context, text string) ([]float32, error)
+}
+
+// memories is the recall read path — a filtered vector search over this
+// client's indexed messages (§11.2, §12.5).
+type memories interface {
+	Search(ctx context.Context, ownerProsoponId int64, embedding []float32, k int) ([]mneme.MemoryHit, error)
+}
+
 type toolRunner interface {
 	Defs() []llm.ToolDef
 	Execute(ctx context.Context, name string, input json.RawMessage) (string, error)

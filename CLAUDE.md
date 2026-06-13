@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Steps 1–5 live.** The design docs in **`docs/architecture/`** (the **source of truth** — read [`docs/architecture/README.md`](docs/architecture/README.md) first, keep it in sync) are one-file-per-section; the `§N` references throughout this file and the code map to the numbered files there (e.g. `§3.2` → `03-the-four-pieces.md`).
 
-What's running: typed Connect stream end-to-end (proto → Go server → React UI), real Claude brain with tool loop (`web_search` via Brave API), Postgres+pgvector store, async memory indexing pipeline (Redis queue → Ollama embedder → pgvector), Google OIDC auth (JWT). The next steps wire in memory recall (RAG at turn-start) and grow the tool set.
+What's running: typed Connect stream end-to-end (proto → Go server → React UI), real Claude brain with tool loop (`web_search` via Brave API), Postgres+pgvector store, async memory indexing pipeline (Redis queue → Ollama embedder → pgvector), Google OIDC auth (JWT), and the memory recall **read path** (§12.5: tier-1 curated profile, tier-2 thresholded auto-hint, tier-3 agentic `recall` tool). The next steps wire in the persona knobs + scheduled mood (§13) and grow the tool set.
 
 ## What Celine is
 

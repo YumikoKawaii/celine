@@ -30,8 +30,10 @@ files below (e.g. `§3.2` → [`03-the-four-pieces.md`](03-the-four-pieces.md), 
 
 **Steps 1–5 are live** — typed `Laleo` stream, real Claude brain with the tool
 loop (`web_search`), Postgres+pgvector store, async indexing write path, and
-Google OIDC + JWT auth. The memory recall **read path** (§12.5) and the persona
-knobs + scheduled mood (§13) are designed but not yet wired. See
+Google OIDC + JWT auth. The memory recall **read path** (§12.5) is now wired —
+all three tiers (curated profile in the prefix, thresholded auto-hint, agentic
+`recall` tool). The persona knobs + scheduled mood (§13) are designed but not
+yet wired. See
 [§5.1](05-repo-layout.md) for the as-built backend diagram and
 [§8](08-build-order.md) for the full roadmap; `CLAUDE.md` tracks per-step status.
 

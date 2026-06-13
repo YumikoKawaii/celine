@@ -16,6 +16,7 @@ import (
 	"github.com/YumikoKawaii/celine/basis/internal/agent"
 	"github.com/YumikoKawaii/celine/basis/internal/config"
 	"github.com/YumikoKawaii/celine/basis/internal/ergon"
+	"github.com/YumikoKawaii/celine/basis/internal/graphe"
 	"github.com/YumikoKawaii/celine/basis/internal/hermes"
 	"github.com/YumikoKawaii/celine/basis/internal/llm"
 	"github.com/YumikoKawaii/celine/basis/internal/mneme"
@@ -51,14 +52,17 @@ func main() {
 	interceptor := hermes.NewAuthInterceptor(verifier)
 	opts := connect.WithInterceptors(interceptor)
 
+	embedder := graphe.NewOllamaClient(cfg.OllamaURL)
+
 	tools := ergon.NewRegistry()
 	if cfg.BraveAPIKey != "" {
 		tools.Register(ergon.NewWebSearch(cfg.BraveAPIKey))
 	}
+	tools.Register(ergon.NewRecall(embedder, store.Memories()))
 
 	brain := llm.New(cfg.AnthropicKey, cfg.Model, cfg.MaxTokens)
 	celineSvc := rpc.NewCeline(
-		agent.New(brain, agent.SystemPrompt(), store.Prosopons(), store.Conversations(), store.Messages(), tx, tools),
+		agent.New(brain, agent.SystemPrompt(), store.Prosopons(), store.Conversations(), store.Messages(), tx, tools, embedder, store.Memories()),
 		store.Messages(),
 		cfg.DebounceDuration,
 	)
