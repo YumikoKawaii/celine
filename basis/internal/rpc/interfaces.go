@@ -29,3 +29,9 @@ type convReader interface {
 type msgReader interface {
 	List(ctx context.Context, scope mneme.Scope, pagination *mneme.Pagination) ([]mneme.Message, error)
 }
+
+// convResolver lets the Celine handler resolve a prosopon's conversation when
+// the request carries no conversation ID (the dev-anon path has no JWT claim).
+type convResolver interface {
+	GetOrCreate(ctx context.Context, filter mneme.KataProsopon) (*mneme.Conversation, error)
+}

@@ -24,6 +24,7 @@ type Server struct {
 	BraveAPIKey      string        // BRAVE_API_KEY, optional — empty = web_search returns error
 	OllamaURL        string        // OLLAMA_URL, default "http://localhost:11434" — embeds the recall query (§12.5)
 	DebounceDuration time.Duration // CELINE_DEBOUNCE, default 45s; fallback flush — the client normally triggers Sigao when the user stops typing
+	DevAnon          bool          // CELINE_DEV_ANON, default false — local-only: bypass auth, treat every request as the anon prosopon (id=2). Never enable in prod.
 }
 
 // Worker holds all configuration for the graphe worker binary.
@@ -61,6 +62,7 @@ func LoadServer() (Server, error) {
 		BraveAPIKey:      os.Getenv("BRAVE_API_KEY"),
 		OllamaURL:        getenv("OLLAMA_URL", "http://localhost:11434"),
 		DebounceDuration: debounce,
+		DevAnon:          os.Getenv("CELINE_DEV_ANON") == "true",
 	}
 	return c, c.validate()
 }

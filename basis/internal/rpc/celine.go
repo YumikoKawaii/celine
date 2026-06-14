@@ -12,20 +12,23 @@ import (
 	celinev1 "github.com/YumikoKawaii/celine/basis/gen/celine/v1"
 	"github.com/YumikoKawaii/celine/basis/gen/celine/v1/celinev1connect"
 	"github.com/YumikoKawaii/celine/basis/internal/hermes"
+	"github.com/YumikoKawaii/celine/basis/internal/mneme"
 )
 
 type Celine struct {
 	celinev1connect.UnimplementedCelineHandler
 	agent    chatAgent
 	msgs     msgReader
+	convs    convResolver
 	registry *registry
 	debounce time.Duration
 }
 
-func NewCeline(a chatAgent, msgs msgReader, debounce time.Duration) *Celine {
+func NewCeline(a chatAgent, msgs msgReader, convs convResolver, debounce time.Duration) *Celine {
 	return &Celine{
 		agent: a,
 		msgs:  msgs,
+		convs: convs,
 		registry: &registry{
 			sigao: make(map[string]chan struct{}),
 			pempo: make(map[string]chan string),
@@ -149,7 +152,16 @@ func (s *Celine) Anamnesis(
 ) (*connect.Response[celinev1.AnamnesisResponse], error) {
 	convID, ok := hermes.ConversationIDFromContext(ctx)
 	if !ok {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("not authenticated"))
+		// No conversation claim (dev-anon path): resolve it from the prosopon.
+		pid, hasPid := hermes.ProsoponIdFromContext(ctx)
+		if !hasPid {
+			return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("not authenticated"))
+		}
+		conv, err := s.convs.GetOrCreate(ctx, mneme.KataProsopon{ProsoponId: pid})
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInternal, err)
+		}
+		convID = conv.Id
 	}
 
 	msgs, err := s.msgs.List(ctx, anamnesisMessages{convID: convID}, nil)
