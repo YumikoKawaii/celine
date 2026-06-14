@@ -1,0 +1,63 @@
+# Local development infra — postgres · redis · ollama.
+# Stands up the backing services so you can run server/worker/eidos locally
+# (go run ./cmd/celine, bun dev) against them. NOT used in deployment — on the
+# host these come from the shared `infra` stack.
+#
+#   docker compose -f docker-compose.dev.yml up -d
+#
+# Postgres auto-seeds the celine schema from 001_init.sql on first boot.
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: celine
+      POSTGRES_PASSWORD: celine
+      POSTGRES_DB: celine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./basis/migrations/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U celine"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+
+  ollama-pull:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["ollama", "pull", "snowflake-arctic-embed:xs"]
+    restart: "no"
+
+volumes:
+  postgres_data:
+  ollama_data:

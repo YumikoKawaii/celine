@@ -1,101 +1,43 @@
+# Deployment compose — app images only (server · worker · eidos).
+# Postgres, Redis and Ollama come from the shared `infra` stack; this compose
+# joins the external `infra` network and reaches them by service name.
+#
+# Deploy (on the host, ~/celine, where .env already lives):
+#   docker compose pull && docker compose up -d
+#
+# Images are pinned by short commit SHA via IMAGE_TAG in .env, e.g.
+#   IMAGE_TAG=sha-3cb15a9
 services:
-  postgres:
-    image: pgvector/pgvector:pg17
-    environment:
-      POSTGRES_USER: celine
-      POSTGRES_PASSWORD: celine
-      POSTGRES_DB: celine
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./basis/migrations/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U celine"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
-  ollama:
-    image: ollama/ollama:latest
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    healthcheck:
-      test: ["CMD-SHELL", "ollama list || exit 1"]
-      interval: 10s
-      timeout: 10s
-      retries: 12
-
-  ollama-pull:
-    image: ollama/ollama:latest
-    depends_on:
-      ollama:
-        condition: service_healthy
-    volumes:
-      - ollama_data:/root/.ollama
-    environment:
-      OLLAMA_HOST: http://ollama:11434
-    entrypoint: ["ollama", "pull", "snowflake-arctic-embed:xs"]
-    restart: "no"
-
   server:
-    build:
-      context: .
-      dockerfile: basis/Dockerfile
-      target: server
-    ports:
-      - "8080:8080"
-    env_file: .env.docker
+    image: ghcr.io/yumikokawaii/celine/server:${IMAGE_TAG}
+    env_file: .env
     environment:
       CELINE_ADDR: ":8080"
-      CELINE_DB_DSN: "host=postgres user=celine password=celine dbname=celine port=5432 sslmode=disable"
+      CELINE_DB_DSN: "host=postgres user=${DB_USER} password=${DB_PASSWORD} dbname=${DB_NAME} port=5432 sslmode=disable search_path=celine"
       CELINE_REDIS_ADDR: "redis:6379"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    restart: on-failure
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    restart: unless-stopped
 
   worker:
-    build:
-      context: .
-      dockerfile: basis/Dockerfile
-      target: worker
+    image: ghcr.io/yumikokawaii/celine/worker:${IMAGE_TAG}
+    env_file: .env
     environment:
-      CELINE_DB_DSN: "host=postgres user=celine password=celine dbname=celine port=5432 sslmode=disable"
+      CELINE_DB_DSN: "host=postgres user=${DB_USER} password=${DB_PASSWORD} dbname=${DB_NAME} port=5432 sslmode=disable search_path=celine"
       CELINE_REDIS_ADDR: "redis:6379"
       OLLAMA_URL: "http://ollama:11434"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      ollama-pull:
-        condition: service_completed_successfully
-    restart: on-failure
+    restart: unless-stopped
 
   eidos:
-    build:
-      context: eidos
-      dockerfile: Dockerfile
+    image: ghcr.io/yumikokawaii/celine/eidos:${IMAGE_TAG}
     ports:
-      - "5173:80"
+      - "${EIDOS_PORT:-5173}:80"
     depends_on:
       - server
+    restart: unless-stopped
 
-volumes:
-  postgres_data:
-  ollama_data:
+# The infra stack (postgres · redis · ollama) owns this network; we attach to it.
+networks:
+  default:
+    name: infra
+    external: true

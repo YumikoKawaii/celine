@@ -131,3 +131,34 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+
+  # ---- Deploy to gungir: copy the compose, pin the tag, pull + up. ----
+  # Master only — pushes the freshly built images onto the host.
+  deploy:
+    needs: images
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Copy compose to host
+        run: |
+          scp -i ~/.ssh/id_deploy docker-compose.yml \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:~/celine/docker-compose.yml"
+
+      - name: Pin image tag and deploy
+        # IMAGE_TAG matches docker/metadata-action's short-sha tag (sha-<7 chars>).
+        run: |
+          TAG="sha-${GITHUB_SHA::7}"
+          ssh -i ~/.ssh/id_deploy "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            "cd ~/celine && \
+             grep -q '^IMAGE_TAG=' .env && sed -i 's/^IMAGE_TAG=.*/IMAGE_TAG=$TAG/' .env || echo 'IMAGE_TAG=$TAG' >> .env && \
+             echo '${{ secrets.GHCR_PULL_TOKEN }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin && \
+             docker compose pull && docker compose up -d"
