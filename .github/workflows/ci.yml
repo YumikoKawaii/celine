@@ -9,8 +9,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  # backend = server + worker (celine-backend/*); frontend = eidos
-  # (celine-frontend/*). Grouped by path prefix under the owner namespace.
+  # All images live under celine/* in the owner namespace.
 
 jobs:
   # ---- Backend: build + test the Go module ----
@@ -79,15 +78,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - image: celine-backend/server
+          - image: celine/server
             context: .
             dockerfile: basis/Dockerfile
             target: server
-          - image: celine-backend/worker
+          - image: celine/worker
             context: .
             dockerfile: basis/Dockerfile
             target: worker
-          - image: celine-frontend/eidos
+          - image: celine/eidos
             context: eidos
             dockerfile: eidos/Dockerfile
             target: eidos
@@ -117,7 +116,6 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ steps.owner.outputs.name }}/${{ matrix.image }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
             type=sha,format=short
 
       - name: Build and push
