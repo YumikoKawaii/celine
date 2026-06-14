@@ -12,10 +12,10 @@ import (
 	"github.com/YumikoKawaii/celine/basis/internal/mneme"
 )
 
-// google and issuer are kept as concrete types because they are optionally nil
-// in dev mode (no GOOGLE_CLIENT_ID set). Assigning a nil concrete pointer to an
-// interface produces a non-nil interface value that panics on method call — the
-// nil concrete pointer is the safe, checkable form here.
+// google and issuer are concrete types (not interfaces) so the nil guards in
+// the handlers below are checkable: a nil concrete pointer stays nil, whereas a
+// nil pointer boxed in an interface is non-nil and panics on method call. Auth
+// is mandatory, so these are defensive — wiring always supplies both.
 type Hermes struct {
 	celinev1connect.UnimplementedHermesHandler
 	google    *hermes.GoogleAuth

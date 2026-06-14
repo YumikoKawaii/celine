@@ -16,15 +16,14 @@ type Server struct {
 	AnthropicKey     string        // ANTHROPIC_API_KEY, required
 	Model            string        // CELINE_MODEL, optional (defaults inside llm package)
 	MaxTokens        int64         // CELINE_MAX_TOKENS, optional (default 8192)
-	JWTSecret        string        // CELINE_JWT_SECRET, optional — empty = dev mode, no auth enforced
+	JWTSecret        string        // CELINE_JWT_SECRET, required — signs/verifies the session JWT
 	TokenTTL         time.Duration // CELINE_TOKEN_TTL, default 72h; parsed as Go duration string
-	GoogleClientID   string        // GOOGLE_CLIENT_ID, optional — empty = Google OAuth disabled
-	GoogleSecret     string        // GOOGLE_CLIENT_SECRET, required when GoogleClientID is set
+	GoogleClientID   string        // GOOGLE_CLIENT_ID, required — Google OIDC
+	GoogleSecret     string        // GOOGLE_CLIENT_SECRET, required — Google OIDC
 	WhitelistPath    string        // CELINE_WHITELIST, optional — YAML list of allowed emails; empty = open access
 	BraveAPIKey      string        // BRAVE_API_KEY, optional — empty = web_search returns error
 	OllamaURL        string        // OLLAMA_URL, default "http://localhost:11434" — embeds the recall query (§12.5)
 	DebounceDuration time.Duration // CELINE_DEBOUNCE, default 45s; fallback flush — the client normally triggers Sigao when the user stops typing
-	DevAnon          bool          // CELINE_DEV_ANON, default false — local-only: bypass auth, treat every request as the anon prosopon (id=2). Never enable in prod.
 }
 
 // Worker holds all configuration for the graphe worker binary.
@@ -62,7 +61,6 @@ func LoadServer() (Server, error) {
 		BraveAPIKey:      os.Getenv("BRAVE_API_KEY"),
 		OllamaURL:        getenv("OLLAMA_URL", "http://localhost:11434"),
 		DebounceDuration: debounce,
-		DevAnon:          os.Getenv("CELINE_DEV_ANON") == "true",
 	}
 	return c, c.validate()
 }
@@ -86,9 +84,9 @@ func (c *Server) validate() error {
 	require(c.DBDsn, "CELINE_DB_DSN")
 	require(c.RedisAddr, "CELINE_REDIS_ADDR")
 	require(c.AnthropicKey, "ANTHROPIC_API_KEY")
-	if c.GoogleClientID != "" {
-		require(c.GoogleSecret, "GOOGLE_CLIENT_SECRET")
-	}
+	require(c.JWTSecret, "CELINE_JWT_SECRET")
+	require(c.GoogleClientID, "GOOGLE_CLIENT_ID")
+	require(c.GoogleSecret, "GOOGLE_CLIENT_SECRET")
 	if len(missing) > 0 {
 		return fmt.Errorf("missing required env vars: %s", strings.Join(missing, ", "))
 	}

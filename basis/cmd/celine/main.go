@@ -45,17 +45,8 @@ func main() {
 	store := mneme.NewMneme(db)
 	tx := taxis.New(rdb)
 
-	var interceptor *hermes.AuthInterceptor
-	if cfg.DevAnon {
-		log.Println("auth: DEV-ANON enabled — auth bypassed, all requests run as anon (prosopon 2). Do NOT use in prod.")
-		interceptor = hermes.NewDevAnonInterceptor()
-	} else {
-		var verifier *hermes.Verifier
-		if cfg.JWTSecret != "" {
-			verifier = hermes.NewVerifier(cfg.JWTSecret)
-		}
-		interceptor = hermes.NewAuthInterceptor(verifier)
-	}
+	verifier := hermes.NewVerifier(cfg.JWTSecret)
+	interceptor := hermes.NewAuthInterceptor(verifier)
 	opts := connect.WithInterceptors(interceptor)
 
 	embedder := graphe.NewOllamaClient(cfg.OllamaURL)
@@ -70,7 +61,6 @@ func main() {
 	celineSvc := rpc.NewCeline(
 		agent.New(brain, agent.SystemPrompt(), store.Prosopons(), store.Conversations(), store.Messages(), tx, tools, embedder, store.Memories()),
 		store.Messages(),
-		store.Conversations(),
 		cfg.DebounceDuration,
 	)
 
@@ -82,12 +72,8 @@ func main() {
 		log.Println("whitelist: open access (no CELINE_WHITELIST configured)")
 	}
 
-	var googleAuth *hermes.GoogleAuth
-	var issuer *hermes.Issuer
-	if cfg.GoogleClientID != "" {
-		googleAuth = hermes.NewGoogleAuth(cfg.GoogleClientID, cfg.GoogleSecret)
-		issuer = hermes.NewIssuer(cfg.JWTSecret, cfg.TokenTTL)
-	}
+	googleAuth := hermes.NewGoogleAuth(cfg.GoogleClientID, cfg.GoogleSecret)
+	issuer := hermes.NewIssuer(cfg.JWTSecret, cfg.TokenTTL)
 	hermesSvc := rpc.NewHermes(googleAuth, issuer, store.Prosopons(), store.Conversations(), whitelist)
 
 	mux := http.NewServeMux()
