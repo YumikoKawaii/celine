@@ -5,8 +5,11 @@ lint:
   use:
     - STANDARD
   except:
-    # Chat streams ChatEvent (a typed oneof), not a "ChatResponse" — intentional, see §7.
+    # Parousia streams ParousiaEvent (a typed oneof), not a "ParousiaResponse" — intentional, see §7.
     - RPC_RESPONSE_STANDARD_NAME
+    # Services are named for their role (Celine, Hermes — the Greek-naming convention),
+    # not suffixed with "Service". Renaming would ripple through all generated Go/TS.
+    - SERVICE_SUFFIX
 breaking:
   use:
     - FILE
