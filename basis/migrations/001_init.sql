@@ -15,10 +15,9 @@ CREATE TABLE prosopons
 );
 
 INSERT INTO prosopons (id, sub, email, display_name)
-VALUES (1, 'celine', 'celine@internal', 'Celine'),
-       (2, 'anon', 'anon@internal', 'Anon');
+VALUES (1, 'celine', 'celine@internal', 'Celine');
 
-SELECT setval('prosopons_id_seq', 2);
+SELECT setval('prosopons_id_seq', 1);
 
 CREATE TABLE conversations
 (

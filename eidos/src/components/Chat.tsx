@@ -2,8 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { useChatStream } from "../hooks/useChatStream";
 import { Starfield } from "./Starfield";
 import { MagicCircle } from "./MagicCircle";
+import type { User } from "../gen/celine/v1/hermes_pb";
 
-export function Chat() {
+export function Chat({
+  user,
+  onSignOut,
+}: {
+  user: User | null;
+  onSignOut: () => void;
+}) {
   const { bubbles, typing, busy, send, noteTyping } = useChatStream();
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -40,6 +47,18 @@ export function Chat() {
         <span className="chat__header-glyph">✦</span>
         Celine
         <span className="chat__header-glyph">✦</span>
+        <button
+          className="chat__signout"
+          type="button"
+          onClick={onSignOut}
+          title={user?.email ? `Sign out ${user.email}` : "Sign out"}
+        >
+          {user?.avatarUrl ? (
+            <img className="chat__avatar" src={user.avatarUrl} alt="" />
+          ) : (
+            "⏻"
+          )}
+        </button>
       </header>
 
       <div className="chat__body">
