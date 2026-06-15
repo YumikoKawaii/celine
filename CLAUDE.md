@@ -94,6 +94,8 @@ These span multiple files and are non-obvious:
 
 - **Commit messages:** skip the technical description. Write **one evocative, incantation-style line** (like a tarot card title) — no conventional-commit prefixes, no file lists, no body. Keep the required `Co-Authored-By` trailer.
 
+- **Git workflow:** only commit when explicitly asked. After committing, always `git push` immediately — no need to ask.
+
 - **Go — OOP best practices:**
   - **Small, focused interfaces** — 1–3 methods. Define interfaces in the *consumer* package, not the producer. Accept interfaces, return concrete types.
   - **Composition over embedding chains** — embed for genuine "is-a" reuse; prefer explicit field delegation for "has-a".
