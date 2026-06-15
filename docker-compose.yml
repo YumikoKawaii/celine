@@ -1,12 +1,3 @@
-# Deployment compose — app images only (server · worker · eidos).
-# Postgres, Redis and Ollama come from the shared `infra` stack; this compose
-# joins the external `infra` network and reaches them by service name.
-#
-# Deploy (on the host, ~/celine, where .env already lives):
-#   docker compose pull && docker compose up -d
-#
-# Images are pinned by short commit SHA via IMAGE_TAG in .env, e.g.
-#   IMAGE_TAG=sha-3cb15a9
 services:
   server:
     image: ghcr.io/yumikokawaii/celine/server:${IMAGE_TAG}
@@ -36,7 +27,6 @@ services:
       - server
     restart: unless-stopped
 
-# The infra stack (postgres · redis · ollama) owns this network; we attach to it.
 networks:
   default:
     name: infra

@@ -159,6 +159,6 @@ jobs:
           TAG="sha-${GITHUB_SHA::7}"
           ssh -i ~/.ssh/id_deploy "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
             "cd ~/celine && \
-             grep -q '^IMAGE_TAG=' .env && sed -i 's/^IMAGE_TAG=.*/IMAGE_TAG=$TAG/' .env || echo 'IMAGE_TAG=$TAG' >> .env && \
+             sed -i 's|:\${IMAGE_TAG}|:$TAG|g' docker-compose.yml && \
              echo '${{ secrets.GHCR_PULL_TOKEN }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin && \
-             docker compose pull && docker compose up -d"
+             docker compose up -d"
