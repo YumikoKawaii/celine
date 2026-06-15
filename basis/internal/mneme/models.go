@@ -13,7 +13,7 @@ type Prosopon struct {
 	Email       string          `gorm:"column:email"`
 	DisplayName string          `gorm:"column:display_name"`
 	AvatarURL   *string         `gorm:"column:avatar_url"`
-	Preferences json.RawMessage `gorm:"column:preferences"`
+	Preferences json.RawMessage `gorm:"column:preferences;default:'{}'"`
 	Persona     *string         `gorm:"column:persona"`
 	CreatedAt   time.Time       `gorm:"column:created_at"`
 	UpdatedAt   time.Time       `gorm:"column:updated_at"`

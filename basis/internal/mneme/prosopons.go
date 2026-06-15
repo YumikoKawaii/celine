@@ -2,6 +2,7 @@ package mneme
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
 	"gorm.io/gorm"
@@ -13,6 +14,9 @@ type Prosopons struct {
 }
 
 func (r *Prosopons) Upsert(ctx context.Context, c *Prosopon) error {
+	if c.Preferences == nil {
+		c.Preferences = json.RawMessage(`{}`)
+	}
 	return r.db.WithContext(ctx).
 		Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "sub"}},
