@@ -7,7 +7,7 @@ services:
       CELINE_DB_DSN: "host=postgres user=${DB_USER} password=${DB_PASSWORD} dbname=${DB_NAME} port=5432 sslmode=disable search_path=celine"
       CELINE_REDIS_ADDR: "redis:6379"
     ports:
-      - "${SERVER_PORT:-8080}:8080"
+      - "${SERVER_PORT:-10080}:8080"
     restart: unless-stopped
 
   worker:
