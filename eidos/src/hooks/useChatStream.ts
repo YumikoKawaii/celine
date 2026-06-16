@@ -67,13 +67,18 @@ export function useChatStream() {
       try {
         const res = await celine.anamnesis(create(AnamnesisRequestSchema, {}));
         if (cancelled) return;
-        // Stored messages join all bubbles with \n\n (see agent.go). Split them
-        // back out so history renders as individual chat bubbles, not one wall of text.
+        // Both sides are stored as one row per turn with their bubbles joined;
+        // split them back out so history renders as individual chat bubbles, not
+        // one wall of text. The join separator differs by side (a design wart to
+        // revisit, §14): the assistant joins bubbles with \n\n (agent.go), while
+        // a coalesced user turn joins its queued messages with \n (registry.go
+        // Flush). Split each on its own separator so both render correctly.
         setBubbles(
           res.messages.flatMap((m) => {
             const from: Bubble["from"] = m.prosoponId === CELINE_PROSOPON_ID ? "celine" : "user";
+            const sep = from === "celine" ? "\n\n" : "\n";
             return m.text
-              .split("\n\n")
+              .split(sep)
               .map((chunk) => ({ id: nextId++, from, text: chunk.trim() }))
               .filter((b) => b.text !== "");
           }),
