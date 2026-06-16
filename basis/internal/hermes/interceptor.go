@@ -81,7 +81,11 @@ func (a *AuthInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc
 }
 
 func (a *AuthInterceptor) authenticate(ctx context.Context, procedure string, headers http.Header) (context.Context, error) {
-	if strings.HasPrefix(procedure, "/celine.v1.Hermes/") {
+	// Hermes auth-flow routes don't require a token — they're how a token is
+	// obtained. Gnorizo is the exception: it validates an existing token and
+	// hydrates the user, so it must go through the normal auth check.
+	if strings.HasPrefix(procedure, "/celine.v1.Hermes/") &&
+		procedure != "/celine.v1.Hermes/Gnorizo" {
 		return ctx, nil
 	}
 
