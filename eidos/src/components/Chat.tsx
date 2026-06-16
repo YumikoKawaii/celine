@@ -16,7 +16,12 @@ export function Chat({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    // rAF defers until after the browser has painted the new bubble, so
+    // scrollHeight is fully settled and we don't land a few pixels short.
+    const id = requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    });
+    return () => cancelAnimationFrame(id);
   }, [bubbles, typing]);
 
   const submit = (e: React.FormEvent) => {
