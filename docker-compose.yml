@@ -2,8 +2,11 @@ services:
   server:
     image: ghcr.io/yumikokawaii/celine/server:${IMAGE_TAG}
     env_file: .env
+    volumes:
+      - ./whitelist.yaml:/celine/whitelist.yaml:ro
     environment:
       CELINE_ADDR: ":8080"
+      CELINE_WHITELIST: "/celine/whitelist.yaml"
       CELINE_DB_DSN: "host=postgres user=${DB_USER} password=${DB_PASSWORD} dbname=${DB_NAME} port=5432 sslmode=disable search_path=celine"
       CELINE_REDIS_ADDR: "redis:6379"
     ports:
