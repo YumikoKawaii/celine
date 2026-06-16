@@ -121,6 +121,10 @@ body::before {
 .chat__log {
   flex: 1;
   overflow-y: auto;
+  /* clip horizontal bleed: the celine bubble's decorative magic circle sits at
+     right:-20px/bottom:-20px and would otherwise expand the scroll width,
+     pushing bubbles to (and past) the right edge. */
+  overflow-x: hidden;
   padding: 24px 20px;
   display: flex;
   flex-direction: column;
@@ -176,12 +180,17 @@ body::before {
     0 0 24px rgba(120, 60, 255, 0.12),
     0 2px 8px rgba(0, 0, 0, 0.4),
     inset 0 1px 0 rgba(180, 140, 255, 0.1);
-  /* isolate so the absolute-positioned magic circle doesn't escape,
-     but avoid overflow:hidden which clips text when the circle's negative
-     offset expands the scroll width. border-radius masks the circle instead. */
   isolation: isolate;
   border-radius: 18px;
   border-bottom-left-radius: 5px;
+  /* The magic circle sits at right/bottom:-20px — visually trimmed by its own
+     clip-path, but those 20px still extend the element's layout box and feed
+     into .chat__log's scroll overflow. On the last bubble that adds phantom
+     height below the content (the bottom gap); the browser's scroll-anchoring
+     then snaps you off it when you scroll down. `overflow: clip` confines the
+     overhang to the bubble box without creating a scroll container (unlike
+     `hidden`) and without clipping the text, which lives inside the box. */
+  overflow: clip;
 }
 
 .bubble--user {
@@ -226,11 +235,17 @@ body::before {
 
 .magic-circle polygon:first-of-type {
   animation: poly-spin 20s linear infinite reverse;
+  /* view-box maps the origin to SVG user units (viewBox 0 0 120 120), so 60 60
+     is the true geometric center at any rendered CSS size — without it, a px
+     origin is read against the element's CSS box and the polygons orbit
+     off-center (visible on the small 80px bubble circle). */
+  transform-box: view-box;
   transform-origin: 60px 60px;
 }
 
 .magic-circle polygon:last-of-type {
   animation: poly-spin 25s linear infinite;
+  transform-box: view-box;
   transform-origin: 60px 60px;
 }
 

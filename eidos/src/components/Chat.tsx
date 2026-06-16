@@ -11,7 +11,7 @@ export function Chat({
   user: User | null;
   onSignOut: () => void;
 }) {
-  const { bubbles, typing, busy, send, noteTyping } = useChatStream();
+  const { bubbles, typing, send, noteTyping } = useChatStream();
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -19,7 +19,16 @@ export function Chat({
     // rAF defers until after the browser has painted the new bubble, so
     // scrollHeight is fully settled and we don't land a few pixels short.
     const id = requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+      const el = scrollRef.current;
+      if (!el) return;
+      const target = el.scrollHeight - el.clientHeight;
+      const distance = target - el.scrollTop;
+      // Bubbles arrive paced apart (§14); a fresh `smooth` animation on each one
+      // gets restarted before it finishes, so over a long log it crawls and
+      // never catches the bottom — the visible lag. Smooth-scroll only the
+      // small final nudge; snap instantly when we're far behind so each bubble
+      // lands immediately.
+      el.scrollTo({ top: target, behavior: distance > 600 ? "auto" : "smooth" });
     });
     return () => cancelAnimationFrame(id);
   }, [bubbles, typing]);
@@ -95,7 +104,7 @@ export function Chat({
             rows={1}
             autoFocus
           />
-          <button type="submit" disabled={busy || !draft.trim()}>
+          <button type="submit" disabled={!draft.trim()}>
             ✦
           </button>
         </form>

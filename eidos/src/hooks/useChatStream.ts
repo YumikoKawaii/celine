@@ -27,6 +27,12 @@ export function useChatStream() {
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const [typing, setTyping] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Mirror of `busy` readable synchronously inside the long-lived Parousia
+  // closure, which would otherwise capture a stale `busy` from first render.
+  const busyRef = useRef(false);
+  useEffect(() => {
+    busyRef.current = busy;
+  }, [busy]);
 
   // Messages sent since the server last started a flush (its typing event).
   // While > 0 the server holds an undrained inbox, so going quiet must Sigao.
@@ -102,8 +108,17 @@ export function useChatStream() {
             const e = ev.event;
             switch (e.case) {
               case "typing":
-                // Flush started — everything sent so far is being processed.
-                queued.current = 0;
+                // The server emits a typing beat both at flush-start and before
+                // every paced bubble (§14). Only the flush-start beat means the
+                // inbox has been drained; clearing `queued` on the per-bubble
+                // beats too would strand a message the user sends mid-turn (the
+                // idle timer would skip its Sigao). So drain only while idle —
+                // i.e. when no turn is currently in flight.
+                if (!busyRef.current) {
+                  queued.current = 0;
+                  busyRef.current = true;
+                  setBusy(true);
+                }
                 setTyping(true);
                 break;
               case "message":
@@ -116,10 +131,12 @@ export function useChatStream() {
                 break;
               case "done":
                 setTyping(false);
+                busyRef.current = false;
                 setBusy(false);
                 break;
               case "error":
                 setTyping(false);
+                busyRef.current = false;
                 setBusy(false);
                 setBubbles((b) => [
                   ...b,
@@ -131,6 +148,7 @@ export function useChatStream() {
           // Stream ended cleanly (server returned). Reopen unless unmounting.
         } catch {
           if (stopped || controller.signal.aborted) return;
+          busyRef.current = false;
           setBusy(false);
           setTyping(false);
         }
@@ -182,5 +200,5 @@ export function useChatStream() {
     [armIdle],
   );
 
-  return { bubbles, typing, busy, send, noteTyping };
+  return { bubbles, typing, send, noteTyping };
 }
