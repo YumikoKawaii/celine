@@ -176,7 +176,12 @@ body::before {
     0 0 24px rgba(120, 60, 255, 0.12),
     0 2px 8px rgba(0, 0, 0, 0.4),
     inset 0 1px 0 rgba(180, 140, 255, 0.1);
-  overflow: hidden;
+  /* isolate so the absolute-positioned magic circle doesn't escape,
+     but avoid overflow:hidden which clips text when the circle's negative
+     offset expands the scroll width. border-radius masks the circle instead. */
+  isolation: isolate;
+  border-radius: 18px;
+  border-bottom-left-radius: 5px;
 }
 
 .bubble--user {
@@ -205,10 +210,12 @@ body::before {
   position: absolute;
   right: -20px;
   bottom: -20px;
-  width: 90px;
-  height: 90px;
-  opacity: 0.6;
+  width: 80px;
+  height: 80px;
+  opacity: 0.45;
   pointer-events: none;
+  /* clip-path masks the circle to the bubble bounds without overflow:hidden */
+  clip-path: inset(0 0 0 0 round 18px);
 }
 
 /* ── Magic circle shared animation ──────────────────────────── */
