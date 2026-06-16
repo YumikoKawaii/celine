@@ -10,6 +10,7 @@ import (
 
 // EventSink receives all events produced during a single Chat turn.
 type EventSink interface {
+	Typing() error
 	Bubble(seq int32, text string) error
 	ToolCall(id, name, inputJSON string) error
 	ToolResult(id, output string, isError bool) error

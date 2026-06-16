@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/YumikoKawaii/celine/basis/internal/arche"
 	"github.com/YumikoKawaii/celine/basis/internal/ergon"
@@ -13,6 +14,25 @@ import (
 
 // celineProsoponId aliases arche.CelineProsoponID for package-local readability.
 const celineProsoponId = arche.CelineProsoponID
+
+// Bubble pacing constants (§14). Before each bubble the client sees a Typing
+// indicator for a duration proportional to the bubble's word count, so longer
+// bubbles feel like they took longer to compose.
+const (
+	pacingBase    = 300 * time.Millisecond // minimum delay regardless of length
+	pacingPerWord = 30 * time.Millisecond  // added per word in the bubble
+	pacingMax     = 2500 * time.Millisecond // ceiling so very long bubbles don't stall
+)
+
+// bubbleDelay returns how long to show the typing indicator before revealing bubble.
+func bubbleDelay(bubble string) time.Duration {
+	words := len(strings.Fields(bubble))
+	d := pacingBase + time.Duration(words)*pacingPerWord
+	if d > pacingMax {
+		return pacingMax
+	}
+	return d
+}
 
 // Recall tuning for the §12.5 tier-2 thresholded hint.
 const (
@@ -123,9 +143,19 @@ func (a *Agent) Chat(ctx context.Context, ownerSub string, userText string, sink
 	// allBubbles accumulates every bubble across iterations for DB persistence.
 	var allBubbles []string
 
-	// emit forwards each bubble to the sink the moment its boundary arrives
-	// in the token stream — the client sees it while the turn is still generating.
+	// emit paces each bubble: show a Typing indicator for a duration proportional
+	// to the bubble's word count (§14), then deliver the bubble. The delay runs
+	// on the Parousia goroutine so it naturally backpressures the stream —
+	// the client waits while the next bubble is "composing".
 	emit := func(bubble string) {
+		if err := sink.Typing(); err != nil {
+			log.Printf("agent: typing indicator %d: %v", seq, err)
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(bubbleDelay(bubble)):
+		}
 		if err := sink.Bubble(seq, bubble); err != nil {
 			log.Printf("agent: bubble %d: %v", seq, err)
 		}

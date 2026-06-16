@@ -176,10 +176,16 @@ type streamSink struct {
 	stream *connect.ServerStream[celinev1.ParousiaEvent]
 }
 
-func (s *streamSink) typing() error {
+// Typing implements agent.EventSink — signals a per-bubble typing beat.
+func (s *streamSink) Typing() error {
 	return s.stream.Send(&celinev1.ParousiaEvent{
 		Event: &celinev1.ParousiaEvent_Typing{Typing: &celinev1.Typing{}},
 	})
+}
+
+// typing is the turn-level typing indicator (called once before agent.Chat).
+func (s *streamSink) typing() error {
+	return s.Typing()
 }
 
 func (s *streamSink) done(conversationId int64) error {

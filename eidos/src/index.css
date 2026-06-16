@@ -176,7 +176,9 @@ body::before {
     0 0 24px rgba(120, 60, 255, 0.12),
     0 2px 8px rgba(0, 0, 0, 0.4),
     inset 0 1px 0 rgba(180, 140, 255, 0.1);
-  overflow: hidden;
+  /* overflow: hidden removed — it was clipping the bubble-in scale animation
+     and causing visual artifacts when the log scrolls. The magic circle uses
+     clip-path instead to stay contained. */
 }
 
 .bubble--user {
@@ -195,8 +197,8 @@ body::before {
 }
 
 @keyframes bubble-in {
-  from { transform: translateY(10px) scale(0.95); opacity: 0; }
-  to   { transform: translateY(0)    scale(1);    opacity: 1; }
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
 }
 
 /* ── Magic circle on celine bubbles ─────────────────────────── */
@@ -209,6 +211,8 @@ body::before {
   height: 90px;
   opacity: 0.6;
   pointer-events: none;
+  /* clip to the bubble's visual bounds so it never bleeds into adjacent bubbles */
+  clip-path: inset(0 0 0 0 round 18px);
 }
 
 /* ── Magic circle shared animation ──────────────────────────── */
