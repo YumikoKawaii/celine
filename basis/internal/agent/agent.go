@@ -91,12 +91,15 @@ func (a *Agent) Chat(ctx context.Context, ownerSub string, userText string, sink
 
 	// Tier-2 recall (§12.5): embed the query, search this client's memories,
 	// and inject a hint only when the top hit clears the similarity floor.
-	// Sits below the cached prefix, so on a miss the prefix stays clean.
+	// The hint is prepended to the user turn (not a separate message) so the
+	// history always alternates user/assistant — two consecutive user messages
+	// are rejected by the Claude Messages API with a parse error.
+	turnText := userText
 	if hint := a.recallHint(ctx, p.Id, userText); hint != "" {
-		hist = append(hist, llm.Message{Role: "user", Text: hint})
+		turnText = hint + "\n\n" + userText
 	}
 
-	hist = append(hist, llm.Message{Role: "user", Text: userText})
+	hist = append(hist, llm.Message{Role: "user", Text: turnText})
 
 	// Tier-1 recall (§12.5): the client's curated profile, always in the
 	// (cached, per-client-stable) system prefix.

@@ -61,12 +61,16 @@ export function useChatStream() {
       try {
         const res = await celine.anamnesis(create(AnamnesisRequestSchema, {}));
         if (cancelled) return;
+        // Stored messages join all bubbles with \n\n (see agent.go). Split them
+        // back out so history renders as individual chat bubbles, not one wall of text.
         setBubbles(
-          res.messages.map((m) => ({
-            id: nextId++,
-            from: m.prosoponId === CELINE_PROSOPON_ID ? "celine" : "user",
-            text: m.text,
-          })),
+          res.messages.flatMap((m) => {
+            const from: Bubble["from"] = m.prosoponId === CELINE_PROSOPON_ID ? "celine" : "user";
+            return m.text
+              .split("\n\n")
+              .map((chunk) => ({ id: nextId++, from, text: chunk.trim() }))
+              .filter((b) => b.text !== "");
+          }),
         );
       } catch {
         // Empty/failed history is non-fatal — start with a blank pane.
