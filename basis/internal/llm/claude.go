@@ -125,6 +125,19 @@ func (c *Client) Chat(
 	var buf strings.Builder
 	var bubbles []string
 
+	// emitBubble is the single egress for a model-delimited bubble. The model's
+	// blank line is the intended boundary, but it sometimes packs several
+	// sentences into one bubble (a long wall, §14). splitSentences is the
+	// length-gated safety net: a normal-length bubble passes through untouched;
+	// an over-long, multi-sentence one is force-split into one sentence per
+	// bubble. Code fences are never touched.
+	emitBubble := func(b string) {
+		for _, piece := range splitSentences(b) {
+			bubbles = append(bubbles, piece)
+			emit(piece)
+		}
+	}
+
 	for stream.Next() {
 		ev := stream.Current()
 		_ = acc.Accumulate(ev)
@@ -140,8 +153,7 @@ func (c *Client) Chat(
 				break
 			}
 			if b := strings.TrimSpace(s[:idx]); b != "" {
-				bubbles = append(bubbles, b)
-				emit(b)
+				emitBubble(b)
 			}
 			buf.Reset()
 			buf.WriteString(s[idx+2:])
@@ -152,8 +164,7 @@ func (c *Client) Chat(
 	}
 	// flush whatever remains after the stream closes
 	if b := strings.TrimSpace(buf.String()); b != "" {
-		bubbles = append(bubbles, b)
-		emit(b)
+		emitBubble(b)
 	}
 
 	turn := Turn{Bubbles: bubbles}
@@ -186,6 +197,96 @@ func bubbleBoundary(s string) int {
 		}
 	}
 	return -1
+}
+
+// maxBubbleLen is the length gate for the sentence-splitting safety net. A
+// bubble at or under this passes through whole — short bubbles, even with two
+// sentences, read fine and shouldn't be fragmented. Only longer ones are split.
+const maxBubbleLen = 160
+
+// sentenceAbbrev are lowercase tokens that end in '.' but do not end a sentence;
+// splitSentences refuses to break right after one. Kept small and common.
+var sentenceAbbrev = map[string]bool{
+	"e.g.": true, "i.e.": true, "etc.": true, "vs.": true,
+	"mr.": true, "mrs.": true, "ms.": true, "dr.": true, "st.": true,
+}
+
+// splitSentences is the backend safety net for over-long bubbles (§14). The
+// model is supposed to separate thoughts with a blank line; when it instead
+// packs several sentences into one bubble, this breaks that bubble into one
+// sentence per piece. It is deliberately conservative:
+//
+//   - Bubbles at or under maxBubbleLen, or with no internal break, return as-is.
+//   - Bubbles containing a code fence return as-is — never split block content.
+//   - A '.', '?' or '!' ends a sentence only when followed by whitespace and the
+//     next non-space rune is an uppercase letter or digit, and the token it ends
+//     is not a known abbreviation or a decimal (e.g. "3.5"). This guards the
+//     common false positives without a full NLP tokenizer.
+//
+// It never splits on commas: a comma does not mark a complete thought.
+func splitSentences(b string) []string {
+	if len(b) <= maxBubbleLen || strings.Contains(b, "```") {
+		return []string{b}
+	}
+
+	var out []string
+	start := 0
+	runes := []rune(b)
+	for i := 0; i < len(runes); i++ {
+		r := runes[i]
+		if r != '.' && r != '?' && r != '!' {
+			continue
+		}
+		// Need whitespace after the terminator.
+		j := i + 1
+		if j >= len(runes) || !isSpace(runes[j]) {
+			continue
+		}
+		// Skip the whitespace run; the next char must start a new sentence.
+		for j < len(runes) && isSpace(runes[j]) {
+			j++
+		}
+		if j >= len(runes) || !startsNewSentence(runes[j]) {
+			continue
+		}
+		// Guard decimals: a '.' between two digits is not a terminator.
+		if r == '.' && i > 0 && isDigit(runes[i-1]) && isDigit(runes[j]) {
+			continue
+		}
+		// Guard known abbreviations ending in '.'.
+		if r == '.' && endsWithAbbrev(string(runes[start:i+1])) {
+			continue
+		}
+		if piece := strings.TrimSpace(string(runes[start : i+1])); piece != "" {
+			out = append(out, piece)
+		}
+		start = j
+		i = j - 1
+	}
+	if piece := strings.TrimSpace(string(runes[start:])); piece != "" {
+		out = append(out, piece)
+	}
+	if len(out) == 0 {
+		return []string{b}
+	}
+	return out
+}
+
+func isSpace(r rune) bool { return r == ' ' || r == '\t' || r == '\n' || r == '\r' }
+func isDigit(r rune) bool { return r >= '0' && r <= '9' }
+
+func startsNewSentence(r rune) bool {
+	return (r >= 'A' && r <= 'Z') || isDigit(r) || r == '"' || r == '\''
+}
+
+// endsWithAbbrev reports whether the final whitespace-delimited token of s is a
+// known abbreviation (case-insensitive), e.g. "...for example, e.g.".
+func endsWithAbbrev(s string) bool {
+	fields := strings.Fields(s)
+	if len(fields) == 0 {
+		return false
+	}
+	return sentenceAbbrev[strings.ToLower(fields[len(fields)-1])]
 }
 
 // toParam converts a llm.Message to the anthropic SDK's MessageParam.
