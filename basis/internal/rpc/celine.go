@@ -44,7 +44,9 @@ func (s *Celine) Parousia(
 		return connect.NewError(connect.CodeUnauthenticated, errors.New("not authenticated"))
 	}
 
-	s.registry.Register(sub)
+	if !s.registry.Register(sub) {
+		return connect.NewError(connect.CodeAlreadyExists, errors.New("a session is already active for this user"))
+	}
 	defer s.registry.Unregister(sub)
 
 	sigao, _ := s.registry.Sigao(sub)

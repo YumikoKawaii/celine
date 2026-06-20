@@ -12,17 +12,23 @@ type registry struct {
 	pempo map[string]chan string
 }
 
-// Register installs a fresh connection for sub, replacing any previous one —
-// last writer wins, so a new tab supersedes the old.
-func (r *registry) Register(sub string) {
+// Register installs a fresh connection for sub and reports true, but only if sub
+// has no live session — first wins, at most one active session per user. It
+// returns false when one already exists; the caller must refuse the new stream.
+func (r *registry) Register(sub string) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if _, f := r.pempo[sub]; f {
+		return false
+	}
 	r.pempo[sub] = make(chan string, 64)
 	r.sigao[sub] = make(chan struct{}, 1)
+	return true
 }
 
-// Unregister removes sub's connection only if it is still c — an old Parousia
-// loop exiting must not tear down its successor's registration.
+// Unregister removes sub's connection. Safe under first-wins (Register): while a
+// session's entry is present, no successor can be installed, so the exiting loop
+// only ever clears its own registration.
 func (r *registry) Unregister(sub string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
