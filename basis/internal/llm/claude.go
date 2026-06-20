@@ -133,6 +133,7 @@ func (c *Client) Chat(
 	// bubble. Code fences are never touched.
 	emitBubble := func(b string) {
 		for _, piece := range splitSentences(b) {
+			piece = dropTerminalPeriod(piece)
 			bubbles = append(bubbles, piece)
 			emit(piece)
 		}
@@ -270,6 +271,27 @@ func splitSentences(b string) []string {
 		return []string{b}
 	}
 	return out
+}
+
+// dropTerminalPeriod removes a single trailing '.' from a bubble for the relaxed,
+// texting-style register (§14): "yahalo." → "yahalo". It is conservative — it
+// leaves the bubble alone when stripping would be wrong:
+//
+//   - '?' and '!' stay; they carry tone, not just sentence closure.
+//   - An ellipsis ("...") stays; it is a trailing-off, not a period.
+//   - A bubble ending in a code fence stays untouched.
+//
+// Only the very last rune is considered, so an internal "...sentence one. Two."
+// (a force-split that left a period mid-piece) is unaffected — by the time a
+// bubble reaches here it is already one sentence.
+func dropTerminalPeriod(b string) string {
+	if strings.HasSuffix(b, "```") || strings.HasSuffix(b, "...") {
+		return b
+	}
+	if strings.HasSuffix(b, ".") {
+		return strings.TrimRight(b[:len(b)-1], " \t")
+	}
+	return b
 }
 
 func isSpace(r rune) bool { return r == ' ' || r == '\t' || r == '\n' || r == '\r' }

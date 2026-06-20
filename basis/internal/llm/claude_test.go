@@ -92,6 +92,23 @@ func TestSplitSentences_GuardsDecimalsAndAbbrev(t *testing.T) {
 	}
 }
 
+func TestDropTerminalPeriod(t *testing.T) {
+	cases := map[string]string{
+		"yahalo.":          "yahalo",
+		"no period here":   "no period here",
+		"keep the bang!":   "keep the bang!",
+		"keep the query?":  "keep the query?",
+		"trailing off...": "trailing off...",
+		"```\ncode\n```":  "```\ncode\n```",
+		"two sentences. but one bubble.": "two sentences. but one bubble", // only the last dot goes
+	}
+	for in, want := range cases {
+		if got := dropTerminalPeriod(in); got != want {
+			t.Errorf("dropTerminalPeriod(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
 func TestBubbleBoundary_OutsideFenceOnly(t *testing.T) {
 	if got := bubbleBoundary("ab\n\ncd"); got != 2 {
 		t.Fatalf("plain boundary: got %d want 2", got)
